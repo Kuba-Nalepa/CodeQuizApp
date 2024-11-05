@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "392511032819",
+    "project_id": "codequizapp-53b6a",
+    "storage_bucket": "codequizapp-53b6a.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:392511032819:android:d33ae5c6a467fbcd0b5686",
+        "android_client_info": {
+          "package_name": "com.jakubn.codequizapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA1zWxicm3f4S_8ka2fmh1Ndrx-OJr8x0I"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
