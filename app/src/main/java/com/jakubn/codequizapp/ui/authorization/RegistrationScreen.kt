@@ -140,7 +140,3 @@ private fun RegistrationScreenPreview() {
 
     }
 }
-
-private fun Modifier.graphicsLayer() {
-    Modifier.graphicsLayer()
-}
