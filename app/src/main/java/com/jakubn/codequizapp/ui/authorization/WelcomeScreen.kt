@@ -1,4 +1,4 @@
-package com.jakubn.codequizapp.ui.welcome
+package com.jakubn.codequizapp.ui.authorization
 
 
 import androidx.compose.foundation.background
@@ -20,16 +20,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 import com.jakubn.codequizapp.R
-import com.jakubn.codequizapp.theme.CodeQuizAppTheme
+import com.jakubn.codequizapp.navigation.Navigate
 import com.jakubn.codequizapp.theme.Typography
 import com.jakubn.codequizapp.ui.uiComponents.CustomButton
 
 @Composable
-fun WelcomeScreen() {
+fun WelcomeScreen(navController: NavController) {
 
     Box(
         modifier = Modifier
@@ -65,25 +64,26 @@ fun WelcomeScreen() {
                 .clip(shape = RoundedCornerShape(25.dp, 25.dp, 0.dp, 0.dp))
                 .background(Color(0xE6648097))
                 .fillMaxHeight(0.25f),
-            verticalArrangement = Arrangement.spacedBy(5.dp, Alignment.CenterVertically),
+            verticalArrangement = Arrangement.spacedBy(15.dp, Alignment.CenterVertically),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             CustomButton(
-                modifier = Modifier.fillMaxWidth(0.7f),
+                modifier = Modifier.fillMaxWidth(),
                 backgroundColor = Color(0xFF7F9FB8),
                 text = "Sign Up",
                 textColor = Color(0xFFA3FF0D),
                 onClick = {
+                    navController.navigate(Navigate.Registration.route)
                 }
             )
 
             CustomButton(
-                modifier = Modifier.fillMaxWidth(0.7f),
+                modifier = Modifier.fillMaxWidth(),
                 backgroundColor = Color(0xFF7F9FB8),
                 text = "Log In",
                 textColor = Color(0xFFFFFFFF),
                 onClick = {
-
+                    navController.navigate(Navigate.Login.route)
                 }
             )
         }
@@ -101,12 +101,11 @@ fun WelcomeText(text: String) {
     )
 }
 
-@Preview(showBackground = true)
-@Composable
-private fun WelcomeScreenPreview() {
-    CodeQuizAppTheme {
-        WelcomeScreen()
-
-    }
-
-}
+//@Preview(showBackground = true)
+//@Composable
+//private fun WelcomeScreenPreview() {
+//    CodeQuizAppTheme {
+//        WelcomeScreen()
+//
+//    }
+//}

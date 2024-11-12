@@ -2,6 +2,7 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+    id("org.jetbrains.kotlin.plugin.serialization")
 }
 
 android {
@@ -78,8 +79,11 @@ dependencies {
     implementation ("androidx.navigation:navigation-fragment-ktx:2.8.0")
     implementation ("androidx.navigation:navigation-ui-ktx:2.8.0")
 
-    implementation ("androidx.compose.material3:material3:1.2.1")
-    implementation ("androidx.compose.material:material-icons-extended:1.6.8")
+    implementation ("androidx.compose.material3:material3:1.3.1")
+    implementation ("androidx.compose.material:material-icons-extended:1.7.5")
+
+    // Serialization
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
 
     // Dependency Injection
     implementation ("com.google.dagger:hilt-android:2.51.1")

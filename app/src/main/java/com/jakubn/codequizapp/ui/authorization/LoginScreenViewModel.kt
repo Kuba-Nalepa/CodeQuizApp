@@ -1,4 +1,4 @@
-package com.jakubn.codequizapp.ui.welcome
+package com.jakubn.codequizapp.ui.authorization
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-class WelcomeScreenViewModel @Inject constructor (
+class LoginScreenViewModel @Inject constructor (
     private val repository: AuthRepository
 ): ViewModel() {
 

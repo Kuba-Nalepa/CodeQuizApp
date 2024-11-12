@@ -1,22 +1,33 @@
 package com.jakubn.codequizapp.navigation
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 sealed class Navigate(
     val route: String
 ) {
-    object AuthScreen : Navigate("auth_screen")
 
-    object HomeScreen : Navigate("home_screen")
-
-    object CategoryScreen : Navigate("category_screen")
-
-    object GameScreen : Navigate("navigate_screen")
-
-    object GameOverScreen : Navigate("game_over_screen")
-
-    object MyProfileScreen : Navigate("my_profile_screen")
-
-    object UserProfileScreen : Navigate("user_profile_screen")
-
-    object ChatScreen : Navigate("chat_screen")
+    @Serializable
+    object Auth : Navigate("auth_route")
+    @Serializable
+    object Welcome : Navigate("welcome_route")
+    @Serializable
+    object Registration : Navigate("registration_screen")
+    @Serializable
+    object Login : Navigate("login_screen")
+    @Serializable
+    object Home : Navigate("home_screen")
+    @Serializable
+    object Category : Navigate("category_screen")
+    @Serializable
+    object Game : Navigate("navigate_screen")
+    @Serializable
+    object GameOver : Navigate("game_over_screen")
+    @Serializable
+    object MyProfile : Navigate("my_profile_screen")
+    @Serializable
+    object UserProfile : Navigate("user_profile_screen")
+    @Serializable
+    object Chat : Navigate("chat_screen")
 
 }
