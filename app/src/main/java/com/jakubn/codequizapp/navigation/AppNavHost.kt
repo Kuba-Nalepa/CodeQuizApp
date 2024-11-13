@@ -8,6 +8,7 @@ import androidx.navigation.navigation
 import com.jakubn.codequizapp.ui.authorization.LoginScreen
 import com.jakubn.codequizapp.ui.authorization.RegistrationScreen
 import com.jakubn.codequizapp.ui.authorization.WelcomeScreen
+import com.jakubn.codequizapp.ui.home.HomeScreen
 
 
 @Composable
@@ -28,6 +29,13 @@ fun AppNavHost() {
                 LoginScreen(navController)
             }
 
+        }
+
+        navigation(route = Navigate.Main.route, startDestination = Navigate.Home.route) {
+
+            composable(route = Navigate.Home.route) {
+                HomeScreen(navController)
+            }
         }
     }
 }

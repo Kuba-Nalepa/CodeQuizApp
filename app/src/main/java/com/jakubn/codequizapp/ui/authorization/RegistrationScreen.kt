@@ -119,7 +119,7 @@ fun RegistrationScreen() {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             CustomButton(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
                 backgroundColor = Color(0xFF002137),
                 text = "Sign Up",
                 textColor = Color(0xFFFFFFFF),

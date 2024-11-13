@@ -20,10 +20,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import com.jakubn.codequizapp.R
 import com.jakubn.codequizapp.navigation.Navigate
+import com.jakubn.codequizapp.theme.CodeQuizAppTheme
 import com.jakubn.codequizapp.theme.Typography
 import com.jakubn.codequizapp.ui.uiComponents.CustomButton
 
@@ -68,7 +71,7 @@ fun WelcomeScreen(navController: NavController) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             CustomButton(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
                 backgroundColor = Color(0xFF7F9FB8),
                 text = "Sign Up",
                 textColor = Color(0xFFA3FF0D),
@@ -78,7 +81,7 @@ fun WelcomeScreen(navController: NavController) {
             )
 
             CustomButton(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
                 backgroundColor = Color(0xFF7F9FB8),
                 text = "Log In",
                 textColor = Color(0xFFFFFFFF),
@@ -101,11 +104,12 @@ fun WelcomeText(text: String) {
     )
 }
 
-//@Preview(showBackground = true)
-//@Composable
-//private fun WelcomeScreenPreview() {
-//    CodeQuizAppTheme {
-//        WelcomeScreen()
-//
-//    }
-//}
+@Preview(showBackground = true)
+@Composable
+private fun WelcomeScreenPreview() {
+    val navController = rememberNavController()
+    CodeQuizAppTheme {
+        WelcomeScreen(navController)
+
+    }
+}

@@ -27,9 +27,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import com.jakubn.codequizapp.R
+import com.jakubn.codequizapp.navigation.Navigate
+import com.jakubn.codequizapp.theme.CodeQuizAppTheme
 import com.jakubn.codequizapp.theme.Typography
 import com.jakubn.codequizapp.ui.uiComponents.CustomTextField
 
@@ -110,7 +114,7 @@ fun LoginScreen(navController: NavController) {
             .fillMaxHeight(0.5f)
             .shadow(
                 elevation = 5.dp,
-                shape = RoundedCornerShape(50.dp, 50.dp, 50.dp, 50.dp),
+                shape = RoundedCornerShape(50.dp),
                 spotColor = Color.Black
             )
             .paint(
@@ -119,18 +123,19 @@ fun LoginScreen(navController: NavController) {
             ),
             colors = ButtonDefaults.buttonColors(Color.Transparent),
             onClick = {
-
+                navController.navigate(route = Navigate.Home.route)
             }
         ) {
-            Text(text = "Sign In", color = Color(0xffA3FF0D), style = Typography.bodyLarge)
+            Text(text = "Sign In".uppercase(), color = Color(0xffA3FF0D), style = Typography.bodyLarge)
         }
     }
 }
 
-//@Preview
-//@Composable
-//private fun PreviewLoginScreen() {
-//    CodeQuizAppTheme {
-//        LoginScreen()
-//    }
-//}
+@Preview
+@Composable
+private fun PreviewLoginScreen() {
+    CodeQuizAppTheme {
+        val navController = rememberNavController()
+        LoginScreen(navController)
+    }
+}

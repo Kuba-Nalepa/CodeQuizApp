@@ -16,6 +16,8 @@ sealed class Navigate(
     @Serializable
     object Login : Navigate("login_screen")
     @Serializable
+    object Main : Navigate("main_route")
+    @Serializable
     object Home : Navigate("home_screen")
     @Serializable
     object Category : Navigate("category_screen")
