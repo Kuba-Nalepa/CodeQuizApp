@@ -1,173 +1,196 @@
 package com.jakubn.codequizapp.ui.profile
 
-import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import com.jakubn.codequizapp.R
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.jakubn.codequizapp.ui.home.Header
+import com.jakubn.codequizapp.theme.Typography
 
 @Composable
 fun UserProfileScreen() {
+    val colors = arrayOf(
+        0.06f to Color(0xffA3FF0D),
+        0.22f to Color(0xff74B583),
+        0.39f to Color(0xff58959A),
+        0.62f to Color(0xff003963),
+        0.95f to Color(0xff000226)
+    )
+
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF111418))
-            .padding(16.dp)
+            .background(brush = Brush.verticalGradient(colorStops = colors))
+            .padding(20.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Header()
-        ProfileSection("User")
-        ActionButtons()
-        StatsSection()
-        StartGameButton()
-    }
-}
-
-//@Composable
-//fun Header() {
-//    Row(
-//        modifier = Modifier
-//            .fillMaxWidth()
-//            .padding(vertical = 16.dp),
-//        verticalAlignment = Alignment.CenterVertically,
-//        horizontalArrangement = Arrangement.SpaceBetween
-//    ) {
-//        Icon(
-//            painter = painterResource(id = R.drawable.ic_close),
-//            contentDescription = "Close",
-//            tint = Color.White,
-//            modifier = Modifier.size(24.dp)
-//        )
-//    }
-//}
-
-@Composable
-fun ActionButtons() {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 16.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        Button(
-            onClick = { /* TODO: Add friend action */ },
-            modifier = Modifier.weight(1f),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF293038))
-        ) {
-            Text("Add friend")
-        }
-        Button(
-            onClick = { /* TODO: Challenge action */ },
-            modifier = Modifier.weight(1f)
-        ) {
-            Text("Challenge")
-        }
-    }
-}
-
-@Composable
-fun StatsSection() {
-    Column(
-        modifier = Modifier
-            .padding(vertical = 16.dp)
-    ) {
-        Text(
-            text = "Statistics",
-            color = Color.White,
-            fontSize = 22.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = 8.dp)
-        )
-
         Column(
             modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.SpaceEvenly
+            verticalArrangement = Arrangement.Top,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Top Row with two boxes
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                // First Box - Games Played
-                MyStatsBox(
-                    statsNumber = "50",
-                    statsDescription = "Games played",
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(4.dp)
-                )
-                // Second Box - Wins
-                MyStatsBox(
-                    statsNumber = "25",
-                    statsDescription = "Wins",
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(4.dp)
-                )
-            }
-            // Bottom Row with one box
-            MyStatsBox(
-                statsNumber = "25",
-                statsDescription = "Losses",
+            Text(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(4.dp)
+                    .padding(top = 10.dp, bottom = 20.dp),
+                text = "<CODE/QUIZ>",
+                style = Typography.bodyMedium,
+                color = Color(0xff7BAFC4)
+            )
+
+            Image(
+                modifier = Modifier
+                    .size(125.dp)
+                    .shadow(5.dp, shape = CircleShape)
+                    .border(1.dp, Color.Black, CircleShape),
+                painter = painterResource(R.drawable.sample_avatar),
+                contentScale = ContentScale.Crop,
+                contentDescription = "Avatar Image"
+            )
+            Text(
+                modifier = Modifier
+                    .padding(top = 10.dp, bottom = 5.dp),
+                text = "user name",
+                style = Typography.bodyMedium,
+            )
+            Text(
+                modifier = Modifier
+                    .padding(bottom = 20.dp),
+                text = "# 213",
+                style = Typography.bodyMedium,
+                color = Color(0xffA3FF0D)
             )
         }
-    }
-}
 
-@Composable
-fun StatsBox(statsNumber: String, statsDescription: String, modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier
-            .border(BorderStroke(1.dp, Color.White), RoundedCornerShape(4.dp))
-            .padding(8.dp),
-        contentAlignment = Alignment.CenterStart
-    ) {
-        Column(horizontalAlignment = Alignment.Start) {
-            Text(text = statsNumber, fontSize = 24.sp, color = Color.White)
-            Text(text = statsDescription, fontSize = 12.sp, color = Color.White)
-        }
-    }
-}
-
-@Composable
-fun StartGameButton() {
-    Column(
-        Modifier.fillMaxHeight(),
-        verticalArrangement = Arrangement.SpaceBetween
-    ) {
-
-        Column(
-            modifier = Modifier
-                .verticalScroll(rememberScrollState())
-                .weight(1f, false)
-        ) {
-            //...
-        }
-
-        Button(
-            onClick = { /* TODO: Start game action */ },
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 16.dp)
+                .height(intrinsicSize = IntrinsicSize.Min)
+                .padding(top = 20.dp, bottom = 40.dp),
+            horizontalArrangement = Arrangement.spacedBy(20.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("Start Game")
+            Button(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight(),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0x52FFFFFF)),
+                shape = RoundedCornerShape(20.dp),
+                onClick = {
+
+                },
+            ) {
+                Text(
+                    text = "Add Friend".uppercase(),
+                    textAlign = TextAlign.Center,
+                    color = Color(0xffA3FF0D),
+                    style = Typography.bodyMedium,
+                    softWrap = true
+                )
+            }
+            Button(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight(),
+                shape = RoundedCornerShape(20.dp),
+                onClick = {
+
+                },
+            ) {
+                Text(
+                    text = "Chalenge".uppercase(),
+                    textAlign = TextAlign.Center,
+                    color = Color(0xff000000),
+                    style = Typography.bodyMedium,
+                    softWrap = true
+
+                )
+            }
+        }
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 20.dp, bottom = 20.dp)
+                .clip(shape = RoundedCornerShape(20.dp))
+                .background(Color(0x52D9D9D9)),
+            horizontalArrangement = Arrangement.SpaceAround,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(text = "50", style = Typography.titleMedium, fontSize = 44.sp)
+            Text(
+                modifier = Modifier.padding(vertical = 20.dp),
+                text = "games\nplayed",
+                style = Typography.titleMedium,
+                textAlign = TextAlign.Center,
+            )
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(20.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(shape = RoundedCornerShape(20.dp))
+                    .background(Color(0x52D9D9D9)),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+
+                Text(
+                    modifier = Modifier.padding(top = 10.dp, bottom = 10.dp),
+                    text = "25", style = Typography.titleMedium, color = Color(0xffA3FF0D)
+                )
+                Text(
+                    modifier = Modifier.padding(bottom = 10.dp),
+                    text = "wins",
+                    style = Typography.titleSmall,
+                    textAlign = TextAlign.Center
+                )
+            }
+
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(shape = RoundedCornerShape(20.dp))
+                    .background(Color(0x52D9D9D9)),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+
+                Text(
+                    modifier = Modifier.padding(top = 10.dp, bottom = 10.dp),
+                    text = "25", style = Typography.titleMedium
+                )
+                Text(
+                    modifier = Modifier.padding(bottom = 10.dp),
+                    text = "losses",
+                    style = Typography.titleSmall,
+                    textAlign = TextAlign.Center
+                )
+            }
         }
     }
-
 }
 
 @Preview(showBackground = true)
@@ -175,9 +198,3 @@ fun StartGameButton() {
 fun PreviewProfileScreen() {
     UserProfileScreen()
 }
-@Preview(showBackground = true)
-@Composable
-fun StatsBoxPreview() {
-    StatsBox(statsNumber = "1preview", statsDescription = "preview" )
-}
-

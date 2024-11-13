@@ -190,10 +190,11 @@ fun HomeScreen(navController: NavController) {
                 },
             ) {
                 Text(
-                    text = "Create\nGame".uppercase(),
+                    text = "Create Game".uppercase(),
                     textAlign = TextAlign.Center,
                     color = Color(0xffA3FF0D),
-                    style = Typography.bodyLarge
+                    style = Typography.bodyLarge,
+                    softWrap = true
                 )
             }
             Button(
@@ -204,10 +205,11 @@ fun HomeScreen(navController: NavController) {
                 },
             ) {
                 Text(
-                    text = "Play\nNow".uppercase(),
+                    text = "Play Now".uppercase(),
                     textAlign = TextAlign.Center,
-                    color = Color(0xffffffff),
-                    style = Typography.bodyLarge
+                    color = Color(0xFF000000),
+                    style = Typography.bodyLarge,
+                    softWrap = true
 
                 )
             }
@@ -218,7 +220,7 @@ fun HomeScreen(navController: NavController) {
 @Preview(showBackground = true)
 @Composable
 fun CodeQuizAppPreview() {
-    val navCOntroller = rememberNavController()
-    HomeScreen(navCOntroller)
+    val navController = rememberNavController()
+    HomeScreen(navController)
 }
 
