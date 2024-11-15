@@ -3,10 +3,12 @@ package com.jakubn.codequizapp.theme
 import androidx.compose.ui.graphics.Color
 
 // Light Mode
-val PrimaryGreen = Color(0xFFA3FF0D) // primary
-val PrimaryBlue = Color(0xFF004469) // primary and use for gradient
+val PrimaryLight = Color(0xFFA3FF0D) // primary
+val SecondaryLight = Color(0xFF004469) // primary and use for gradient
+val OnPrimaryLight = Color(0xFF112970)
 
 
 //Dark Mode
-val PrimaryGreenDM = Color(0xFFA3FF0D)
-val PrimaryBlueDM = Color(0xFF000429)
+val PrimaryDark = Color(0xFFA3FF0D)
+val SecondaryDark = Color(0xFF000429)
+val OnPrimaryDark = Color(0xff004469)
