@@ -25,7 +25,6 @@ class MainActivity : ComponentActivity() {
             val navHostController = rememberNavController()
 
             CodeQuizAppTheme {
-
                 NavHost(
                     navController = navHostController,
                     startDestination = Screen.Auth.route

@@ -55,7 +55,8 @@ fun WelcomeScreen(navController: NavController) {
             Text(
                 textAlign = TextAlign.Center,
                 style = Typography.bodyMedium,
-                text = "Dive into code, break barriers, and rack up those points!"
+                text = "Dive into code, break barriers, and rack up those points!",
+                color = Color.White
             )
         }
 

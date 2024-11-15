@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.jakubn.codequizapp.R
+import com.jakubn.codequizapp.theme.CodeQuizAppTheme
 import com.jakubn.codequizapp.theme.Typography
 
 @Composable
@@ -170,7 +171,8 @@ fun HomeScreen(navController: NavController) {
             )
         }
 
-        Text(modifier = Modifier.padding(bottom = 20.dp),
+        Text(
+            modifier = Modifier.padding(bottom = 20.dp),
             text = "Ready to test your programming skills?",
             style = Typography.bodyLarge,
             textAlign = TextAlign.Center
