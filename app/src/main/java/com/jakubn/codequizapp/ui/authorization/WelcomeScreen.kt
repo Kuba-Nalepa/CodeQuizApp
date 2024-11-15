@@ -25,14 +25,13 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.jakubn.codequizapp.R
-import com.jakubn.codequizapp.navigation.Navigate
+import com.jakubn.codequizapp.navigation.Screen
 import com.jakubn.codequizapp.theme.CodeQuizAppTheme
 import com.jakubn.codequizapp.theme.Typography
 import com.jakubn.codequizapp.ui.uiComponents.CustomButton
 
 @Composable
 fun WelcomeScreen(navController: NavController) {
-
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -76,7 +75,7 @@ fun WelcomeScreen(navController: NavController) {
                 text = "Sign Up",
                 textColor = Color(0xFFA3FF0D),
                 onClick = {
-                    navController.navigate(Navigate.Registration.route)
+                    navController.navigate(Screen.Registration.route)
                 }
             )
 
@@ -86,7 +85,7 @@ fun WelcomeScreen(navController: NavController) {
                 text = "Log In",
                 textColor = Color(0xFFFFFFFF),
                 onClick = {
-                    navController.navigate(Navigate.Login.route)
+                    navController.navigate(Screen.Login.route)
                 }
             )
         }

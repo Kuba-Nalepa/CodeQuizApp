@@ -32,7 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.jakubn.codequizapp.R
-import com.jakubn.codequizapp.navigation.Navigate
+import com.jakubn.codequizapp.navigation.Screen
 import com.jakubn.codequizapp.theme.CodeQuizAppTheme
 import com.jakubn.codequizapp.theme.Typography
 import com.jakubn.codequizapp.ui.uiComponents.CustomTextField
@@ -123,7 +123,7 @@ fun LoginScreen(navController: NavController) {
             ),
             colors = ButtonDefaults.buttonColors(Color.Transparent),
             onClick = {
-                navController.navigate(route = Navigate.Home.route)
+                navController.navigate(route = Screen.Home.route)
             }
         ) {
             Text(text = "Sign In".uppercase(), color = Color(0xffA3FF0D), style = Typography.bodyLarge)

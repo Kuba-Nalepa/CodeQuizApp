@@ -89,7 +89,6 @@ dependencies {
     implementation ("com.google.dagger:hilt-android:2.51.1")
     implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
 
-
     // Import the Firebase BoM
     implementation(platform("com.google.firebase:firebase-bom:33.2.0"))
 
@@ -97,5 +96,10 @@ dependencies {
     implementation("com.google.firebase:firebase-auth")
     // When using the BoM, don't specify versions in Firebase dependencies
     implementation("com.google.firebase:firebase-analytics")
+
+    // Bottom Navigation
+    implementation ("androidx.compose.material:material:1.7.5")
+    implementation("androidx.navigation:navigation-compose:2.8.4")
+
 
 }
