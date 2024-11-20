@@ -14,11 +14,12 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navigation
 import androidx.room.Room
 import com.jakubn.codequizapp.navigation.Screen
-import com.jakubn.codequizapp.room.answer.AnswersDatabase
-import com.jakubn.codequizapp.room.answer.AnswersViewModel
-import com.jakubn.codequizapp.room.question.QuestionsDatabase
-import com.jakubn.codequizapp.room.question.QuestionsViewModel
+import com.jakubn.codequizapp.data.roomDatabases.answers.AnswersDatabase
+import com.jakubn.codequizapp.data.roomDatabases.answers.AnswersViewModel
+import com.jakubn.codequizapp.data.roomDatabases.questions.QuestionsDatabase
+import com.jakubn.codequizapp.data.roomDatabases.questions.QuestionsViewModel
 import com.jakubn.codequizapp.theme.CodeQuizAppTheme
+import com.jakubn.codequizapp.ui.MainScreen
 import com.jakubn.codequizapp.ui.authorization.LoginScreen
 import com.jakubn.codequizapp.ui.authorization.RegistrationScreen
 import com.jakubn.codequizapp.ui.authorization.WelcomeScreen

@@ -1,4 +1,4 @@
-package com.jakubn.codequizapp
+package com.jakubn.codequizapp.ui
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.BottomNavigation
@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
+import com.jakubn.codequizapp.R
 import com.jakubn.codequizapp.navigation.BottomNavItem
 import com.jakubn.codequizapp.navigation.Screen
 

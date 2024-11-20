@@ -96,12 +96,18 @@ dependencies {
 
     // TODO: Add the dependencies for Firebase products you want to use
     implementation("com.google.firebase:firebase-auth")
+    implementation("com.google.firebase:firebase-firestore")
     // When using the BoM, don't specify versions in Firebase dependencies
     implementation("com.google.firebase:firebase-analytics")
 
     // Bottom Navigation
     implementation ("androidx.compose.material:material:1.7.5")
     implementation("androidx.navigation:navigation-compose:2.8.4")
+
+    // Retrofit
+    implementation("com.jakewharton.retrofit:retrofit2-kotlinx-serialization-converter:1.0.0")
+    implementation("com.squareup.okhttp3:okhttp:4.11.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.10.0")
 
     implementation("androidx.room:room-ktx:2.6.1")
     kapt("androidx.room:room-compiler:2.6.1")

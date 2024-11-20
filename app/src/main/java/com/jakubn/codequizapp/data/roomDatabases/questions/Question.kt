@@ -1,4 +1,4 @@
-package com.jakubn.codequizapp.room.question
+package com.jakubn.codequizapp.data.roomDatabases.questions
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
