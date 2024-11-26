@@ -19,7 +19,7 @@ import androidx.compose.ui.unit.sp
 
 @Composable
 fun QuizScreen() {
-    // State for selected option
+    // CustomState for selected option
     val selectedOption = remember { mutableStateOf("") }
 
     Column(

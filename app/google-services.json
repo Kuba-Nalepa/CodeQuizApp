@@ -1,8 +1,9 @@
 {
   "project_info": {
     "project_number": "392511032819",
+    "firebase_url": "https://codequizapp-53b6a-default-rtdb.europe-west1.firebasedatabase.app",
     "project_id": "codequizapp-53b6a",
-    "storage_bucket": "codequizapp-53b6a.appspot.com"
+    "storage_bucket": "codequizapp-53b6a.firebasestorage.app"
   },
   "client": [
     {

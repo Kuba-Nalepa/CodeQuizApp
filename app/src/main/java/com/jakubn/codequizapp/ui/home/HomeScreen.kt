@@ -26,17 +26,18 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
 import com.jakubn.codequizapp.R
-import com.jakubn.codequizapp.theme.CodeQuizAppTheme
+import com.jakubn.codequizapp.domain.model.Question
 import com.jakubn.codequizapp.theme.Typography
+import kotlinx.serialization.json.Json
 
 @Composable
 fun HomeScreen(navController: NavController) {
+
     val colors = arrayOf(
         0.06f to Color(0xffA3FF0D),
         0.22f to Color(0xff74B583),
@@ -219,10 +220,9 @@ fun HomeScreen(navController: NavController) {
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-fun CodeQuizAppPreview() {
-    val navController = rememberNavController()
-    HomeScreen(navController)
-}
-
+//@Preview(showBackground = true)
+//@Composable
+//fun CodeQuizAppPreview() {
+//    val navController = rememberNavController()
+//    HomeScreen(navController)
+//}

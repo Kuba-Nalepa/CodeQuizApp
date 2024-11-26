@@ -8,22 +8,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class LoginViewModel @Inject constructor(
-    private val authUseCases: LoginUseCase
+    private val logInUseCase: LoginUseCase
 ) : ViewModel() {
-
-    fun signIn(email: String, password: String, onResult: (FirebaseUser?) -> Unit) {
-        viewModelScope.launch {
-            val user = authUseCases.signInUser(email, password)
-            onResult(user)
-        }
-    }
-
-    fun signOut() {
-        authUseCases.signOutUser()
-    }
-
-    fun getCurrentUser(): FirebaseUser? {
-        return authUseCases.getCurrentUser()
-    }
 
 }
