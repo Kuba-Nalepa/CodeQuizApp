@@ -35,9 +35,7 @@ class UserAuthRepositoryImpl @Inject constructor(
             val user = User(
                 uid = firebaseUser.uid,
                 name = name,
-                email = email,
-                score = 0,
-                imageUrl = null
+                email = email
             )
 
             firebaseFirestore.collection("users").document(firebaseUser.uid).set(user).await()
@@ -61,7 +59,7 @@ class UserAuthRepositoryImpl @Inject constructor(
                 ?: throw Exception("User data not found")
 
             emit(user)
-        }
+        }.flowOn(Dispatchers.IO)
     }
 
     override fun signOutUser(): Boolean {

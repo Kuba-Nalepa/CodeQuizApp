@@ -1,3 +1,11 @@
 package com.jakubn.codequizapp.domain.model
 
-data class User(val uid: String, val name: String,val email: String, val imageUrl: String?, val score: Int)
+data class User(
+    val uid: String? = null,
+    val name: String? = null,
+    val email: String? = null,
+    val imageUrl: String? = null,
+    val gamesPlayed: Int = 0,
+    val wins: Int = 0,
+    val score: Int = 0
+)

@@ -1,7 +1,6 @@
 package com.jakubn.codequizapp.ui.authorization
 
 
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -44,7 +43,6 @@ import com.jakubn.codequizapp.theme.CodeQuizAppTheme
 import com.jakubn.codequizapp.theme.Typography
 import com.jakubn.codequizapp.ui.uiComponents.CustomButton
 import com.jakubn.codequizapp.ui.uiComponents.CustomTextField
-import dagger.hilt.android.lifecycle.HiltViewModel
 
 @Composable
 fun RegistrationScreen(navHostController: NavHostController, viewModel: AuthViewModel = hiltViewModel()) {
@@ -52,6 +50,7 @@ fun RegistrationScreen(navHostController: NavHostController, viewModel: AuthView
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    val buttonState by remember { mutableStateOf(false) }
 
     val authState by viewModel.authState.collectAsState()
 
@@ -94,7 +93,8 @@ fun RegistrationScreen(navHostController: NavHostController, viewModel: AuthView
                 Text(
                     textAlign = TextAlign.Center,
                     style = Typography.bodyMedium,
-                    text = "Your mind is key to success"
+                    text = "Your mind is key to success",
+                    color = Color.White
                 )
             }
 
@@ -146,25 +146,24 @@ fun RegistrationScreen(navHostController: NavHostController, viewModel: AuthView
                 backgroundColor = Color(0xFF002137),
                 text = "Sign Up",
                 textColor = Color(0xFFFFFFFF),
+                enabled = authState !is CustomState.Loading,
                 onClick = {
                     viewModel.signUpUser(name, email, password)
                 }
             )
         }
     }
-    LaunchedEffect(authState, context) {
-        when(authState) {
 
+    LaunchedEffect(authState, context, buttonState) {
+        when(authState) {
             is CustomState.Success -> {
-                Log.d("TAG","succces")
                 navHostController.navigate(route = Screen.Login.route)
                 viewModel.resetState()
-
             }
-            is CustomState.Failure -> {
-                Log.d("TAG","failer")
 
+            is CustomState.Failure -> {
                 val message = (authState as CustomState.Failure).message
+
                 Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
             }
 
