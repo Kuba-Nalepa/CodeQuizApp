@@ -15,7 +15,7 @@ import javax.inject.Singleton
 
 
 @Singleton
-class UserAuthRepositoryImpl @Inject constructor(
+class AuthRepositoryImpl @Inject constructor(
     private val firebaseAuth: FirebaseAuth,
     private val firebaseFirestore: FirebaseFirestore
 ) : AuthRepository {
@@ -40,7 +40,7 @@ class UserAuthRepositoryImpl @Inject constructor(
 
             firebaseFirestore.collection("users").document(firebaseUser.uid).set(user).await()
             emit(user)
-        }.flowOn(Dispatchers.IO) // Errors will be thrown naturally within the flow
+        }.flowOn(Dispatchers.IO)
     }
 
     override suspend fun signInUser(

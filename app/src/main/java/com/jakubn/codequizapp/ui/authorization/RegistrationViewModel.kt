@@ -14,7 +14,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class AuthViewModel @Inject constructor(
+class RegistrationViewModel @Inject constructor(
     private val registrationUseCase: RegistrationUseCase
 ) : ViewModel() {
 

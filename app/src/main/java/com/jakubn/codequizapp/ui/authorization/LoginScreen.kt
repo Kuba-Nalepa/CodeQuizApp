@@ -141,17 +141,17 @@ fun LoginScreen(navController: NavController, viewModel: LoginViewModel = hiltVi
     }
 
     LaunchedEffect(userState, context) {
-        when(userState) {
+        when(val currentState = userState) {
             is CustomState.Success -> {
                 val message = "Logged successfully!"
 
-                navController.navigate(route = Screen.Home.route)
                 Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
                 viewModel.resetState()
+                navController.navigate(route = Screen.Home.route)
 
             }
             is CustomState.Failure -> {
-                val message = (userState as CustomState.Failure).message
+                val message = currentState.message
 
                 Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
             }

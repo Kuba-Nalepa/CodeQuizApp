@@ -45,7 +45,7 @@ import com.jakubn.codequizapp.ui.uiComponents.CustomButton
 import com.jakubn.codequizapp.ui.uiComponents.CustomTextField
 
 @Composable
-fun RegistrationScreen(navHostController: NavHostController, viewModel: AuthViewModel = hiltViewModel()) {
+fun RegistrationScreen(navHostController: NavHostController, viewModel: RegistrationViewModel = hiltViewModel()) {
     val context = LocalContext.current
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
@@ -155,14 +155,14 @@ fun RegistrationScreen(navHostController: NavHostController, viewModel: AuthView
     }
 
     LaunchedEffect(authState, context, buttonState) {
-        when(authState) {
+        when(val currentState = authState) {
             is CustomState.Success -> {
                 navHostController.navigate(route = Screen.Login.route)
                 viewModel.resetState()
             }
 
             is CustomState.Failure -> {
-                val message = (authState as CustomState.Failure).message
+                val message = currentState.message
 
                 Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
             }
