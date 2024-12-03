@@ -24,7 +24,7 @@ sealed class Screen(
     @Serializable
     object Profile : Screen("profile_screen")
     @Serializable
-    object Category : Screen("category_screen")
+    object CreateGame : Screen("create_game_screen")
     @Serializable
     object Game : Screen("navigate_screen")
     @Serializable
