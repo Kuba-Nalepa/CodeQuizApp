@@ -15,11 +15,20 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonColors
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -40,7 +49,9 @@ import com.jakubn.codequizapp.theme.Typography
 
 @Composable
 fun CreateGameScreen() {
-    var text by remember { mutableStateOf("") }
+    var quizCategorySelected by remember { mutableStateOf("") }
+    var quizNumberSelected by remember { mutableIntStateOf(0) }
+    var quizTimeSecondsIndicator by remember { mutableFloatStateOf(15f) }
 
     val contentList = hashMapOf(
         "Linux" to R.drawable.linux_image,
@@ -54,28 +65,45 @@ fun CreateGameScreen() {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(10.dp)
+            .padding(10.dp),
+        verticalArrangement = Arrangement.SpaceBetween
     ) {
-        Text(modifier = Modifier.padding(vertical = 10.dp), text = "Choose category")
+        Column {
+            Text(modifier = Modifier.padding(vertical = 10.dp), text = "Choose category")
 
-        LazyVerticalGrid(
-            modifier = Modifier.fillMaxWidth(),
-            columns = GridCells.Adaptive(128.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            items(items = contentList.toList()) { item ->
-                CategorySelection(item.first, item.second, text == item.first) {
-                    text = it
+            LazyVerticalGrid(
+                modifier = Modifier.fillMaxWidth(),
+                columns = GridCells.Adaptive(128.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                items(items = contentList.toList()) { item ->
+                    CategorySelection(item.first, item.second, quizCategorySelected == item.first) {
+                        quizCategorySelected = it
+                    }
                 }
             }
+
+            Text(
+                modifier = Modifier.padding(vertical = 10.dp),
+                text = "Select the number of questions in Quiz"
+            )
+
+            QuizNumberSelection(quizNumberSelected) { quizNumberSelected = it }
+
+            Text(
+                modifier = Modifier.padding(vertical = 10.dp),
+                text = "Set the amount of time for every question"
+            )
+
+            Text("${quizTimeSecondsIndicator.toInt()} seconds")
+
+            QuestionTimeSlider(quizTimeSecondsIndicator) { quizTimeSecondsIndicator = it }
         }
 
-        Text(
-            modifier = Modifier.padding(vertical = 10.dp),
-            text = "Select the number of questions in Quiz"
-        )
-
+        Button(modifier = Modifier.fillMaxWidth(), onClick = { }, enabled = quizCategorySelected.isNotEmpty()) {
+            Text(modifier = Modifier.align(Alignment.Bottom), text = "Continue")
+        }
     }
 }
 
@@ -128,6 +156,58 @@ fun CategorySelection(
             textAlign = TextAlign.Center
         )
     }
+}
+
+@Composable
+fun QuizNumberSelection(index: Int, onUpdateIndex: (index: Int) -> Unit) {
+    val quantityNumberList = listOf("5 questions", "10 questions", "15 questions")
+
+    SingleChoiceSegmentedButtonRow(
+        modifier = Modifier
+            .fillMaxWidth()
+            .border(width = 1.dp, shape = RoundedCornerShape(25.dp), color = Color.Black)
+            .padding(horizontal = 5.dp)
+    ) {
+        quantityNumberList.forEachIndexed { idx, string ->
+            SegmentedButton(colors = SegmentedButtonColors(
+                activeContainerColor = Color(0xFFA3FF0D),
+                activeContentColor = Color(0xFF74B583),
+                activeBorderColor = Color(0xFF003963),
+                inactiveContentColor = Color(0xFF58959A),
+                inactiveBorderColor = Color(0xFF003963),
+                inactiveContainerColor = Color.White,
+                disabledInactiveContainerColor = Color(0x00000000),
+                disabledActiveBorderColor = Color(0x00000000),
+                disabledActiveContentColor = Color(0x00000000),
+                disabledInactiveBorderColor = Color(0x00000000),
+                disabledActiveContainerColor = Color(0x00000000),
+                disabledInactiveContentColor = Color(0x00000000)
+            ),
+                border = SegmentedButtonDefaults.borderStroke(Color.White, 0.dp),
+                icon = { SegmentedButtonDefaults.Icon(false) },
+                shape = RoundedCornerShape(20.dp),
+                selected = idx == index,
+                onClick = {
+                    onUpdateIndex(idx)
+                }
+            ) {
+                Text(
+                    text = string,
+                    style = Typography.labelSmall,
+                    color = Color.Black,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun QuestionTimeSlider(number: Float, onValueChange: (indicator: Float) -> Unit) {
+    Slider(
+        value = number,
+        onValueChange = { onValueChange(it) },
+        valueRange = 15f..60f
+    )
 }
 
 @Preview

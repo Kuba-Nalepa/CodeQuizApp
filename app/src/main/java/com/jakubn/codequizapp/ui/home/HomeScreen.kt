@@ -1,6 +1,5 @@
 package com.jakubn.codequizapp.ui.home
 
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -45,6 +44,7 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.jakubn.codequizapp.R
 import com.jakubn.codequizapp.domain.model.CustomState
+import com.jakubn.codequizapp.navigation.Screen
 import com.jakubn.codequizapp.theme.CodeQuizAppTheme
 import com.jakubn.codequizapp.theme.Typography
 
@@ -56,13 +56,11 @@ fun HomeScreen(navController: NavController, homeViewModel: HomeViewModel = hilt
     LaunchedEffect(state, context) {
         when (val currentState = state) {
             is CustomState.Success -> {
-                Log.d("TAG", "Success screen")
 
 
             }
 
             is CustomState.Failure -> {
-                Log.d("TAG", "Failer screen")
                 val message = currentState.message
 
                 Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
@@ -239,7 +237,7 @@ fun HomeScreen(navController: NavController, homeViewModel: HomeViewModel = hilt
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0x52FFFFFF)),
                         shape = RoundedCornerShape(20.dp),
                         onClick = {
-
+                            navController.navigate(Screen.CreateGame.route)
                         },
                     ) {
                         Text(
