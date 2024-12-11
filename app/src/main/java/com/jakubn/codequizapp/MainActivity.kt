@@ -1,10 +1,9 @@
 package com.jakubn.codequizapp
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -52,7 +51,21 @@ class MainActivity : ComponentActivity() {
                     ) {
                         composable(route = Screen.Home.route) {
                             MainScreen(navHostController) {
-                                HomeScreen(navHostController)
+                                HomeScreen(createGame = {
+                                    startActivity(
+                                        Intent(
+                                            applicationContext,
+                                            GameActivity::class.java
+                                        ).putExtra("action", "createGame")
+                                    )
+                                }, playGame = {
+                                    startActivity(
+                                        Intent(
+                                            applicationContext,
+                                            GameActivity::class.java
+                                        ).putExtra("action", "playGame")
+                                    )
+                                })
                             }
                         }
                         composable(route = Screen.Leaderboard.route) {
@@ -69,14 +82,5 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-    }
-}
-
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    CodeQuizAppTheme {
-
     }
 }

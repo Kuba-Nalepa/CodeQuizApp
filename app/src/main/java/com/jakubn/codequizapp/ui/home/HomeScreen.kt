@@ -34,22 +34,17 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.jakubn.codequizapp.R
 import com.jakubn.codequizapp.domain.model.CustomState
-import com.jakubn.codequizapp.navigation.Screen
-import com.jakubn.codequizapp.theme.CodeQuizAppTheme
 import com.jakubn.codequizapp.theme.Typography
 
 @Composable
-fun HomeScreen(navController: NavController, homeViewModel: HomeViewModel = hiltViewModel()) {
+fun HomeScreen(homeViewModel: HomeViewModel = hiltViewModel(), createGame: () -> Unit, playGame: () -> Unit) {
     val context = LocalContext.current
     val state by homeViewModel.state.collectAsState()
 
@@ -236,9 +231,8 @@ fun HomeScreen(navController: NavController, homeViewModel: HomeViewModel = hilt
                         modifier = Modifier.weight(1f),
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0x52FFFFFF)),
                         shape = RoundedCornerShape(20.dp),
-                        onClick = {
-                            navController.navigate(Screen.CreateGame.route)
-                        },
+                        onClick = createGame
+
                     ) {
                         Text(
                             text = "Create Game".uppercase(),
@@ -251,9 +245,7 @@ fun HomeScreen(navController: NavController, homeViewModel: HomeViewModel = hilt
                     Button(
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(20.dp),
-                        onClick = {
-
-                        },
+                        onClick = playGame,
                     ) {
                         Text(
                             text = "Play Now".uppercase(),
@@ -293,14 +285,4 @@ fun HomeScreen(navController: NavController, homeViewModel: HomeViewModel = hilt
 
         else -> {}
     }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun CodeQuizAppPreview() {
-    CodeQuizAppTheme {
-        val navController = rememberNavController()
-        HomeScreen(navController)
-    }
-
 }
