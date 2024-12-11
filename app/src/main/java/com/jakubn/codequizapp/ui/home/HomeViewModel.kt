@@ -25,7 +25,7 @@ class HomeViewModel @Inject constructor(private val userDataUseCase: GetUserData
         getUserData()
     }
 
-    fun getUserData() {
+    private fun getUserData() {
         viewModelScope.launch {
             userDataUseCase.getUserData()
                 .onStart {

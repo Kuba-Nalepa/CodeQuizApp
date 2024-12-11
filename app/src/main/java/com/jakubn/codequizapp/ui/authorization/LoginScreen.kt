@@ -45,7 +45,7 @@ import com.jakubn.codequizapp.theme.Typography
 import com.jakubn.codequizapp.ui.uiComponents.CustomTextField
 
 @Composable
-fun LoginScreen(navController: NavController, viewModel: LoginViewModel = hiltViewModel()) {
+fun LoginScreen(viewModel: LoginViewModel = hiltViewModel(), logIn: () -> Unit) {
     val context = LocalContext.current
     val userState by viewModel.authState.collectAsState()
     var email by remember { mutableStateOf("") }
@@ -147,7 +147,8 @@ fun LoginScreen(navController: NavController, viewModel: LoginViewModel = hiltVi
 
                 Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
                 viewModel.resetState()
-                navController.navigate(route = Screen.Home.route)
+//                navController.navigate(route = Screen.Home.route)
+                logIn()
 
             }
             is CustomState.Failure -> {
@@ -158,14 +159,5 @@ fun LoginScreen(navController: NavController, viewModel: LoginViewModel = hiltVi
 
             else -> {}
         }
-    }
-}
-
-@Preview
-@Composable
-private fun PreviewLoginScreen() {
-    CodeQuizAppTheme {
-        val navController = rememberNavController()
-        LoginScreen(navController)
     }
 }

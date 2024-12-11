@@ -1,4 +1,4 @@
-package com.jakubn.codequizapp.ui.createGame
+package com.jakubn.codequizapp.ui.game.createGame
 
 import android.widget.Toast
 import androidx.compose.foundation.background
@@ -49,12 +49,13 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavHostController
 import com.jakubn.codequizapp.R
 import com.jakubn.codequizapp.domain.model.CustomState
 import com.jakubn.codequizapp.theme.Typography
 
 @Composable
-fun CreateGameScreen(viewModel: CreateGameViewModel = hiltViewModel(), onCLick: () -> Unit) {
+fun CreateGameScreen(navController: NavHostController,viewModel: CreateGameViewModel = hiltViewModel()) {
     val createGameState by viewModel.state.collectAsState()
     val context = LocalContext.current
     var quizCategorySelected by remember { mutableStateOf("") }
@@ -82,7 +83,7 @@ fun CreateGameScreen(viewModel: CreateGameViewModel = hiltViewModel(), onCLick: 
         when (val currentCreateGameState = createGameState) {
             is CustomState.Success -> {
                 viewModel.resetState()
-                onCLick()
+//                navController.navigate()
             }
 
             is CustomState.Failure -> {

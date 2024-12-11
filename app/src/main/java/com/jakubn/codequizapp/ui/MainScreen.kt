@@ -40,7 +40,7 @@ fun MainScreen(
             "Leaderboard"
         ),
         BottomNavItem(
-            Screen.MyProfile.route,
+            Screen.Settings.route,
             ImageVector.vectorResource(R.drawable.ic_nav_settings),
             "Settings"
         )

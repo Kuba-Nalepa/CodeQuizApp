@@ -5,8 +5,12 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import com.jakubn.codequizapp.navigation.Screen
 import com.jakubn.codequizapp.theme.CodeQuizAppTheme
-import com.jakubn.codequizapp.ui.createGame.CreateGameScreen
+import com.jakubn.codequizapp.ui.game.createGame.CreateGameScreen
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -15,26 +19,33 @@ class GameActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val action = intent.getStringExtra("type") ?: ""
+        val action = intent.getStringExtra("action") ?: ""
 
         setContent {
             CodeQuizAppTheme {
-                GameScreen(action = action)
+                val navController = rememberNavController()
+
+                NavHost(navController = navController, startDestination = getStartDestination(action)) {
+                    composable(Screen.CreateGame.route) {
+                        CreateGameScreen(navController)
+                    }
+                    composable(Screen.AvailableGameList.route) {
+                        GamesListScreen()
+                    }
+                    composable("huh") {
+//                        Huuh
+                    }
+                }
             }
         }
     }
 }
 
-@Composable
-fun GameScreen(action: String) {
-    when (action) {
-        "createGame" -> CreateGameScreen {  }
-        "playGame" -> ActiveGamesListScreen()
-        else -> {}
-    }
+fun getStartDestination(action: String): String {
+    return if(action == "createGame") Screen.CreateGame.route else Screen.AvailableGameList.route
 }
 
 @Composable
-fun ActiveGamesListScreen() {
-    Text(text = "Here are the active games.")
+fun GamesListScreen() {
+    Text(text = "Here are the available games.")
 }

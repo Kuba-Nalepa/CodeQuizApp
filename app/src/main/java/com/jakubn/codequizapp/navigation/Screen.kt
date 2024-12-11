@@ -26,11 +26,13 @@ sealed class Screen(
     @Serializable
     object CreateGame : Screen("create_game_screen")
     @Serializable
+    object AvailableGameList : Screen("available_game_list_screen")
+    @Serializable
     object Game : Screen("navigate_screen")
     @Serializable
     object GameOver : Screen("game_over_screen")
     @Serializable
-    object MyProfile : Screen("my_profile_screen")
+    object Settings : Screen("settings_screen")
     @Serializable
     object UserProfile : Screen("user_profile_screen")
     @Serializable

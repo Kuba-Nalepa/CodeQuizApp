@@ -1,6 +1,7 @@
 package com.jakubn.codequizapp.domain.repositoryImpl
 
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.UserProfileChangeRequest
 import com.google.firebase.firestore.FirebaseFirestore
 import com.jakubn.codequizapp.domain.model.User
@@ -62,9 +63,11 @@ class AuthRepositoryImpl @Inject constructor(
         }.flowOn(Dispatchers.IO)
     }
 
-    override fun signOutUser(): Boolean {
-        firebaseAuth.signOut()
-        return true
+    override fun getCurrentUser(): FirebaseUser? {
+        return firebaseAuth.currentUser
+    }
 
+    override fun signOutUser() {
+        firebaseAuth.signOut()
     }
 }

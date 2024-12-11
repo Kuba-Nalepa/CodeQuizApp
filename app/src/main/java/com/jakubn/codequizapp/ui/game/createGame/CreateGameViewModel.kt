@@ -1,4 +1,4 @@
-package com.jakubn.codequizapp.ui.createGame
+package com.jakubn.codequizapp.ui.game.createGame
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

@@ -1,5 +1,6 @@
 package com.jakubn.codequizapp.domain.repository
 
+import com.google.firebase.auth.FirebaseUser
 import com.jakubn.codequizapp.domain.model.User
 import kotlinx.coroutines.flow.Flow
 
@@ -9,6 +10,8 @@ interface AuthRepository {
 
     suspend fun signInUser(email:String, password: String): Flow<User>
 
-    fun signOutUser(): Boolean
+    fun getCurrentUser(): FirebaseUser?
+
+    fun signOutUser()
 
 }

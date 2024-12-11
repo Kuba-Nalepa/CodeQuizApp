@@ -20,78 +20,89 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
 import com.jakubn.codequizapp.R
 import com.jakubn.codequizapp.navigation.Screen
-import com.jakubn.codequizapp.theme.CodeQuizAppTheme
 import com.jakubn.codequizapp.theme.Typography
 import com.jakubn.codequizapp.ui.uiComponents.CustomButton
 
 @Composable
-fun WelcomeScreen(navController: NavController) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .paint(
-                painterResource(R.drawable.background_auth),
-                contentScale = ContentScale.FillBounds
-            )
+fun WelcomeScreen(
+    navController: NavController,
+    viewModel: WelcomeScreenViewModel = hiltViewModel(),
+    logIn: () -> Unit
+) {
+    if(viewModel.getCurrentUser() != null) logIn() else {
 
-    ) {
-        Column(
+        Box(
             modifier = Modifier
-                .align(Alignment.TopCenter)
-                .fillMaxWidth(0.8f)
-                .fillMaxHeight(0.75f),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
+                .fillMaxSize()
+                .paint(
+                    painterResource(R.drawable.background_auth),
+                    contentScale = ContentScale.FillBounds
+                )
+
         ) {
+            Column(
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .fillMaxWidth(0.8f)
+                    .fillMaxHeight(0.75f),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
 
-            WelcomeText("Code Quiz".uppercase())
+                WelcomeText("Code Quiz".uppercase())
 
-            Text(
-                textAlign = TextAlign.Center,
-                style = Typography.bodyMedium,
-                text = "Dive into code, break barriers, and rack up those points!",
-                color = Color.White
-            )
-        }
+                Text(
+                    textAlign = TextAlign.Center,
+                    style = Typography.bodyMedium,
+                    text = "Dive into code, break barriers, and rack up those points!",
+                    color = Color.White
+                )
+            }
 
-        Column(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .fillMaxWidth()
-                .clip(shape = RoundedCornerShape(25.dp, 25.dp, 0.dp, 0.dp))
-                .background(Color(0xE6648097))
-                .fillMaxHeight(0.25f),
-            verticalArrangement = Arrangement.spacedBy(15.dp, Alignment.CenterVertically),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            CustomButton(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
-                backgroundColor = Color(0xFF7F9FB8),
-                text = "Sign Up",
-                textColor = Color(0xFFA3FF0D),
-                onClick = {
-                    navController.navigate(Screen.Registration.route)
-                }
-            )
+            Column(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .clip(shape = RoundedCornerShape(25.dp, 25.dp, 0.dp, 0.dp))
+                    .background(Color(0xE6648097))
+                    .fillMaxHeight(0.25f),
+                verticalArrangement = Arrangement.spacedBy(15.dp, Alignment.CenterVertically),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                CustomButton(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp),
+                    backgroundColor = Color(0xFF7F9FB8),
+                    text = "Sign Up",
+                    textColor = Color(0xFFA3FF0D),
+                    onClick = {
+                        navController.navigate(Screen.Registration.route)
+                    }
+                )
 
-            CustomButton(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
-                backgroundColor = Color(0xFF7F9FB8),
-                text = "Log In",
-                textColor = Color(0xFFFFFFFF),
-                onClick = {
-                    navController.navigate(Screen.Login.route)
-                }
-            )
+                CustomButton(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp),
+                    backgroundColor = Color(0xFF7F9FB8),
+                    text = "Log In",
+                    textColor = Color(0xFFFFFFFF),
+                    onClick = {
+                        navController.navigate(Screen.Login.route)
+                    }
+                )
+            }
+
         }
 
     }
+
 }
 
 @Composable
@@ -102,14 +113,4 @@ fun WelcomeText(text: String) {
         text = text,
         style = Typography.titleLarge
     )
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun WelcomeScreenPreview() {
-    val navController = rememberNavController()
-    CodeQuizAppTheme {
-        WelcomeScreen(navController)
-
-    }
 }
