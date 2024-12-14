@@ -28,6 +28,8 @@ sealed class Screen(
     @Serializable
     object AvailableGameList : Screen("available_game_list_screen")
     @Serializable
+    object Lobby : Screen("lobby_screen")
+    @Serializable
     object Game : Screen("navigate_screen")
     @Serializable
     object GameOver : Screen("game_over_screen")

@@ -52,6 +52,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.jakubn.codequizapp.R
 import com.jakubn.codequizapp.domain.model.CustomState
+import com.jakubn.codequizapp.navigation.Screen
 import com.jakubn.codequizapp.theme.Typography
 
 @Composable
@@ -83,7 +84,7 @@ fun CreateGameScreen(navController: NavHostController,viewModel: CreateGameViewM
         when (val currentCreateGameState = createGameState) {
             is CustomState.Success -> {
                 viewModel.resetState()
-//                navController.navigate()
+                navController.navigate(Screen.Lobby.route)
             }
 
             is CustomState.Failure -> {

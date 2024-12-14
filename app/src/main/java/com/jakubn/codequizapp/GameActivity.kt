@@ -3,14 +3,14 @@ package com.jakubn.codequizapp
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.jakubn.codequizapp.navigation.Screen
 import com.jakubn.codequizapp.theme.CodeQuizAppTheme
+import com.jakubn.codequizapp.ui.game.availableGames.AvailableGameListScreen
 import com.jakubn.codequizapp.ui.game.createGame.CreateGameScreen
+import com.jakubn.codequizapp.ui.game.lobby.LobbyScreen
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -30,22 +30,16 @@ class GameActivity : ComponentActivity() {
                         CreateGameScreen(navController)
                     }
                     composable(Screen.AvailableGameList.route) {
-                        GamesListScreen()
+                        AvailableGameListScreen()
                     }
-                    composable("huh") {
-//                        Huuh
+                    composable(Screen.Lobby.route) {
+                        LobbyScreen()
                     }
                 }
             }
         }
     }
-}
-
-fun getStartDestination(action: String): String {
-    return if(action == "createGame") Screen.CreateGame.route else Screen.AvailableGameList.route
-}
-
-@Composable
-fun GamesListScreen() {
-    Text(text = "Here are the available games.")
+    private fun getStartDestination(action: String): String {
+        return if(action == "createGame") Screen.CreateGame.route else Screen.AvailableGameList.route
+    }
 }

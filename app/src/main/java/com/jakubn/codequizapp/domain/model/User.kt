@@ -8,5 +8,6 @@ data class User(
     val imageUrl: String? = null,
     val gamesPlayed: Int = 0,
     val wins: Int = 0,
-    val score: Int = 0
+    val score: Int = 0,
+    val winRatio: Int? = null
 )
