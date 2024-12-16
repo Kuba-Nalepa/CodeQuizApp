@@ -186,7 +186,7 @@ fun PlayerContainer(
                     verticalArrangement = Arrangement.Center,
                 ) {
                     CircularProgressIndicator()
-                    Text(modifier = Modifier.padding(top = 20.dp), text = "Waiting for the other player", style = Typography.labelLarge)
+                    Text(modifier = Modifier.padding(top = 20.dp), text = "Waiting for the other player", style = Typography.labelLarge, textAlign = TextAlign.Center)
                 }
 
             } else if (user != null) {

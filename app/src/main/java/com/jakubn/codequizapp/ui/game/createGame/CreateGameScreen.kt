@@ -57,7 +57,10 @@ import com.jakubn.codequizapp.navigation.Screen
 import com.jakubn.codequizapp.theme.Typography
 
 @Composable
-fun CreateGameScreen(navController: NavHostController,viewModel: CreateGameViewModel = hiltViewModel()) {
+fun CreateGameScreen(
+    navController: NavHostController,
+    viewModel: CreateGameViewModel = hiltViewModel()
+) {
     val createGameState by viewModel.state.collectAsState()
     val context = LocalContext.current
     var quizCategorySelected by remember { mutableStateOf("") }
@@ -147,7 +150,7 @@ fun CreateGameScreen(navController: NavHostController,viewModel: CreateGameViewM
 
         when (createGameState) {
             CustomState.Loading -> {
-                Row (
+                Row(
                     modifier = Modifier.align(Alignment.CenterHorizontally)
                 ) {
                     CircularProgressIndicator(modifier = Modifier.align(Alignment.Bottom))
@@ -174,7 +177,12 @@ fun CreateGameScreen(navController: NavHostController,viewModel: CreateGameViewM
 }
 
 @Composable
-fun CategorySelection(text: String, drawable: Int, isActive: Boolean = false, onCLick: (id: String) -> Unit) {
+fun CategorySelection(
+    text: String,
+    drawable: Int,
+    isActive: Boolean = false,
+    onCLick: (id: String) -> Unit
+) {
 
     Box(
         modifier = Modifier
@@ -254,6 +262,7 @@ fun QuizNumberSelection(index: Int, onUpdateIndex: (index: Int) -> Unit) {
                     text = string,
                     style = Typography.labelSmall,
                     color = Color.Black,
+                    textAlign = TextAlign.Center
                 )
             }
         }
