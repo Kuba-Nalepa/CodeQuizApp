@@ -16,9 +16,11 @@ import javax.inject.Inject
 @HiltViewModel
 class CreateGameViewModel @Inject constructor(
     private val createGameUseCase: CreateGameUseCase
-): ViewModel() {
-    private val _state = MutableStateFlow<CustomState<Boolean>>(CustomState.Idle)
-    val state: StateFlow<CustomState<Boolean>> = _state
+) : ViewModel() {
+    private val _state = MutableStateFlow<CustomState<String>>(CustomState.Idle)
+    val state: StateFlow<CustomState<String>> = _state
+
+
 
     fun createGame(
         questionCategory: String,
@@ -34,8 +36,8 @@ class CreateGameViewModel @Inject constructor(
                 .catch { throwable ->
                     _state.value = CustomState.Failure(throwable.message)
                 }
-                .collect { boolean ->
-                    _state.value = CustomState.Success(boolean)
+                .collect { gameId ->
+                    _state.value = CustomState.Success(gameId)
                 }
         }
     }

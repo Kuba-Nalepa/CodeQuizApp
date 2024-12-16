@@ -1,5 +1,6 @@
 package com.jakubn.codequizapp.ui.game.createGame
 
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -84,11 +85,13 @@ fun CreateGameScreen(navController: NavHostController,viewModel: CreateGameViewM
         when (val currentCreateGameState = createGameState) {
             is CustomState.Success -> {
                 viewModel.resetState()
-                navController.navigate(Screen.Lobby.route)
+
+                navController.navigate(route = Screen.Lobby.route + "/${currentCreateGameState.result}")
             }
 
             is CustomState.Failure -> {
                 val message = currentCreateGameState.message
+                Log.d("ugh", message.toString())
                 Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
 
             }

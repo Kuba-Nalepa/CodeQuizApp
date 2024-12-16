@@ -5,9 +5,9 @@ data class User(
     val name: String? = null,
     val email: String? = null,
     var friends: List<Friend>? = null,
-    val imageUrl: String? = null,
+    val imageUri: String? = null,
     val gamesPlayed: Int = 0,
     val wins: Int = 0,
     val score: Int = 0,
-    val winRatio: Int? = null
+    val winRatio: Int = 0
 )

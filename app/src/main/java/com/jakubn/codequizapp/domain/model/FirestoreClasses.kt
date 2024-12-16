@@ -87,12 +87,13 @@ data class Tag(
 )
 
 data class Game(
+    var gameId: String,
     var questions: List<Question>? = null,
     var lobby: Lobby? = null,
     var questionDuration: Int? = null
 )
 
 data class Lobby(
-    var founder: String? = null,
-    var member: String? = null
+    var founder: User? = null,
+    var member: User? = null
 )

@@ -32,8 +32,9 @@ class GameActivity : ComponentActivity() {
                     composable(Screen.AvailableGameList.route) {
                         AvailableGameListScreen()
                     }
-                    composable(Screen.Lobby.route) {
-                        LobbyScreen()
+                    composable(Screen.Lobby.route + "/{gameId}") { backStackEntry ->
+
+                        LobbyScreen(navController, gameId = backStackEntry.arguments?.getString("gameId"))
                     }
                 }
             }

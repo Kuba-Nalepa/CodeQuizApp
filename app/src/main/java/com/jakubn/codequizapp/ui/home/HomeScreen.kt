@@ -104,7 +104,7 @@ fun HomeScreen(homeViewModel: HomeViewModel = hiltViewModel(), createGame: () ->
                             .shadow(5.dp, shape = CircleShape)
                             .border(1.dp, Color.Black, CircleShape),
                         model = ImageRequest.Builder(LocalContext.current)
-                            .data(user.imageUrl ?: R.drawable.sample_avatar)
+                            .data(user.imageUri ?: R.drawable.sample_avatar)
                             .crossfade(true)
                             .build(),
                         placeholder = painterResource(R.drawable.sample_avatar),

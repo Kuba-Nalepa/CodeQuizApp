@@ -1,5 +1,6 @@
 package com.jakubn.codequizapp.ui.game.lobby
 
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -17,9 +18,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -34,14 +39,47 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
+import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.jakubn.codequizapp.R
+import com.jakubn.codequizapp.domain.model.CustomState
+import com.jakubn.codequizapp.domain.model.User
 import com.jakubn.codequizapp.theme.CodeQuizAppTheme
 import com.jakubn.codequizapp.theme.Typography
 
 @Composable
-fun LobbyScreen() {
+fun LobbyScreen(
+    navController: NavController,
+    gameId: String?,
+    viewModel: LobbyViewModel = hiltViewModel()
+) {
+    val lobbyState by viewModel.state.collectAsState()
+    val context = LocalContext.current
+    val lobbyData by viewModel.lobby.collectAsState()
+
+    if (gameId != null) viewModel.getLobbyData(gameId)
+
+    LaunchedEffect(lobbyState, context, lobbyData) {
+        when (val currentState = lobbyState) {
+            is CustomState.Success -> {
+                viewModel.resetState()
+
+            }
+
+            is CustomState.Failure -> {
+                val message = currentState.message
+                Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+
+            }
+
+            CustomState.Idle -> {}
+            CustomState.Loading -> {}
+
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -68,30 +106,58 @@ fun LobbyScreen() {
                 .weight(2f),
             verticalArrangement = Arrangement.SpaceEvenly
         ) {
+            when (val currentLobbyState = lobbyState) {
+                is CustomState.Success -> {
+                    PlayerContainer(currentLobbyState.result.founder, false, null)
 
-            // TODO: fetching valid data
-            PlayerContainer("Booba", 2, 100, null)
+                    VersusText("VS")
 
-            Text(
-                modifier = Modifier.fillMaxWidth(),
-                text = "VS",
-                style = Typography.titleLarge,
-                textAlign = TextAlign.Center
-            )
+                    if (currentLobbyState.result.member == null) {
+                        PlayerContainer(null, true, null)
+                    } else {
+                        PlayerContainer(currentLobbyState.result.member, false, null)
+                    }
+                }
 
-            // TODO: fetching valid data
-            PlayerContainer("Marczan", 1, 50, null)
+                is CustomState.Failure -> {
+                    PlayerContainer(null, false, currentLobbyState.message)
 
+                    VersusText("VS")
+
+                    PlayerContainer(null, false, currentLobbyState.message)
+
+                }
+
+                CustomState.Loading -> {
+                    PlayerContainer(null, true)
+
+                    VersusText("VS")
+
+                    PlayerContainer(null, true)
+
+                }
+
+                CustomState.Idle -> {
+                    PlayerContainer(null)
+                    Text(
+                        modifier = Modifier.fillMaxWidth(),
+                        text = "VS",
+                        style = Typography.titleLarge,
+                        textAlign = TextAlign.Center
+                    )
+                    PlayerContainer(null)
+
+                }
+            }
         }
     }
 }
 
 @Composable
 fun PlayerContainer(
-    userName: String,
-    userRanking: Int,
-    userWinRatio: Int,
-    userImgUri: String?
+    user: User? = null,
+    isLoading: Boolean = false,
+    errorMessage: String? = null
 ) {
     Box(
         modifier = Modifier
@@ -111,68 +177,99 @@ fun PlayerContainer(
                 .zIndex(1f),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-
-            AsyncImage(
-                modifier = Modifier
-                    .size(125.dp)
-                    .shadow(5.dp, shape = CircleShape)
-                    .border(1.dp, Color.Black, CircleShape),
-                model = ImageRequest.Builder(LocalContext.current)
-                    .data(userImgUri)
-                    .crossfade(true)
-                    .build(),
-                placeholder = painterResource(R.drawable.sample_avatar),
-                contentDescription = stringResource(R.string.app_name),
-                contentScale = ContentScale.Crop
-            )
-
-            Column(
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .padding(horizontal = 20.dp),
-                verticalArrangement = Arrangement.SpaceEvenly
-            ) {
-                Text(text = userName, style = Typography.labelMedium, softWrap = true)
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
+            if (isLoading) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(125.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
                 ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_rank),
-                        contentDescription = "Rank",
-                        tint = Color(0xFFA3FF0D)
-                    )
+                    CircularProgressIndicator()
+                    Text(modifier = Modifier.padding(top = 20.dp), text = "Waiting for the other player", style = Typography.labelLarge)
+                }
+
+            } else if (user != null) {
+                AsyncImage(
+                    modifier = Modifier
+                        .size(125.dp)
+                        .shadow(5.dp, shape = CircleShape)
+                        .border(1.dp, Color.Black, CircleShape),
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data(user.imageUri ?: R.drawable.sample_avatar)
+                        .crossfade(true)
+                        .build(),
+                    placeholder = painterResource(R.drawable.sample_avatar),
+                    contentDescription = stringResource(R.string.app_name),
+                    contentScale = ContentScale.Crop
+                )
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .padding(horizontal = 20.dp),
+                    verticalArrangement = Arrangement.SpaceEvenly
+                ) {
                     Text(
-                        text = " $userRanking",
-                        color = Color(0xFFA3FF0D),
-                        style = Typography.labelLarge,
+                        text = user.name ?: "",
+                        style = Typography.labelMedium,
                         softWrap = true
                     )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_rank),
+                            contentDescription = "Rank",
+                            tint = Color(0xFFA3FF0D)
+                        )
+                        Text(
+                            text = " ${user.wins}", //TODO user's rank
+                            color = Color(0xFFA3FF0D),
+                            style = Typography.labelLarge,
+                            softWrap = true
+                        )
+                    }
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_ranking_up),
+                            contentDescription = "Win ratio"
+                        )
+                        Text(
+                            text = " ${user.winRatio}",
+                            style = Typography.labelLarge,
+                            softWrap = true
+                        )
+                    }
                 }
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_ranking_up),
-                        contentDescription = "Rank"
-                    )
-                    Text(text = " $userWinRatio %", style = Typography.labelLarge, softWrap = true)
-
-                }
-
+            } else if (errorMessage != null) {
+                Text(errorMessage)
             }
         }
-
     }
+}
+
+@Composable
+fun VersusText(text: String) {
+    Text(
+        modifier = Modifier.fillMaxWidth(),
+        text = text,
+        style = Typography.titleLarge,
+        textAlign = TextAlign.Center
+    )
 }
 
 @Preview
 @Composable
 fun LobbyScreenPreview() {
     CodeQuizAppTheme {
-        LobbyScreen()
+        val navController = NavHostController(LocalContext.current)
+        LobbyScreen(navController, "preview_enabled")
     }
 }
