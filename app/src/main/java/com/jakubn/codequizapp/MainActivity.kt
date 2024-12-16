@@ -11,9 +11,6 @@ import androidx.navigation.navigation
 import com.jakubn.codequizapp.navigation.Screen
 import com.jakubn.codequizapp.theme.CodeQuizAppTheme
 import com.jakubn.codequizapp.ui.MainScreen
-import com.jakubn.codequizapp.ui.authorization.LoginScreen
-import com.jakubn.codequizapp.ui.authorization.RegistrationScreen
-import com.jakubn.codequizapp.ui.authorization.WelcomeScreen
 import com.jakubn.codequizapp.ui.home.HomeScreen
 import com.jakubn.codequizapp.ui.settings.SettingsScreen
 import dagger.hilt.android.AndroidEntryPoint
@@ -31,21 +28,6 @@ class MainActivity : ComponentActivity() {
                     navController = navHostController,
                     startDestination = Screen.Main.route
                 ) {
-//                    navigation(
-//                        route = Screen.Auth.route,
-//                        startDestination = Screen.Welcome.route
-//                    ) {
-//                        composable(route = Screen.Welcome.route) {
-//                            WelcomeScreen(navHostController)
-//                        }
-//                        composable(route = Screen.Registration.route) {
-//                            RegistrationScreen(navHostController)
-//                        }
-//                        composable(route = Screen.Login.route) {
-//                            LoginScreen(navHostController)
-//                        }
-//                    }
-
                     navigation(
                         route = Screen.Main.route,
                         startDestination = Screen.Home.route

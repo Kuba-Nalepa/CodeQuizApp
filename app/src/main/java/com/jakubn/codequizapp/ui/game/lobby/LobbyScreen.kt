@@ -36,18 +36,15 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.jakubn.codequizapp.R
 import com.jakubn.codequizapp.domain.model.CustomState
 import com.jakubn.codequizapp.domain.model.User
-import com.jakubn.codequizapp.theme.CodeQuizAppTheme
 import com.jakubn.codequizapp.theme.Typography
 
 @Composable
@@ -58,14 +55,10 @@ fun LobbyScreen(
 ) {
     val lobbyState by viewModel.state.collectAsState()
     val context = LocalContext.current
-    val lobbyData by viewModel.lobby.collectAsState()
 
-    if (gameId != null) viewModel.getLobbyData(gameId)
-
-    LaunchedEffect(lobbyState, context, lobbyData) {
+    LaunchedEffect(lobbyState, context) {
         when (val currentState = lobbyState) {
             is CustomState.Success -> {
-                viewModel.resetState()
 
             }
 
@@ -75,7 +68,10 @@ fun LobbyScreen(
 
             }
 
-            CustomState.Idle -> {}
+            CustomState.Idle -> {
+                if (gameId != null) viewModel.getLobbyData(gameId)
+            }
+
             CustomState.Loading -> {}
 
         }
@@ -263,13 +259,4 @@ fun VersusText(text: String) {
         style = Typography.titleLarge,
         textAlign = TextAlign.Center
     )
-}
-
-@Preview
-@Composable
-fun LobbyScreenPreview() {
-    CodeQuizAppTheme {
-        val navController = NavHostController(LocalContext.current)
-        LobbyScreen(navController, "preview_enabled")
-    }
 }

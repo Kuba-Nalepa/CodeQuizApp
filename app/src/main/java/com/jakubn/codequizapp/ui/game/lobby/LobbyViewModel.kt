@@ -20,9 +20,6 @@ class LobbyViewModel @Inject constructor(
     private val _state = MutableStateFlow<CustomState<Lobby>>(CustomState.Idle)
     val state: StateFlow<CustomState<Lobby>> = _state
 
-    private val _lobby = MutableStateFlow(Lobby(null, null))
-    val lobby = _lobby
-
     fun getLobbyData(gameId: String) {
         viewModelScope.launch {
             getLobbyDataUseCase.getLobbyData(gameId)
@@ -33,14 +30,8 @@ class LobbyViewModel @Inject constructor(
                     _state.value = CustomState.Failure(throwable.message)
                 }
                 .collect { lobby ->
-                    _lobby.value.founder = lobby.founder
-                    _lobby.value.member = lobby.member
                     _state.value = CustomState.Success(lobby)
                 }
         }
-    }
-
-    fun resetState() {
-        _state.value = CustomState.Idle
     }
 }
