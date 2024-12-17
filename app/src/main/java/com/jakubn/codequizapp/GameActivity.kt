@@ -30,7 +30,7 @@ class GameActivity : ComponentActivity() {
                         CreateGameScreen(navController)
                     }
                     composable(Screen.AvailableGameList.route) {
-                        AvailableGameListScreen()
+                        AvailableGameListScreen(navController)
                     }
                     composable(Screen.Lobby.route + "/{gameId}") { backStackEntry ->
 

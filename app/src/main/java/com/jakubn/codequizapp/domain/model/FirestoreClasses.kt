@@ -87,7 +87,8 @@ data class Tag(
 )
 
 data class Game(
-    var gameId: String,
+    var gameId: String? = null,
+    var category: String? = null,
     var questions: List<Question>? = null,
     var lobby: Lobby? = null,
     var questionDuration: Int? = null
