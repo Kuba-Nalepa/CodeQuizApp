@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.jakubn.codequizapp.domain.model.CustomState
 import com.jakubn.codequizapp.domain.model.Game
+import com.jakubn.codequizapp.domain.model.User
+import com.jakubn.codequizapp.domain.usecases.AddUserToLobbyUseCase
 import com.jakubn.codequizapp.domain.usecases.GetGamesListUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,7 +17,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class AvailableGamesViewModel @Inject constructor(
-    private val getGamesListUseCase: GetGamesListUseCase
+    private val getGamesListUseCase: GetGamesListUseCase,
+    private val addUserToLobbyUseCase: AddUserToLobbyUseCase
 ) : ViewModel() {
     private val _state = MutableStateFlow<CustomState<List<Game>>>(CustomState.Idle)
     val state: StateFlow<CustomState<List<Game>>> = _state
@@ -32,6 +35,13 @@ class AvailableGamesViewModel @Inject constructor(
                 .collect { games ->
                     _state.value = CustomState.Success(games)
                 }
+        }
+    }
+
+    fun addUserToLobby(gameId: String, user: User) {
+        viewModelScope.launch {
+            addUserToLobbyUseCase.addUserToLobby.invoke(gameId, user)
+
         }
     }
 }

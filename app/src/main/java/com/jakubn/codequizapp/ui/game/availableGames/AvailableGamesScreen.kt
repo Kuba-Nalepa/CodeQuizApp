@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
@@ -30,17 +31,16 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.jakubn.codequizapp.R
 import com.jakubn.codequizapp.domain.model.CustomState
 import com.jakubn.codequizapp.domain.model.Game
-import com.jakubn.codequizapp.theme.CodeQuizAppTheme
+import com.jakubn.codequizapp.domain.model.User
+import com.jakubn.codequizapp.navigation.Screen
 import com.jakubn.codequizapp.theme.Typography
 
 @Composable
@@ -78,21 +78,33 @@ fun AvailableGameListScreen(
                 contentScale = ContentScale.FillBounds
             )
     ) {
-        when (val currentGameState = gamesState) {
+        when (val currentGamesState = gamesState) {
             is CustomState.Success -> {
-                SetGamesList(currentGameState.result, errorMessage = null)
+
+                SetGamesList(
+                    currentGamesState.result,
+                    errorMessage = null,
+                    onClick = { gameId, user ->
+
+                        viewModel.addUserToLobby(gameId, user)
+                        navController.navigate(route = Screen.Lobby.route + "/$gameId")
+
+                    })
+
             }
 
             is CustomState.Failure -> {
-                SetGamesList(null, errorMessage = currentGameState.message)
+                SetGamesList(null, errorMessage = currentGamesState.message, onClick = null)
+
             }
 
             CustomState.Loading -> {
-                SetGamesList(null, isLoading = true, errorMessage = null)
+                SetGamesList(null, isLoading = true, errorMessage = null, onClick = null)
+
             }
 
             CustomState.Idle -> {
-                SetGamesList(null, errorMessage = null)
+                SetGamesList(null, errorMessage = null, onClick = null)
 
             }
         }
@@ -100,34 +112,54 @@ fun AvailableGameListScreen(
 }
 
 @Composable
-fun SetGamesList(games: List<Game>?, isLoading: Boolean = false, errorMessage: String?) {
-    if (isLoading) Column(
-        modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        CircularProgressIndicator()
-    }
-    LazyColumn(
-        modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        if (games != null) {
-            items(games.size) { index ->
-                ListItem(games[index])
+fun SetGamesList(
+    games: List<Game>?,
+    isLoading: Boolean = false,
+    errorMessage: String?,
+    onClick: ((gameId: String, user: User) -> Unit)?
+) {
+    when {
+        isLoading -> {
+            // Show a loading indicator when loading
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                CircularProgressIndicator()
             }
-        } else {
-            item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    if (errorMessage != null) {
-                        Text(errorMessage, color = Color.White)
-                    }
-
+        }
+        !games.isNullOrEmpty() -> {
+            // Display the list of games
+            LazyColumn(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(8.dp), // Add spacing between items
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                items(games) { game ->
+                    ListItem(
+                        data = game,
+                        onClick = {
+                            game.gameId?.let { gameId ->
+                                game.lobby?.founder?.let { founder ->
+                                    onClick?.invoke(gameId, founder)
+                                }
+                            }
+                        }
+                    )
+                }
+            }
+        }
+        else -> {
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                errorMessage?.let {
+                    Text(text = it, color = Color.White)
                 }
             }
         }
@@ -135,14 +167,14 @@ fun SetGamesList(games: List<Game>?, isLoading: Boolean = false, errorMessage: S
 }
 
 @Composable
-fun ListItem(data: Game) {
+fun ListItem(data: Game, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 10.dp, horizontal = 20.dp)
             .border(1.dp, Color.Cyan, RoundedCornerShape(20.dp))
             .clip(RoundedCornerShape(20.dp))
-            .clickable(true, onClick = { })
+            .clickable(true, onClick = onClick)
             .background(Color(0x80FFFFFF))
             .padding(horizontal = 20.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -187,7 +219,7 @@ fun ListItem(data: Game) {
             verticalArrangement = Arrangement.SpaceBetween,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            if(data.lobby?.member == null) {
+            if (data.lobby?.member == null) {
                 Text(color = MaterialTheme.colorScheme.primary, text = "1/2")
             } else Text(color = MaterialTheme.colorScheme.error, text = "2/2")
         }
@@ -195,12 +227,12 @@ fun ListItem(data: Game) {
 
     }
 }
-
-@Preview
-@Composable
-fun AvailableGameListScreenPreview() {
-    CodeQuizAppTheme {
-        val navController = NavHostController(LocalContext.current)
-        AvailableGameListScreen(navController = navController)
-    }
-}
+//
+//@Preview
+//@Composable
+//fun AvailableGameListScreenPreview() {
+//    CodeQuizAppTheme {
+//        val navController = NavHostController(LocalContext.current)
+//        AvailableGameListScreen(navController = navController)
+//    }
+//}

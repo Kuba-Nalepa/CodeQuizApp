@@ -63,14 +63,42 @@ class GameRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getLobbyData(gameId: String): Flow<Lobby> {
-        return flow {
-            val gameReference = firebaseDatabase.getReference("games").child(gameId)
-            val lobby = gameReference.child("lobby").get().await().getValue(Lobby::class.java)
-                ?: throw Exception("Failed fetching lobby data")
+        return callbackFlow {
 
-            emit(lobby)
+            val listener = object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    val lobby = snapshot.getValue(Lobby::class.java) ?: throw Exception("Failed fetching games")
+
+                    trySend(lobby)
+                }
+
+                override fun onCancelled(error: DatabaseError) {
+                    throw Exception(error.message)                }
+            }
+
+            val lobbyRef = firebaseDatabase.getReference("games").child(gameId).child("lobby")
+
+            val lobbyDataFirst = lobbyRef.get().await().getValue(Lobby::class.java)
+                ?: throw Exception("Failed fetching lobby data")
+            trySend(lobbyDataFirst)
+
+            lobbyRef.addValueEventListener(listener)
+            awaitClose {
+                lobbyRef.removeEventListener(listener)
+            }
         }
     }
+
+    override suspend fun addUserToLobby(gameId: String ,user: User) {
+            val userList = firebaseFirestore.collection("users").get().await()
+            val currentUser = userList.toObjects(User::class.java).find {
+                it.uid == firebaseAuth.currentUser?.uid
+            } ?: throw Exception("Failed fetching current user")
+
+//            firebaseDatabase.reference.child(gameId).child("lobby").child("member").setValue(currentUser)
+            firebaseDatabase.reference.child("games").child(gameId).child("lobby").child("member").setValue(currentUser).await()
+
+        }
 
     override suspend fun getGamesList(): Flow<List<Game>> {
         return callbackFlow {
