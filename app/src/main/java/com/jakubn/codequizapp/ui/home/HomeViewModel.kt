@@ -1,6 +1,5 @@
 package com.jakubn.codequizapp.ui.home
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.jakubn.codequizapp.domain.model.CustomState
@@ -29,8 +28,6 @@ class HomeViewModel @Inject constructor(private val userDataUseCase: GetUserData
         viewModelScope.launch {
             userDataUseCase.getUserData()
                 .onStart {
-                    Log.d("ugh", "onStart ")
-
                     _state.value = CustomState.Loading
                 }
                 .catch { throwable ->

@@ -195,7 +195,7 @@ fun HomeScreen(homeViewModel: HomeViewModel = hiltViewModel(), createGame: () ->
                 ) {
                     Image(
                         modifier = Modifier,
-                        painter = painterResource(R.drawable.ic_people),
+                        painter = painterResource(R.drawable.ic_players),
                         contentDescription = "Friends icon"
                     )
                     Text(

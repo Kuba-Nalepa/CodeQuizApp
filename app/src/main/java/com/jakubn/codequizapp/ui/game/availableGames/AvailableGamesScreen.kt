@@ -15,6 +15,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -31,6 +32,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
@@ -41,6 +43,7 @@ import com.jakubn.codequizapp.domain.model.CustomState
 import com.jakubn.codequizapp.domain.model.Game
 import com.jakubn.codequizapp.domain.model.User
 import com.jakubn.codequizapp.navigation.Screen
+import com.jakubn.codequizapp.theme.CodeQuizAppTheme
 import com.jakubn.codequizapp.theme.Typography
 
 @Composable
@@ -129,6 +132,7 @@ fun SetGamesList(
                 CircularProgressIndicator()
             }
         }
+
         !games.isNullOrEmpty() -> {
             // Display the list of games
             LazyColumn(
@@ -137,7 +141,7 @@ fun SetGamesList(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 items(games) { game ->
-                    ListItem(
+                    GamesListItem(
                         data = game,
                         onClick = {
                             game.gameId?.let { gameId ->
@@ -167,72 +171,156 @@ fun SetGamesList(
 }
 
 @Composable
-fun ListItem(data: Game, onClick: () -> Unit) {
-    Row(
+fun GamesListItem(data: Game, onClick: () -> Unit) {
+    Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 10.dp, horizontal = 20.dp)
-            .border(1.dp, Color.Cyan, RoundedCornerShape(20.dp))
+            .border(1.dp, Color.Gray, RoundedCornerShape(20.dp))
             .clip(RoundedCornerShape(20.dp))
             .clickable(true, onClick = onClick)
             .background(Color(0x80FFFFFF))
             .padding(horizontal = 20.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceAround
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Column(
-            verticalArrangement = Arrangement.SpaceBetween,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            AsyncImage(
-                modifier = Modifier
-                    .size(50.dp)
-                    .shadow(5.dp, shape = CircleShape)
-                    .border(1.dp, Color.Black, CircleShape),
-                model = ImageRequest.Builder(LocalContext.current)
-                    .data(data.lobby?.founder?.imageUri ?: R.drawable.sample_avatar)
-                    .crossfade(true)
-                    .build(),
-                placeholder = painterResource(R.drawable.sample_avatar),
-                contentDescription = stringResource(R.string.app_name),
-                contentScale = ContentScale.Crop
-            )
-
-            data.lobby?.founder?.name?.let { Text(text = it) }
-        }
 
         Column(
-            verticalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            data.category?.let {
-                Text(
-                    color = MaterialTheme.colorScheme.primary,
-                    text = it
-                )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    AsyncImage(
+                        modifier = Modifier
+                            .size(50.dp)
+                            .shadow(5.dp, shape = CircleShape)
+                            .border(1.dp, Color.Black, CircleShape),
+                        model = ImageRequest.Builder(LocalContext.current)
+                            .data(data.lobby?.founder?.imageUri ?: R.drawable.sample_avatar)
+                            .crossfade(true)
+                            .build(),
+                        placeholder = painterResource(R.drawable.sample_avatar),
+                        contentDescription = stringResource(R.string.app_name),
+                        contentScale = ContentScale.Crop
+                    )
+                    data.lobby?.founder?.name?.let { Text(text = it) }
+                }
+
+                data.category?.let {
+                    Text(
+                        modifier = Modifier
+                            .border(1.dp, Color(0xFF006134), RoundedCornerShape(5.dp))
+                            .clip(RoundedCornerShape(5.dp))
+                            .background(color = MaterialTheme.colorScheme.primary)
+                            .padding(4.dp),
+                        text = it, style = Typography.labelMedium
+                    )
+                }
             }
 
-            Text(style = Typography.bodyMedium, text = "${data.questions?.size} questions")
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 10.dp)
+                    .border(1.dp, Color.Gray, RoundedCornerShape(15.dp))
+                    .clip(RoundedCornerShape(15.dp))
+                    .background(Color(0x4DFFFFFF))
+                    .padding(horizontal = 20.dp, vertical = 10.dp),
+                verticalArrangement = Arrangement.spacedBy(5.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_players),
+                            contentDescription = "Question quantity"
+                        )
+                        Text(style = Typography.labelMedium, text = "players:")
+
+                    }
+
+                    Text(
+                        style = Typography.labelMedium,
+                        color = if (data.lobby?.member == null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
+                        text = if (data.lobby?.member == null) "1/2" else "2/2"
+                    )
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+
+                        Icon(
+                            painter = painterResource(R.drawable.ic_quantity),
+                            contentDescription = "Question quantity"
+                        )
+                        Text(style = Typography.labelMedium, text = "question quantity:")
+
+
+                    }
+                    Text(
+                        style = Typography.labelMedium,
+                        color = Color.Black,
+                        text = "5"
+                    )
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+
+                        Icon(
+                            painter = painterResource(R.drawable.ic_duration),
+                            contentDescription = "Question duration"
+                        )
+                        Text(style = Typography.labelMedium, text = "question duration:")
+
+
+                    }
+                    Text(
+                        style = Typography.labelMedium,
+                        color = Color.Black,
+                        text = "40 s"
+                    )
+                }
+            }
         }
-
-        Column(
-            verticalArrangement = Arrangement.SpaceBetween,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            if (data.lobby?.member == null) {
-                Text(color = MaterialTheme.colorScheme.primary, text = "1/2")
-            } else Text(color = MaterialTheme.colorScheme.error, text = "2/2")
-        }
-
-
     }
 }
-//
-//@Preview
-//@Composable
-//fun AvailableGameListScreenPreview() {
-//    CodeQuizAppTheme {
-//        val navController = NavHostController(LocalContext.current)
-//        AvailableGameListScreen(navController = navController)
-//    }
-//}
+
+
+@Preview
+@Composable
+fun Xd() {
+    CodeQuizAppTheme {
+        GamesListItem(Game("1398318417", "Wordpress", null, null, 15), onClick = {})
+    }
+}

@@ -1,6 +1,5 @@
 package com.jakubn.codequizapp.ui.game.createGame
 
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -94,7 +93,6 @@ fun CreateGameScreen(
 
             is CustomState.Failure -> {
                 val message = currentCreateGameState.message
-                Log.d("ugh", message.toString())
                 Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
 
             }
