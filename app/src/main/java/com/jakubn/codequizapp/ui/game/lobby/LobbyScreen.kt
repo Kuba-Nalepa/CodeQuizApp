@@ -22,6 +22,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -49,6 +50,7 @@ import com.jakubn.codequizapp.theme.Typography
 
 @Composable
 fun LobbyScreen(
+    user: User,
     navController: NavController,
     gameId: String?,
     viewModel: LobbyViewModel = hiltViewModel()
@@ -58,22 +60,21 @@ fun LobbyScreen(
 
     LaunchedEffect(lobbyState, context) {
         when (val currentState = lobbyState) {
-            is CustomState.Success -> {
+            is CustomState.Success -> if(currentState.result == null)  navController.popBackStack()
 
-            }
+            is CustomState.Failure -> Toast.makeText(context, currentState.message, Toast.LENGTH_SHORT).show()
 
-            is CustomState.Failure -> {
-                val message = currentState.message
-                Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
-
-            }
-
-            CustomState.Idle -> {
-                if (gameId != null) viewModel.getLobbyData(gameId)
-            }
+            CustomState.Idle -> if(gameId != null) viewModel.getLobbyData(gameId)
 
             CustomState.Loading -> {}
+        }
+    }
 
+    DisposableEffect(Unit) {
+        onDispose {
+            gameId?.let {
+                if(viewModel.isCurrentUserFounder(user)) viewModel.deleteLobby(it) else viewModel.removeUserFromLobby(it)
+            }
         }
     }
 
@@ -103,7 +104,10 @@ fun LobbyScreen(
             verticalArrangement = Arrangement.SpaceEvenly
         ) {
             when (val currentLobbyState = lobbyState) {
+
                 is CustomState.Success -> {
+                    if(currentLobbyState.result == null) return
+
                     PlayerContainer(currentLobbyState.result.founder, false, null)
 
                     VersusText("VS")

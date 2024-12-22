@@ -1,11 +1,9 @@
 package com.jakubn.codequizapp.ui.home
 
-import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -17,12 +15,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -40,31 +34,11 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.jakubn.codequizapp.R
-import com.jakubn.codequizapp.domain.model.CustomState
+import com.jakubn.codequizapp.domain.model.User
 import com.jakubn.codequizapp.theme.Typography
 
 @Composable
-fun HomeScreen(homeViewModel: HomeViewModel = hiltViewModel(), createGame: () -> Unit, playGame: () -> Unit) {
-    val context = LocalContext.current
-    val state by homeViewModel.state.collectAsState()
-
-    LaunchedEffect(state, context) {
-        when (val currentState = state) {
-            is CustomState.Success -> {
-
-
-            }
-
-            is CustomState.Failure -> {
-                val message = currentState.message
-
-                Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
-            }
-
-            else -> {}
-        }
-    }
-
+fun HomeScreen(user: User, homeViewModel: HomeViewModel = hiltViewModel(), createGame: () -> Unit, playGame: () -> Unit) {
 
     val colors = arrayOf(
         0.06f to Color(0xffA3FF0D),
@@ -73,10 +47,6 @@ fun HomeScreen(homeViewModel: HomeViewModel = hiltViewModel(), createGame: () ->
         0.62f to Color(0xff003963),
         0.95f to Color(0xff000226)
     )
-
-    when (val currentState = state) {
-        is CustomState.Success -> {
-            val user = currentState.result
 
             Column(
                 modifier = Modifier
@@ -174,7 +144,8 @@ fun HomeScreen(homeViewModel: HomeViewModel = hiltViewModel(), createGame: () ->
 
                         Text(
                             modifier = Modifier.padding(top = 10.dp, bottom = 10.dp),
-                            text = "${user.gamesPlayed - user.wins}", style = Typography.titleMedium
+                            text = "${user.gamesPlayed - user.wins}",
+                            style = Typography.titleMedium
                         )
 
                         Text(
@@ -258,31 +229,4 @@ fun HomeScreen(homeViewModel: HomeViewModel = hiltViewModel(), createGame: () ->
                     }
                 }
             }
-
         }
-
-        is CustomState.Failure -> {
-            val message = "Failed while fetching data"
-            Box(modifier = Modifier.fillMaxSize()) {
-                Text(
-                    modifier = Modifier.align(Alignment.Center),
-                    text = message,
-                    color = Color.Black,
-                    style = Typography.bodyLarge
-                )
-
-            }
-        }
-
-        CustomState.Loading -> {
-            Box(
-                modifier = Modifier.fillMaxSize()
-            ) {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-
-            }
-        }
-
-        else -> {}
-    }
-}

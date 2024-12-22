@@ -1,7 +1,7 @@
 package com.jakubn.codequizapp.domain.usecases
 
 import com.jakubn.codequizapp.domain.model.User
-import com.jakubn.codequizapp.domain.repositoryImpl.GameRepositoryImpl
+import com.jakubn.codequizapp.data.repositoryImpl.GameRepositoryImpl
 import javax.inject.Inject
 
 data class AddUserToLobbyUseCase @Inject constructor(

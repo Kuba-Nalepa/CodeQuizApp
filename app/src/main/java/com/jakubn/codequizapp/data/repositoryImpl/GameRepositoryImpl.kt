@@ -1,4 +1,4 @@
-package com.jakubn.codequizapp.domain.repositoryImpl
+package com.jakubn.codequizapp.data.repositoryImpl
 
 
 import com.google.firebase.auth.FirebaseAuth
@@ -11,7 +11,7 @@ import com.jakubn.codequizapp.domain.model.Game
 import com.jakubn.codequizapp.domain.model.Lobby
 import com.jakubn.codequizapp.domain.model.Question
 import com.jakubn.codequizapp.domain.model.User
-import com.jakubn.codequizapp.domain.repository.GameRepository
+import com.jakubn.codequizapp.data.repository.GameRepository
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -22,39 +22,29 @@ import javax.inject.Singleton
 
 @Singleton
 class GameRepositoryImpl @Inject constructor(
-    private val firebaseDatabase: FirebaseDatabase,
-    private val firebaseAuth: FirebaseAuth,
-    private val firebaseFirestore: FirebaseFirestore
+    private val firebaseDatabase: FirebaseDatabase
 ) : GameRepository {
 
     override suspend fun createGame(
         questionCategory: String,
         questionQuantity: Int,
-        questionDuration: Int
+        questionDuration: Int,
+        founder: User
     ): Flow<String> {
         return flow {
-            // setting lobby founder
-            val userList = firebaseFirestore.collection("users").get().await()
-            val founder = userList.toObjects(User::class.java).find {
-                it.uid == firebaseAuth.currentUser?.uid
-            }
-
             // getting questions from server
             val questionList = firebaseDatabase.getReference("questions").get()
                 .await().children.mapNotNull { snapshot ->
-                snapshot.getValue(Question::class.java)
-            }
+                    snapshot.getValue(Question::class.java)
+                }
             val filteredQuestions = questionList.filter {
                 questionCategory == it.category
             }.shuffled().take(questionQuantity)
 
-            // creating game
-            val lobby = Lobby(founder, null)
-
             val gameId = firebaseDatabase.reference.child("games").push().key
                 ?: throw Exception("Failed creating key")
 
-            val game = Game(gameId, questionCategory, filteredQuestions, lobby, questionDuration)
+            val game = Game(gameId, questionCategory, filteredQuestions, Lobby(founder) ,questionDuration)
 
             firebaseDatabase.reference.child("games").child(gameId).setValue(game)
 
@@ -62,12 +52,12 @@ class GameRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun getLobbyData(gameId: String): Flow<Lobby> {
+    override suspend fun getLobbyData(gameId: String): Flow<Lobby?> {
         return callbackFlow {
 
             val listener = object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
-                    val lobby = snapshot.getValue(Lobby::class.java) ?: throw Exception("Failed fetching games")
+                    val lobby = snapshot.getValue(Lobby::class.java)
 
                     trySend(lobby)
                 }
@@ -89,16 +79,19 @@ class GameRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun addUserToLobby(gameId: String ,user: User) {
-            val userList = firebaseFirestore.collection("users").get().await()
-            val currentUser = userList.toObjects(User::class.java).find {
-                it.uid == firebaseAuth.currentUser?.uid
-            } ?: throw Exception("Failed fetching current user")
-
-//            firebaseDatabase.reference.child(gameId).child("lobby").child("member").setValue(currentUser)
-            firebaseDatabase.reference.child("games").child(gameId).child("lobby").child("member").setValue(currentUser).await()
+    override suspend fun addUserToLobby(gameId: String, user: User) {
+            firebaseDatabase.reference.child("games").child(gameId).child("lobby").child("member").setValue(user).await()
 
         }
+
+    override suspend fun removeUserFromLobby(gameId: String) {
+        firebaseDatabase.reference.child("games").child(gameId).child("lobby").child("member").removeValue()
+
+    }
+
+    override suspend fun deleteLobby(gameId: String) {
+        firebaseDatabase.reference.child("games").child(gameId).removeValue()
+    }
 
     override suspend fun getGamesList(): Flow<List<Game>> {
         return callbackFlow {

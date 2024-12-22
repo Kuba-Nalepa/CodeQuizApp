@@ -1,6 +1,6 @@
 package com.jakubn.codequizapp.domain.usecases
 
-import com.jakubn.codequizapp.domain.repositoryImpl.AuthRepositoryImpl
+import com.jakubn.codequizapp.data.repositoryImpl.AuthRepositoryImpl
 import javax.inject.Inject
 
 

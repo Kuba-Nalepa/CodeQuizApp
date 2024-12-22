@@ -1,6 +1,6 @@
 package com.jakubn.codequizapp.domain.usecases
 
-import com.jakubn.codequizapp.domain.repositoryImpl.UserDataRepositoryImpl
+import com.jakubn.codequizapp.data.repositoryImpl.UserDataRepositoryImpl
 import javax.inject.Inject
 
 data class GetUserDataUseCase @Inject constructor(

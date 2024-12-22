@@ -1,9 +1,9 @@
-package com.jakubn.codequizapp.domain.repositoryImpl
+package com.jakubn.codequizapp.data.repositoryImpl
 
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.jakubn.codequizapp.domain.model.User
-import com.jakubn.codequizapp.domain.repository.UserDataRepository
+import com.jakubn.codequizapp.data.repository.UserDataRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow

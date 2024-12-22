@@ -1,4 +1,4 @@
-package com.jakubn.codequizapp.domain.repository
+package com.jakubn.codequizapp.data.repository
 
 import com.jakubn.codequizapp.domain.model.User
 import kotlinx.coroutines.flow.Flow

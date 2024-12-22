@@ -52,15 +52,17 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.jakubn.codequizapp.R
 import com.jakubn.codequizapp.domain.model.CustomState
+import com.jakubn.codequizapp.domain.model.User
 import com.jakubn.codequizapp.navigation.Screen
 import com.jakubn.codequizapp.theme.Typography
 
 @Composable
 fun CreateGameScreen(
+    user: User,
     navController: NavHostController,
     viewModel: CreateGameViewModel = hiltViewModel()
 ) {
-    val createGameState by viewModel.state.collectAsState()
+    val createGameState by viewModel.createGameState.collectAsState()
     val context = LocalContext.current
     var quizCategorySelected by remember { mutableStateOf("") }
     var indexSelection by remember { mutableIntStateOf(0) }
@@ -87,8 +89,8 @@ fun CreateGameScreen(
         when (val currentCreateGameState = createGameState) {
             is CustomState.Success -> {
                 viewModel.resetState()
-
                 navController.navigate(route = Screen.Lobby.route + "/${currentCreateGameState.result}")
+
             }
 
             is CustomState.Failure -> {
@@ -162,7 +164,8 @@ fun CreateGameScreen(
                         viewModel.createGame(
                             quizCategorySelected,
                             quizNumberSelected,
-                            quizTimeSecondsIndicator
+                            quizTimeSecondsIndicator,
+                            user
                         )
                     },
                     enabled = quizCategorySelected.isNotEmpty()

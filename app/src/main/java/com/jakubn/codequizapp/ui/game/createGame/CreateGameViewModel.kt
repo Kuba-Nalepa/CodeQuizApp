@@ -2,7 +2,9 @@ package com.jakubn.codequizapp.ui.game.createGame
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.jakubn.codequizapp.data.UserManager
 import com.jakubn.codequizapp.domain.model.CustomState
+import com.jakubn.codequizapp.domain.model.User
 import com.jakubn.codequizapp.domain.usecases.CreateGameUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,34 +17,33 @@ import javax.inject.Inject
 
 @HiltViewModel
 class CreateGameViewModel @Inject constructor(
-    private val createGameUseCase: CreateGameUseCase
+    private val createGameUseCase: CreateGameUseCase,
 ) : ViewModel() {
-    private val _state = MutableStateFlow<CustomState<String>>(CustomState.Idle)
-    val state: StateFlow<CustomState<String>> = _state
-
-
+    private val _createGameState = MutableStateFlow<CustomState<String>>(CustomState.Idle)
+    val createGameState: StateFlow<CustomState<String>> = _createGameState
 
     fun createGame(
         questionCategory: String,
         questionQuantity: Int,
-        questionDuration: Int
+        questionDuration: Int,
+        founder: User
     ) {
 
         viewModelScope.launch {
-            createGameUseCase.createGame(questionCategory, questionQuantity, questionDuration)
+            createGameUseCase.createGame(questionCategory, questionQuantity, questionDuration, founder)
                 .onStart {
-                    _state.value = CustomState.Loading
+                    _createGameState.value = CustomState.Loading
                 }
                 .catch { throwable ->
-                    _state.value = CustomState.Failure(throwable.message)
+                    _createGameState.value = CustomState.Failure(throwable.message)
                 }
                 .collect { gameId ->
-                    _state.value = CustomState.Success(gameId)
+                    _createGameState.value = CustomState.Success(gameId)
                 }
         }
     }
 
     fun resetState() {
-        _state.value = CustomState.Idle
+        _createGameState.value = CustomState.Idle
     }
 }

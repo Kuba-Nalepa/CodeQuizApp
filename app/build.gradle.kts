@@ -6,6 +6,7 @@ plugins {
     id ("dagger.hilt.android.plugin")
     id ("com.google.gms.google-services")
     id("org.jetbrains.kotlin.plugin.compose")
+    id ("kotlin-parcelize")
 }
 
 android {

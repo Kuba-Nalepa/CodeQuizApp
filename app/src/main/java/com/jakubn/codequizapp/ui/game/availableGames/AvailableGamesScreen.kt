@@ -32,6 +32,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -48,6 +49,7 @@ import com.jakubn.codequizapp.theme.Typography
 
 @Composable
 fun AvailableGameListScreen(
+    user: User,
     navController: NavController,
     viewModel: AvailableGamesViewModel = hiltViewModel()
 ) {
@@ -87,7 +89,7 @@ fun AvailableGameListScreen(
                 SetGamesList(
                     currentGamesState.result,
                     errorMessage = null,
-                    onClick = { gameId, user ->
+                    onClick = { gameId ->
 
                         viewModel.addUserToLobby(gameId, user)
                         navController.navigate(route = Screen.Lobby.route + "/$gameId")
@@ -119,11 +121,10 @@ fun SetGamesList(
     games: List<Game>?,
     isLoading: Boolean = false,
     errorMessage: String?,
-    onClick: ((gameId: String, user: User) -> Unit)?
+    onClick: ((gameId: String) -> Unit)?
 ) {
     when {
         isLoading -> {
-            // Show a loading indicator when loading
             Column(
                 modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.Center,
@@ -134,7 +135,6 @@ fun SetGamesList(
         }
 
         !games.isNullOrEmpty() -> {
-            // Display the list of games
             LazyColumn(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(8.dp), // Add spacing between items
@@ -145,15 +145,30 @@ fun SetGamesList(
                         data = game,
                         onClick = {
                             game.gameId?.let { gameId ->
-                                game.lobby?.founder?.let { founder ->
-                                    onClick?.invoke(gameId, founder)
-                                }
+                                onClick?.invoke(gameId)
                             }
                         }
                     )
                 }
             }
         }
+        games.isNullOrEmpty() -> {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
+            ) {
+                Text(
+                    textAlign = TextAlign.Center,
+                    style = Typography.bodyMedium,
+                    text = "There are no available games right now",
+                    color = Color.White
+                )
+            }
+        }
+
         else -> {
             Row(
                 modifier = Modifier
@@ -282,7 +297,7 @@ fun GamesListItem(data: Game, onClick: () -> Unit) {
                     Text(
                         style = Typography.labelMedium,
                         color = Color.Black,
-                        text = "5"
+                        text = "${data.questions?.size}"
                     )
                 }
 
@@ -308,7 +323,7 @@ fun GamesListItem(data: Game, onClick: () -> Unit) {
                     Text(
                         style = Typography.labelMedium,
                         color = Color.Black,
-                        text = "40 s"
+                        text = "${data.questionDuration} s"
                     )
                 }
             }
