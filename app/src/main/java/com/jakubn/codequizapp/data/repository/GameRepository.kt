@@ -12,9 +12,9 @@ interface GameRepository {
 
     suspend fun getLobbyData(gameId: String): Flow<Lobby?>
 
-    suspend fun addUserToLobby(gameId: String, user: User)
+    suspend fun addMemberToLobby(gameId: String, user: User)
 
-    suspend fun removeUserFromLobby(gameId: String)
+    suspend fun removeMemberFromLobby(gameId: String)
 
     suspend fun deleteLobby(gameId: String)
 

@@ -7,7 +7,7 @@ import com.jakubn.codequizapp.domain.model.Lobby
 import com.jakubn.codequizapp.domain.model.User
 import com.jakubn.codequizapp.domain.usecases.DeleteLobbyUseCase
 import com.jakubn.codequizapp.domain.usecases.GetLobbyDataUseCase
-import com.jakubn.codequizapp.domain.usecases.RemoveUserFromLobbyUseCase
+import com.jakubn.codequizapp.domain.usecases.RemoveMemberFromLobbyUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -19,7 +19,7 @@ import javax.inject.Inject
 @HiltViewModel
 class LobbyViewModel @Inject constructor(
     private val getLobbyDataUseCase: GetLobbyDataUseCase,
-    private val removeUserFromLobbyUseCase: RemoveUserFromLobbyUseCase,
+    private val removeUserFromLobbyUseCase: RemoveMemberFromLobbyUseCase,
     private val deleteLobbyUseCase: DeleteLobbyUseCase
 ): ViewModel() {
     private val _state = MutableStateFlow<CustomState<Lobby?>>(CustomState.Idle)
@@ -27,6 +27,12 @@ class LobbyViewModel @Inject constructor(
 
     private val _lobby = MutableStateFlow<Lobby?>(Lobby())
     val lobby: StateFlow<Lobby?> = _lobby
+
+    private val _isReadyFounder = MutableStateFlow(false)
+    val isReadyFounder: StateFlow<Boolean> = _isReadyFounder
+
+    private val _isReadyMember = MutableStateFlow(false)
+    val isReadyMember: StateFlow<Boolean> = _isReadyMember
 
     fun getLobbyData(gameId: String) {
         viewModelScope.launch {
@@ -45,9 +51,9 @@ class LobbyViewModel @Inject constructor(
     }
 
 
-    fun removeUserFromLobby(gameId: String) {
+    private fun removeMemberFromLobby(gameId: String) {
         viewModelScope.launch {
-            removeUserFromLobbyUseCase.removeUserFromLobby.invoke(gameId)
+            removeUserFromLobbyUseCase.removeMemberFromLobby.invoke(gameId)
         }
     }
 
@@ -57,7 +63,11 @@ class LobbyViewModel @Inject constructor(
         }
     }
 
-    fun isCurrentUserFounder(user: User): Boolean {
+    fun disposeThisScreen(gameId: String ,user: User) {
+        if(isCurrentUserFounder(user)) deleteLobby(gameId) else removeMemberFromLobby(gameId)
+    }
+
+    private fun isCurrentUserFounder(user: User): Boolean {
         return user.uid == _lobby.value?.founder?.uid
     }
 }

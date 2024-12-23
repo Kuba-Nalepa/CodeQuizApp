@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -56,6 +57,8 @@ fun LobbyScreen(
     viewModel: LobbyViewModel = hiltViewModel()
 ) {
     val lobbyState by viewModel.state.collectAsState()
+    val founderReadinessState by viewModel.isReadyFounder.collectAsState()
+    val memberReadinessState by viewModel.isReadyMember.collectAsState()
     val context = LocalContext.current
 
     LaunchedEffect(lobbyState, context) {
@@ -73,7 +76,7 @@ fun LobbyScreen(
     DisposableEffect(Unit) {
         onDispose {
             gameId?.let {
-                if(viewModel.isCurrentUserFounder(user)) viewModel.deleteLobby(it) else viewModel.removeUserFromLobby(it)
+                viewModel.disposeThisScreen(gameId, user)
             }
         }
     }
@@ -212,7 +215,7 @@ fun PlayerContainer(
                 ) {
                     Text(
                         text = user.name ?: "",
-                        style = Typography.labelMedium,
+                        style = Typography.bodyLarge,
                         softWrap = true
                     )
 
@@ -247,6 +250,7 @@ fun PlayerContainer(
                             softWrap = true
                         )
                     }
+                    Button(modifier = Modifier.fillMaxWidth(), onClick = {  }) { Text("") }
                 }
             } else if (errorMessage != null) {
                 Text(errorMessage)

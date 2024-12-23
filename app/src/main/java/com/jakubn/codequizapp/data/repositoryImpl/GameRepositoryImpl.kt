@@ -77,12 +77,12 @@ class GameRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun addUserToLobby(gameId: String, user: User) {
+    override suspend fun addMemberToLobby(gameId: String, user: User) {
             firebaseDatabase.reference.child("games").child(gameId).child("lobby").child("member").setValue(user).await()
 
         }
 
-    override suspend fun removeUserFromLobby(gameId: String) {
+    override suspend fun removeMemberFromLobby(gameId: String) {
         firebaseDatabase.reference.child("games").child(gameId).child("lobby").child("member").removeValue()
 
     }

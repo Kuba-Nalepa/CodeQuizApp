@@ -79,7 +79,7 @@ fun ChatHistory() {
         )
         Spacer(modifier = Modifier.height(8.dp))
         ChatMessage(
-            message = "I'm ready to start the quiz.",
+            message = "I'm isReadyFounder to start the quiz.",
             sender = "Jeff Bezos"
         )
     }

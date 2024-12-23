@@ -12,6 +12,6 @@ data class AddUserToLobbyUseCase @Inject constructor(
         suspend operator fun invoke(
             gameId: String,
             user: User
-        ) = repository.addUserToLobby(gameId, user)
+        ) = repository.addMemberToLobby(gameId, user)
     }
 }
