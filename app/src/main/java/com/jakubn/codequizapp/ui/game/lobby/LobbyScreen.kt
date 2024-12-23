@@ -146,12 +146,9 @@ fun LobbyScreen(
                 }
                 CustomState.Idle -> {
                     PlayerContainer(null)
-                    Text(
-                        modifier = Modifier.fillMaxWidth(),
-                        text = "VS",
-                        style = Typography.titleLarge,
-                        textAlign = TextAlign.Center
-                    )
+
+                    VersusText("VS")
+
                     PlayerContainer(null)
 
                 }
