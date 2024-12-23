@@ -96,5 +96,14 @@ data class Game(
 
 data class Lobby(
     var founder: User? = null,
-    var member: User? = null
+
+    @get:PropertyName("isFounderReady")
+    @set:PropertyName("isFounderReady")
+    var isFounderReady: Boolean = false,
+
+    var member: User? = null,
+
+    @get:PropertyName("isMemberReady")
+    @set:PropertyName("isMemberReady")
+    var isMemberReady: Boolean = false
 )

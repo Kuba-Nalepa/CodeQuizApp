@@ -53,22 +53,17 @@ import com.jakubn.codequizapp.theme.Typography
 fun LobbyScreen(
     user: User,
     navController: NavController,
-    gameId: String?,
+    gameId: String? = null,
     viewModel: LobbyViewModel = hiltViewModel()
 ) {
     val lobbyState by viewModel.state.collectAsState()
-    val founderReadinessState by viewModel.isReadyFounder.collectAsState()
-    val memberReadinessState by viewModel.isReadyMember.collectAsState()
     val context = LocalContext.current
 
-    LaunchedEffect(lobbyState, context) {
+    LaunchedEffect(lobbyState) {
         when (val currentState = lobbyState) {
             is CustomState.Success -> if(currentState.result == null)  navController.popBackStack()
-
             is CustomState.Failure -> Toast.makeText(context, currentState.message, Toast.LENGTH_SHORT).show()
-
-            CustomState.Idle -> if(gameId != null) viewModel.getLobbyData(gameId)
-
+            CustomState.Idle -> gameId?.let { viewModel.getLobbyData(it) }
             CustomState.Loading -> {}
         }
     }
@@ -76,7 +71,7 @@ fun LobbyScreen(
     DisposableEffect(Unit) {
         onDispose {
             gameId?.let {
-                viewModel.disposeThisScreen(gameId, user)
+                viewModel.removeFromLobby(gameId, user)
             }
         }
     }
@@ -84,20 +79,17 @@ fun LobbyScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .paint(
-                painterResource(R.drawable.background_auth),
-                contentScale = ContentScale.FillBounds
-            ),
+            .paint(painterResource(R.drawable.background_auth), contentScale = ContentScale.FillBounds),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-
         Image(
             modifier = Modifier
                 .fillMaxHeight(0.2f)
                 .zIndex(1f)
                 .padding(top = 20.dp),
-            painter = painterResource(R.drawable.icon_login), contentDescription = "Logo"
+            painter = painterResource(R.drawable.icon_login),
+            contentDescription = "Logo"
         )
 
         Column(
@@ -107,21 +99,35 @@ fun LobbyScreen(
             verticalArrangement = Arrangement.SpaceEvenly
         ) {
             when (val currentLobbyState = lobbyState) {
-
                 is CustomState.Success -> {
-                    if(currentLobbyState.result == null) return
+                    currentLobbyState.result?.let { lobby ->
 
-                    PlayerContainer(currentLobbyState.result.founder, false, null)
+                        PlayerContainer(
+                            user = lobby.founder,
+                            isReady = lobby.isFounderReady,
+                            isFounder = true,
+                            currentUserStatus =  viewModel.isCurrentUserFounder(user),
+                            changeStatus = { gameId?.let { viewModel.changeUserReadinessStatus(it, user) } }
+                        )
 
-                    VersusText("VS")
+                        VersusText("VS")
 
-                    if (currentLobbyState.result.member == null) {
-                        PlayerContainer(null, true, null)
-                    } else {
-                        PlayerContainer(currentLobbyState.result.member, false, null)
+                        if (lobby.member == null) {
+                            PlayerContainer(
+                                user = null,
+                                isLoading = true,
+                            )
+                        } else {
+                            PlayerContainer(
+                                user = lobby.member,
+                                isReady = lobby.isMemberReady,
+                                isMember = true,
+                                currentUserStatus =  viewModel.isCurrentUserMember(user),
+                                changeStatus = { gameId?.let { viewModel.changeUserReadinessStatus(it, user) } }
+                            )
+                        }
                     }
                 }
-
                 is CustomState.Failure -> {
                     PlayerContainer(null, false, currentLobbyState.message)
 
@@ -130,7 +136,6 @@ fun LobbyScreen(
                     PlayerContainer(null, false, currentLobbyState.message)
 
                 }
-
                 CustomState.Loading -> {
                     PlayerContainer(null, true)
 
@@ -139,7 +144,6 @@ fun LobbyScreen(
                     PlayerContainer(null, true)
 
                 }
-
                 CustomState.Idle -> {
                     PlayerContainer(null)
                     Text(
@@ -160,7 +164,12 @@ fun LobbyScreen(
 fun PlayerContainer(
     user: User? = null,
     isLoading: Boolean = false,
-    errorMessage: String? = null
+    errorMessage: String? = null,
+    isReady: Boolean = false,
+    isFounder: Boolean = false,
+    currentUserStatus: Boolean = false,
+    isMember: Boolean = false,
+    changeStatus: () -> Unit = {}
 ) {
     Box(
         modifier = Modifier
@@ -191,7 +200,6 @@ fun PlayerContainer(
                     CircularProgressIndicator()
                     Text(modifier = Modifier.padding(top = 20.dp), text = "Waiting for the other player", style = Typography.labelLarge, textAlign = TextAlign.Center)
                 }
-
             } else if (user != null) {
                 AsyncImage(
                     modifier = Modifier
@@ -250,7 +258,18 @@ fun PlayerContainer(
                             softWrap = true
                         )
                     }
-                    Button(modifier = Modifier.fillMaxWidth(), onClick = {  }) { Text("") }
+
+                    Button(
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = (isFounder && currentUserStatus) || (isMember && currentUserStatus),
+                        onClick = changeStatus
+                    ) {
+                        if (isReady) {
+                            Text("Not ready")
+                        } else {
+                            Text("Ready")
+                        }
+                    }
                 }
             } else if (errorMessage != null) {
                 Text(errorMessage)

@@ -18,6 +18,8 @@ interface GameRepository {
 
     suspend fun deleteLobby(gameId: String)
 
+    suspend fun changeUserReadinessStatus(gameId: String,lobby: Lobby, user: User, userReadinessStatus: Boolean)
+
     suspend fun getGamesList(): Flow<List<Game>>
 
 }

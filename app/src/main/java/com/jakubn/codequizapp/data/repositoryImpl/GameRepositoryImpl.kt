@@ -30,7 +30,6 @@ class GameRepositoryImpl @Inject constructor(
         founder: User
     ): Flow<String> {
         return flow {
-            // getting questions from server
             val questionList = firebaseDatabase.getReference("questions").get()
                 .await().children.mapNotNull { snapshot ->
                     snapshot.getValue(Question::class.java)
@@ -42,7 +41,8 @@ class GameRepositoryImpl @Inject constructor(
             val gameId = firebaseDatabase.reference.child("games").push().key
                 ?: throw Exception("Failed creating key")
 
-            val game = Game(gameId, questionCategory, filteredQuestions, Lobby(founder) ,questionDuration)
+            val game =
+                Game(gameId, questionCategory, filteredQuestions, Lobby(founder), questionDuration)
 
             firebaseDatabase.reference.child("games").child(gameId).setValue(game)
 
@@ -61,7 +61,8 @@ class GameRepositoryImpl @Inject constructor(
                 }
 
                 override fun onCancelled(error: DatabaseError) {
-                    throw Exception(error.message)                }
+                    throw Exception(error.message)
+                }
             }
 
             val lobbyRef = firebaseDatabase.getReference("games").child(gameId).child("lobby")
@@ -78,18 +79,42 @@ class GameRepositoryImpl @Inject constructor(
     }
 
     override suspend fun addMemberToLobby(gameId: String, user: User) {
-            firebaseDatabase.reference.child("games").child(gameId).child("lobby").child("member").setValue(user).await()
+        firebaseDatabase.reference.child("games").child(gameId).child("lobby").child("member")
+            .setValue(user).await()
 
-        }
+    }
 
     override suspend fun removeMemberFromLobby(gameId: String) {
-        firebaseDatabase.reference.child("games").child(gameId).child("lobby").child("member").removeValue()
+        firebaseDatabase.reference.child("games").child(gameId).child("lobby").child("member")
+            .removeValue()
 
     }
 
     override suspend fun deleteLobby(gameId: String) {
         firebaseDatabase.reference.child("games").child(gameId).removeValue()
     }
+
+    override suspend fun changeUserReadinessStatus(
+        gameId: String,
+        lobby: Lobby,
+        user: User,
+        userReadinessStatus: Boolean
+    ) {
+
+        val readinessKey = when (user.uid) {
+            lobby.founder?.uid -> "isFounderReady"
+            lobby.member?.uid -> "isMemberReady"
+            else -> null
+        }
+
+        readinessKey?.let {
+            firebaseDatabase.reference.child("games")
+                .child(gameId)
+                .child("lobby")
+                .updateChildren(hashMapOf<String, Any>(it to userReadinessStatus))
+        }
+    }
+
 
     override suspend fun getGamesList(): Flow<List<Game>> {
         return callbackFlow {
