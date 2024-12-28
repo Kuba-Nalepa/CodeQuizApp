@@ -1,6 +1,8 @@
 package com.jakubn.codequizapp.ui.game.lobby
 
 import android.widget.Toast
+import androidx.activity.ComponentActivity
+import androidx.activity.OnBackPressedCallback
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -47,6 +49,7 @@ import coil.request.ImageRequest
 import com.jakubn.codequizapp.R
 import com.jakubn.codequizapp.domain.model.CustomState
 import com.jakubn.codequizapp.domain.model.User
+import com.jakubn.codequizapp.navigation.Screen
 import com.jakubn.codequizapp.theme.Typography
 
 @Composable
@@ -56,30 +59,57 @@ fun LobbyScreen(
     gameId: String? = null,
     viewModel: LobbyViewModel = hiltViewModel()
 ) {
-    val lobbyState by viewModel.state.collectAsState()
+    val gameState by viewModel.state.collectAsState()
+    val lobbyState by viewModel.lobby.collectAsState()
     val context = LocalContext.current
 
-    LaunchedEffect(lobbyState) {
-        when (val currentState = lobbyState) {
-            is CustomState.Success -> if(currentState.result == null)  navController.popBackStack()
-            is CustomState.Failure -> Toast.makeText(context, currentState.message, Toast.LENGTH_SHORT).show()
+    LaunchedEffect(gameState) {
+        when (val currentState = gameState) {
+            is CustomState.Success -> {
+                if (currentState.result == null) navController.popBackStack()
+                else if (currentState.result.isGameStarted) navController.navigate(Screen.Quiz.route + "/$gameId")
+            }
+            is CustomState.Failure -> Toast.makeText(
+                context,
+                currentState.message,
+                Toast.LENGTH_SHORT
+            ).show()
+
             CustomState.Idle -> gameId?.let { viewModel.getLobbyData(it) }
             CustomState.Loading -> {}
         }
     }
 
     DisposableEffect(Unit) {
-        onDispose {
-            gameId?.let {
-                viewModel.removeFromLobby(gameId, user)
+        val callback = object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                gameId?.let {
+                    viewModel.removeFromLobby(it, user)
+                }
+
+                navController.popBackStack()
             }
         }
+
+        (context as? ComponentActivity)?.onBackPressedDispatcher?.addCallback(callback)
+
+        onDispose {
+            callback.remove()
+        }
+//        onDispose {
+//            gameId?.let {
+//                viewModel.removeFromLobby(gameId, user)
+//            }
+//        }
     }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .paint(painterResource(R.drawable.background_auth), contentScale = ContentScale.FillBounds),
+            .paint(
+                painterResource(R.drawable.background_auth),
+                contentScale = ContentScale.FillBounds
+            ),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
@@ -110,7 +140,20 @@ fun LobbyScreen(
                             changeStatus = { gameId?.let { viewModel.changeUserReadinessStatus(it, user) } }
                         )
 
-                        VersusText("VS")
+                        VersusText(
+                            isFounder = viewModel.isCurrentUserFounder(user),
+                            isFounderReady = currentLobbyState.result.isFounderReady,
+                            isMemberReady = currentLobbyState.result.isMemberReady,
+                            playGame = {
+
+                                gameId?.let {
+                                    viewModel.startGame(it)
+                                    navController.navigate(Screen.Quiz.route + "/$it")
+
+                                }
+                            }
+
+                        )
 
                         if (lobby.member == null) {
                             PlayerContainer(
@@ -131,23 +174,25 @@ fun LobbyScreen(
                 is CustomState.Failure -> {
                     PlayerContainer(null, false, currentLobbyState.message)
 
-                    VersusText("VS")
+                    VersusText()
 
                     PlayerContainer(null, false, currentLobbyState.message)
 
                 }
+
                 CustomState.Loading -> {
                     PlayerContainer(null, true)
 
-                    VersusText("VS")
+                    VersusText()
 
                     PlayerContainer(null, true)
 
                 }
+
                 CustomState.Idle -> {
                     PlayerContainer(null)
 
-                    VersusText("VS")
+                    VersusText()
 
                     PlayerContainer(null)
 
@@ -195,7 +240,12 @@ fun PlayerContainer(
                     verticalArrangement = Arrangement.Center,
                 ) {
                     CircularProgressIndicator()
-                    Text(modifier = Modifier.padding(top = 20.dp), text = "Waiting for the other player", style = Typography.labelLarge, textAlign = TextAlign.Center)
+                    Text(
+                        modifier = Modifier.padding(top = 20.dp),
+                        text = "Waiting for the other player",
+                        style = Typography.labelLarge,
+                        textAlign = TextAlign.Center
+                    )
                 }
             } else if (user != null) {
                 AsyncImage(
@@ -276,11 +326,25 @@ fun PlayerContainer(
 }
 
 @Composable
-fun VersusText(text: String) {
-    Text(
-        modifier = Modifier.fillMaxWidth(),
-        text = text,
-        style = Typography.titleLarge,
-        textAlign = TextAlign.Center
-    )
+fun VersusText(
+    text: String = "VS",
+    isFounder: Boolean = false,
+    isFounderReady: Boolean = false,
+    isMemberReady: Boolean = false,
+    playGame: (() -> Unit)? = null
+) {
+    if(isFounder && (isFounderReady && isMemberReady)) {
+        if (playGame != null) {
+            Button(modifier = Modifier.fillMaxWidth(), onClick = playGame) {
+                Text(text = "Play", style = Typography.titleMedium)
+            }
+        }
+    } else {
+        Text(
+            modifier = Modifier.fillMaxWidth(),
+            text = text,
+            style = Typography.titleLarge,
+            textAlign = TextAlign.Center
+        )
+    }
 }

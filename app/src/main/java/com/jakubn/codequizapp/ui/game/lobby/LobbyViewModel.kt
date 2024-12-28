@@ -3,12 +3,14 @@ package com.jakubn.codequizapp.ui.game.lobby
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.jakubn.codequizapp.domain.model.CustomState
+import com.jakubn.codequizapp.domain.model.Game
 import com.jakubn.codequizapp.domain.model.Lobby
 import com.jakubn.codequizapp.domain.model.User
 import com.jakubn.codequizapp.domain.usecases.ChangeUserReadinessStatusUseCase
 import com.jakubn.codequizapp.domain.usecases.DeleteLobbyUseCase
-import com.jakubn.codequizapp.domain.usecases.GetLobbyDataUseCase
+import com.jakubn.codequizapp.domain.usecases.GetGameDataUseCase
 import com.jakubn.codequizapp.domain.usecases.RemoveMemberFromLobbyUseCase
+import com.jakubn.codequizapp.domain.usecases.StartGameUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -19,29 +21,30 @@ import javax.inject.Inject
 
 @HiltViewModel
 class LobbyViewModel @Inject constructor(
-    private val getLobbyDataUseCase: GetLobbyDataUseCase,
+    private val getGameDataUseCase: GetGameDataUseCase,
     private val removeUserFromLobbyUseCase: RemoveMemberFromLobbyUseCase,
     private val deleteLobbyUseCase: DeleteLobbyUseCase,
-    private val changeUserReadinessStatusUseCase: ChangeUserReadinessStatusUseCase
+    private val changeUserReadinessStatusUseCase: ChangeUserReadinessStatusUseCase,
+    private val startGameUseCase: StartGameUseCase
 ) : ViewModel() {
-    private val _state = MutableStateFlow<CustomState<Lobby?>>(CustomState.Idle)
-    val state: StateFlow<CustomState<Lobby?>> = _state
+    private val _state = MutableStateFlow<CustomState<Game?>>(CustomState.Idle)
+    val state: StateFlow<CustomState<Game?>> = _state
 
-    private val _lobby = MutableStateFlow<Lobby?>(Lobby())
-    val lobby: StateFlow<Lobby?> = _lobby
+    private val _lobby = MutableStateFlow<CustomState<Lobby?>>(CustomState.Idle)
+    val lobby: StateFlow<CustomState<Lobby?>> = _lobby
 
     fun getLobbyData(gameId: String) {
         viewModelScope.launch {
-            getLobbyDataUseCase.getLobbyData(gameId)
+            getGameDataUseCase.getGameData(gameId)
                 .onStart {
                     _state.value = CustomState.Loading
                 }
                 .catch { throwable ->
                     _state.value = CustomState.Failure(throwable.message)
                 }
-                .collect { lobby ->
-                    _lobby.value = lobby
-                    _state.value = CustomState.Success(lobby)
+                .collect { game ->
+                    _lobby.value = CustomState.Success(game?.lobby)
+                    _state.value = CustomState.Success(game)
                 }
         }
     }
@@ -52,21 +55,39 @@ class LobbyViewModel @Inject constructor(
 
     fun changeUserReadinessStatus(gameId: String, user: User) {
         viewModelScope.launch {
-            val lobbyData = _lobby.value
-            lobbyData?.let {
-                val newStatus = when (user.uid) {
-                    it.founder?.uid -> !it.isFounderReady
-                    it.member?.uid -> !it.isMemberReady
-                    else -> return@launch
-                }
+            val lobbyState = _lobby.value
 
-                changeUserReadinessStatusUseCase.changeUserReadinessStatus(gameId, it, user, newStatus)
+            if (lobbyState !is CustomState.Success || lobbyState.result == null) {
+                return@launch
+            }
 
-                if (user.uid == it.founder?.uid) {
-                    _lobby.value = it.copy(isFounderReady = newStatus)
-                } else if (user.uid == it.member?.uid) {
-                    _lobby.value = it.copy(isMemberReady = newStatus)
-                }
+            val lobbyData = lobbyState.result
+
+            val newStatus = when (user.uid) {
+                lobbyData.founder?.uid -> !lobbyData.isFounderReady
+                lobbyData.member?.uid -> !lobbyData.isMemberReady
+                else -> return@launch
+            }
+
+            changeUserReadinessStatusUseCase.changeUserReadinessStatus(gameId, lobbyData, user, newStatus)
+
+            val updatedLobby = if (user.uid == lobbyData.founder?.uid) {
+                lobbyData.copy(isFounderReady = newStatus)
+            } else {
+                lobbyData.copy(isMemberReady = newStatus)
+            }
+            _lobby.value = CustomState.Success(updatedLobby)
+        }
+    }
+
+    fun startGame(gameId: String) {
+        val gameState = _state.value
+
+        viewModelScope.launch {
+            startGameUseCase.startGame.invoke(gameId)
+
+            if(gameState is CustomState.Success && gameState.result != null) {
+                gameState.result.isGameStarted = true
             }
         }
     }
@@ -85,12 +106,22 @@ class LobbyViewModel @Inject constructor(
     }
 
     fun isCurrentUserFounder(user: User): Boolean {
-        return user.uid == _lobby.value?.founder?.uid
+        val lobbyState = _lobby.value
+
+        return if (lobbyState is CustomState.Success && lobbyState.result != null) {
+            user.uid == lobbyState.result.founder?.uid
+        } else {
+            false
+        }
     }
 
     fun isCurrentUserMember(user: User): Boolean {
-        return user.uid == _lobby.value?.member?.uid
-    }
+        val lobbyState = _lobby.value
 
-//    wartosc isREady musze pobierac z bazy danych ugh bo przeciez da dwa osobne viewmodele
+        return if (lobbyState is CustomState.Success && lobbyState.result != null) {
+            user.uid == lobbyState.result.member?.uid
+        } else {
+            false
+        }
+    }
 }

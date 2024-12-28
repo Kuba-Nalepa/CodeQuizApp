@@ -42,7 +42,14 @@ class GameRepositoryImpl @Inject constructor(
                 ?: throw Exception("Failed creating key")
 
             val game =
-                Game(gameId, questionCategory, filteredQuestions, Lobby(founder), questionDuration)
+                Game(
+                    gameId,
+                    false,
+                    questionCategory,
+                    filteredQuestions,
+                    Lobby(founder),
+                    questionDuration
+                )
 
             firebaseDatabase.reference.child("games").child(gameId).setValue(game)
 
@@ -50,14 +57,19 @@ class GameRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun getLobbyData(gameId: String): Flow<Lobby?> {
+    override suspend fun startGame(gameId: String) {
+        firebaseDatabase.getReference("games").child(gameId).updateChildren(
+            hashMapOf<String, Any>("isGameStarted" to true))
+    }
+
+    override suspend fun getGameData(gameId: String): Flow<Game?> {
         return callbackFlow {
 
             val listener = object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
-                    val lobby = snapshot.getValue(Lobby::class.java)
+                    val game = snapshot.getValue(Game::class.java)
 
-                    trySend(lobby)
+                    trySend(game)
                 }
 
                 override fun onCancelled(error: DatabaseError) {
@@ -65,15 +77,15 @@ class GameRepositoryImpl @Inject constructor(
                 }
             }
 
-            val lobbyRef = firebaseDatabase.getReference("games").child(gameId).child("lobby")
+            val gameRef = firebaseDatabase.getReference("games").child(gameId)
 
-            val lobbyDataFirst = lobbyRef.get().await().getValue(Lobby::class.java)
-                ?: throw Exception("Failed fetching lobby data")
-            trySend(lobbyDataFirst)
+            val gameData = gameRef.get().await().getValue(Game::class.java)
+                ?: throw Exception("Failed fetching game data")
+            trySend(gameData)
 
-            lobbyRef.addValueEventListener(listener)
+            gameRef.addValueEventListener(listener)
             awaitClose {
-                lobbyRef.removeEventListener(listener)
+                gameRef.removeEventListener(listener)
             }
         }
     }
@@ -114,7 +126,6 @@ class GameRepositoryImpl @Inject constructor(
                 .updateChildren(hashMapOf<String, Any>(it to userReadinessStatus))
         }
     }
-
 
     override suspend fun getGamesList(): Flow<List<Game>> {
         return callbackFlow {

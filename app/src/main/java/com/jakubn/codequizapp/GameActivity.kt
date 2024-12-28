@@ -16,6 +16,7 @@ import androidx.navigation.compose.rememberNavController
 import com.jakubn.codequizapp.domain.model.User
 import com.jakubn.codequizapp.navigation.Screen
 import com.jakubn.codequizapp.theme.CodeQuizAppTheme
+import com.jakubn.codequizapp.ui.game.QuizScreen
 import com.jakubn.codequizapp.ui.game.availableGames.AvailableGameListScreen
 import com.jakubn.codequizapp.ui.game.createGame.CreateGameScreen
 import com.jakubn.codequizapp.ui.game.lobby.LobbyScreen
@@ -57,6 +58,11 @@ class GameActivity : ComponentActivity() {
                         composable(Screen.Lobby.route + "/{gameId}") { backStackEntry ->
 
                             LobbyScreen(user, navController, gameId = backStackEntry.arguments?.getString("gameId"))
+                        }
+
+                        composable(Screen.Quiz.route + "/{gameId}") { backStackEntry ->
+
+                            QuizScreen(gameId = backStackEntry.arguments?.getString("gameId"))
                         }
                     }
                 }

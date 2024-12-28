@@ -30,7 +30,7 @@ sealed class Screen(
     @Serializable
     object Lobby : Screen("lobby_screen")
     @Serializable
-    object Game : Screen("navigate_screen")
+    object Quiz : Screen("quiz_screen")
     @Serializable
     object GameOver : Screen("game_over_screen")
     @Serializable

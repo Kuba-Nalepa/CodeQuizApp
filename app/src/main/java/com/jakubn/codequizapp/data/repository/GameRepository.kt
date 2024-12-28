@@ -10,7 +10,9 @@ interface GameRepository {
 
     suspend fun createGame(questionCategory: String, questionQuantity: Int, questionDuration: Int, founder: User): Flow<String>
 
-    suspend fun getLobbyData(gameId: String): Flow<Lobby?>
+    suspend fun startGame(gameId: String)
+
+    suspend fun getGameData(gameId: String): Flow<Game?>
 
     suspend fun addMemberToLobby(gameId: String, user: User)
 
