@@ -69,6 +69,7 @@ fun LobbyScreen(
                 if (currentState.result == null) navController.popBackStack()
                 else if (currentState.result.isGameStarted) navController.navigate(Screen.Quiz.route + "/$gameId")
             }
+
             is CustomState.Failure -> Toast.makeText(
                 context,
                 currentState.message,
@@ -96,38 +97,24 @@ fun LobbyScreen(
         onDispose {
             callback.remove()
         }
-//        onDispose {
-//            gameId?.let {
-//                viewModel.removeFromLobby(gameId, user)
-//            }
-//        }
     }
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .paint(
-                painterResource(R.drawable.background_auth),
-                contentScale = ContentScale.FillBounds
-            ),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Image(
-            modifier = Modifier
-                .fillMaxHeight(0.2f)
-                .zIndex(1f)
-                .padding(top = 20.dp),
-            painter = painterResource(R.drawable.icon_login),
-            contentDescription = "Logo"
-        )
 
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .weight(2f),
-            verticalArrangement = Arrangement.SpaceEvenly
+                .paint(
+                    painterResource(R.drawable.background_auth),
+                    contentScale = ContentScale.FillBounds
+                ),
+            verticalArrangement = Arrangement.SpaceEvenly,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            Image(
+                modifier = Modifier,
+                painter = painterResource(R.drawable.icon_login),
+                contentDescription = "Logo"
+            )
+
             when (val currentLobbyState = lobbyState) {
                 is CustomState.Success -> {
                     currentLobbyState.result?.let { lobby ->
@@ -136,8 +123,15 @@ fun LobbyScreen(
                             user = lobby.founder,
                             isReady = lobby.isFounderReady,
                             isFounder = true,
-                            currentUserStatus =  viewModel.isCurrentUserFounder(user),
-                            changeStatus = { gameId?.let { viewModel.changeUserReadinessStatus(it, user) } }
+                            currentUserStatus = viewModel.isCurrentUserFounder(user),
+                            changeStatus = {
+                                gameId?.let {
+                                    viewModel.changeUserReadinessStatus(
+                                        it,
+                                        user
+                                    )
+                                }
+                            }
                         )
 
                         VersusText(
@@ -165,12 +159,20 @@ fun LobbyScreen(
                                 user = lobby.member,
                                 isReady = lobby.isMemberReady,
                                 isMember = true,
-                                currentUserStatus =  viewModel.isCurrentUserMember(user),
-                                changeStatus = { gameId?.let { viewModel.changeUserReadinessStatus(it, user) } }
+                                currentUserStatus = viewModel.isCurrentUserMember(user),
+                                changeStatus = {
+                                    gameId?.let {
+                                        viewModel.changeUserReadinessStatus(
+                                            it,
+                                            user
+                                        )
+                                    }
+                                }
                             )
                         }
                     }
                 }
+
                 is CustomState.Failure -> {
                     PlayerContainer(null, false, currentLobbyState.message)
 
@@ -200,7 +202,7 @@ fun LobbyScreen(
             }
         }
     }
-}
+
 
 @Composable
 fun PlayerContainer(
@@ -243,78 +245,99 @@ fun PlayerContainer(
                     Text(
                         modifier = Modifier.padding(top = 20.dp),
                         text = "Waiting for the other player",
-                        style = Typography.labelLarge,
+                        style = Typography.titleSmall,
                         textAlign = TextAlign.Center
                     )
                 }
             } else if (user != null) {
-                AsyncImage(
+                Row(
                     modifier = Modifier
-                        .size(125.dp)
-                        .shadow(5.dp, shape = CircleShape)
-                        .border(1.dp, Color.Black, CircleShape),
-                    model = ImageRequest.Builder(LocalContext.current)
-                        .data(user.imageUri ?: R.drawable.sample_avatar)
-                        .crossfade(true)
-                        .build(),
-                    placeholder = painterResource(R.drawable.sample_avatar),
-                    contentDescription = stringResource(R.string.app_name),
-                    contentScale = ContentScale.Crop
-                )
-
-                Column(
-                    modifier = Modifier
-                        .fillMaxHeight()
-                        .padding(horizontal = 20.dp),
-                    verticalArrangement = Arrangement.SpaceEvenly
+                        .fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center,
                 ) {
-                    Text(
-                        text = user.name ?: "",
-                        style = Typography.bodyLarge,
-                        softWrap = true
+                    AsyncImage(
+                        modifier = Modifier
+                            .size(80.dp)
+                            .shadow(5.dp, shape = CircleShape)
+                            .border(1.dp, Color.Black, CircleShape),
+                        model = ImageRequest.Builder(LocalContext.current)
+                            .data(user.imageUri ?: R.drawable.sample_avatar)
+                            .crossfade(true)
+                            .build(),
+                        placeholder = painterResource(R.drawable.sample_avatar),
+                        contentDescription = stringResource(R.string.app_name),
+                        contentScale = ContentScale.Crop
                     )
 
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
+                    Column(
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .padding(horizontal = 10.dp, vertical = 5.dp),
+                        verticalArrangement = Arrangement.SpaceEvenly
                     ) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_rank),
-                            contentDescription = "Rank",
-                            tint = Color(0xFFA3FF0D)
-                        )
                         Text(
-                            text = " ${user.wins}", //TODO user's rank
-                            color = Color(0xFFA3FF0D),
-                            style = Typography.labelLarge,
+                            text = user.name ?: "",
+                            style = Typography.bodyLarge,
                             softWrap = true
                         )
-                    }
 
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_ranking_up),
-                            contentDescription = "Win ratio"
-                        )
-                        Text(
-                            text = " ${user.winRatio}",
-                            style = Typography.labelLarge,
-                            softWrap = true
-                        )
-                    }
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 5.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_rank),
+                                contentDescription = "Rank",
+                                tint = Color(0xFFA3FF0D)
+                            )
+                            Text(
+                                text = " ${user.wins}", //TODO user's rank
+                                color = Color(0xFFA3FF0D),
+                                style = Typography.titleSmall,
+                                softWrap = true
+                            )
+                        }
 
-                    Button(
-                        modifier = Modifier.fillMaxWidth(),
-                        enabled = (isFounder && currentUserStatus) || (isMember && currentUserStatus),
-                        onClick = changeStatus
-                    ) {
-                        if (isReady) {
-                            Text("Not ready")
-                        } else {
-                            Text("Ready")
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(bottom = 5.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_ranking_up),
+                                contentDescription = "Win ratio"
+                            )
+                            Text(
+                                text = " ${user.winRatio}",
+                                style = Typography.titleSmall,
+                                softWrap = true
+                            )
+                        }
+
+                        Button(
+                            modifier = Modifier.fillMaxWidth(),
+                            enabled = (isFounder && currentUserStatus) || (isMember && currentUserStatus),
+                            onClick = changeStatus
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceEvenly,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "ready",
+                                    style = Typography.titleSmall
+                                )
+                                if(isReady) Icon(modifier = Modifier.size(24.dp),
+                                    painter = painterResource(R.drawable.ready_checked),
+                                    contentDescription = "Toggle icon"
+                                )
+                                else Icon(modifier = Modifier.size(24.dp),
+                                    painter = painterResource(R.drawable.ready_unchecked),
+                                    contentDescription = "Toggle icon"
+                                )
+
+                            }
                         }
                     }
                 }
@@ -333,10 +356,10 @@ fun VersusText(
     isMemberReady: Boolean = false,
     playGame: (() -> Unit)? = null
 ) {
-    if(isFounder && (isFounderReady && isMemberReady)) {
+    if (isFounder && (isFounderReady && isMemberReady)) {
         if (playGame != null) {
-            Button(modifier = Modifier.fillMaxWidth(), onClick = playGame) {
-                Text(text = "Play", style = Typography.titleMedium)
+            Button(modifier = Modifier.fillMaxWidth().padding(horizontal = 50.dp), onClick = playGame) {
+                Text(text = "PLAY", style = Typography.titleMedium)
             }
         }
     } else {
