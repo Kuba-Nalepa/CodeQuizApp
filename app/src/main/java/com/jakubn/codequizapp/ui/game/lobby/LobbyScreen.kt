@@ -87,8 +87,6 @@ fun LobbyScreen(
                 gameId?.let {
                     viewModel.removeFromLobby(it, user)
                 }
-
-                navController.popBackStack()
             }
         }
 
@@ -283,7 +281,9 @@ fun PlayerContainer(
                         )
 
                         Row(
-                            modifier = Modifier.fillMaxWidth().padding(vertical = 5.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 5.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Icon(
@@ -300,7 +300,9 @@ fun PlayerContainer(
                         }
 
                         Row(
-                            modifier = Modifier.fillMaxWidth().padding(bottom = 5.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 5.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Icon(
@@ -358,7 +360,9 @@ fun VersusText(
 ) {
     if (isFounder && (isFounderReady && isMemberReady)) {
         if (playGame != null) {
-            Button(modifier = Modifier.fillMaxWidth().padding(horizontal = 50.dp), onClick = playGame) {
+            Button(modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 50.dp), onClick = playGame) {
                 Text(text = "PLAY", style = Typography.titleMedium)
             }
         }
