@@ -85,6 +85,9 @@ fun LobbyScreen(
         val callback = object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 gameId?.let {
+                    if(viewModel.isCurrentUserMember(user)) {
+                        navController.popBackStack()
+                    }
                     viewModel.removeFromLobby(it, user)
                 }
             }
