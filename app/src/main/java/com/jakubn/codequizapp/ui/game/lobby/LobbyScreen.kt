@@ -56,7 +56,7 @@ import com.jakubn.codequizapp.theme.Typography
 fun LobbyScreen(
     user: User,
     navController: NavController,
-    gameId: String? = null,
+    gameId: String,
     viewModel: LobbyViewModel = hiltViewModel()
 ) {
     val gameState by viewModel.state.collectAsState()
@@ -76,7 +76,7 @@ fun LobbyScreen(
                 Toast.LENGTH_SHORT
             ).show()
 
-            CustomState.Idle -> gameId?.let { viewModel.getLobbyData(it) }
+            CustomState.Idle -> viewModel.getLobbyData(gameId)
             CustomState.Loading -> {}
         }
     }
@@ -84,11 +84,9 @@ fun LobbyScreen(
     DisposableEffect(Unit) {
         val callback = object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
-                gameId?.let {
-                    if(viewModel.isCurrentUserMember(user)) {
-                        navController.popBackStack()
-                    }
-                    viewModel.removeFromLobby(it, user)
+                if (viewModel.isCurrentUserMember(user)) {
+                    navController.popBackStack()
+                    viewModel.removeFromLobby(gameId, user)
                 }
             }
         }
@@ -100,109 +98,107 @@ fun LobbyScreen(
         }
     }
 
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .paint(
-                    painterResource(R.drawable.background_auth),
-                    contentScale = ContentScale.FillBounds
-                ),
-            verticalArrangement = Arrangement.SpaceEvenly,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Image(
-                modifier = Modifier,
-                painter = painterResource(R.drawable.icon_login),
-                contentDescription = "Logo"
-            )
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .paint(
+                painterResource(R.drawable.background_auth),
+                contentScale = ContentScale.FillBounds
+            ),
+        verticalArrangement = Arrangement.SpaceEvenly,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Image(
+            modifier = Modifier,
+            painter = painterResource(R.drawable.icon_login),
+            contentDescription = "Logo"
+        )
 
-            when (val currentLobbyState = lobbyState) {
-                is CustomState.Success -> {
-                    currentLobbyState.result?.let { lobby ->
+        when (val currentLobbyState = lobbyState) {
+            is CustomState.Success -> {
+                currentLobbyState.result?.let { lobby ->
 
-                        PlayerContainer(
-                            user = lobby.founder,
-                            isReady = lobby.isFounderReady,
-                            isFounder = true,
-                            currentUserStatus = viewModel.isCurrentUserFounder(user),
-                            changeStatus = {
-                                gameId?.let {
-                                    viewModel.changeUserReadinessStatus(
-                                        it,
-                                        user
-                                    )
-                                }
+                    PlayerContainer(
+                        user = lobby.founder,
+                        isReady = lobby.isFounderReady,
+                        isFounder = true,
+                        currentUserStatus = viewModel.isCurrentUserFounder(user),
+                        changeStatus = {
+                            gameId.let {
+                                viewModel.changeUserReadinessStatus(
+                                    it,
+                                    user
+                                )
                             }
-                        )
-
-                        VersusText(
-                            isFounder = viewModel.isCurrentUserFounder(user),
-                            isFounderReady = currentLobbyState.result.isFounderReady,
-                            isMemberReady = currentLobbyState.result.isMemberReady,
-                            playGame = {
-
-                                gameId?.let {
-                                    viewModel.startGame(it)
-                                    navController.navigate(Screen.Quiz.route + "/$it")
-
-                                }
-                            }
-
-                        )
-
-                        if (lobby.member == null) {
-                            PlayerContainer(
-                                user = null,
-                                isLoading = true,
-                            )
-                        } else {
-                            PlayerContainer(
-                                user = lobby.member,
-                                isReady = lobby.isMemberReady,
-                                isMember = true,
-                                currentUserStatus = viewModel.isCurrentUserMember(user),
-                                changeStatus = {
-                                    gameId?.let {
-                                        viewModel.changeUserReadinessStatus(
-                                            it,
-                                            user
-                                        )
-                                    }
-                                }
-                            )
                         }
+                    )
+
+                    VersusText(
+                        isFounder = viewModel.isCurrentUserFounder(user),
+                        isFounderReady = currentLobbyState.result.isFounderReady,
+                        isMemberReady = currentLobbyState.result.isMemberReady,
+                        playGame = {
+
+                            gameId.let {
+                                viewModel.startGame(it)
+                                navController.navigate(Screen.Quiz.route + "/$it")
+
+                            }
+                        }
+
+                    )
+
+                    if (lobby.member == null) {
+                        PlayerContainer(
+                            user = null,
+                            isLoading = true,
+                        )
+                    } else {
+                        PlayerContainer(
+                            user = lobby.member,
+                            isReady = lobby.isMemberReady,
+                            isMember = true,
+                            currentUserStatus = viewModel.isCurrentUserMember(user),
+                            changeStatus = {
+                                viewModel.changeUserReadinessStatus(
+                                    gameId,
+                                    user
+                                )
+                            }
+                        )
                     }
                 }
+            }
 
-                is CustomState.Failure -> {
-                    PlayerContainer(null, false, currentLobbyState.message)
+            is CustomState.Failure -> {
+                PlayerContainer(null, false, currentLobbyState.message)
 
-                    VersusText()
+                VersusText()
 
-                    PlayerContainer(null, false, currentLobbyState.message)
+                PlayerContainer(null, false, currentLobbyState.message)
 
-                }
+            }
 
-                CustomState.Loading -> {
-                    PlayerContainer(null, true)
+            CustomState.Loading -> {
+                PlayerContainer(null, true)
 
-                    VersusText()
+                VersusText()
 
-                    PlayerContainer(null, true)
+                PlayerContainer(null, true)
 
-                }
+            }
 
-                CustomState.Idle -> {
-                    PlayerContainer(null)
+            CustomState.Idle -> {
+                PlayerContainer(null)
 
-                    VersusText()
+                VersusText()
 
-                    PlayerContainer(null)
+                PlayerContainer(null)
 
-                }
             }
         }
     }
+}
 
 
 @Composable
@@ -333,11 +329,13 @@ fun PlayerContainer(
                                     text = "ready",
                                     style = Typography.titleSmall
                                 )
-                                if(isReady) Icon(modifier = Modifier.size(24.dp),
+                                if (isReady) Icon(
+                                    modifier = Modifier.size(24.dp),
                                     painter = painterResource(R.drawable.ready_checked),
                                     contentDescription = "Toggle icon"
                                 )
-                                else Icon(modifier = Modifier.size(24.dp),
+                                else Icon(
+                                    modifier = Modifier.size(24.dp),
                                     painter = painterResource(R.drawable.ready_unchecked),
                                     contentDescription = "Toggle icon"
                                 )
@@ -363,9 +361,11 @@ fun VersusText(
 ) {
     if (isFounder && (isFounderReady && isMemberReady)) {
         if (playGame != null) {
-            Button(modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 50.dp), onClick = playGame) {
+            Button(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 50.dp), onClick = playGame
+            ) {
                 Text(text = "PLAY", style = Typography.titleMedium)
             }
         }

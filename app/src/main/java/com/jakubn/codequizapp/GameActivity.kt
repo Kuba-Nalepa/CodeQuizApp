@@ -39,37 +39,41 @@ class GameActivity : ComponentActivity() {
         setContent {
             CodeQuizAppTheme {
                 val navController = rememberNavController()
-                if(user == null) {
-                    CodeQuizAppTheme {
-                        Box(
-                            modifier = Modifier.fillMaxSize()
-                        ) {
-                            Text("User data is empty")
-                        }
+                if (user == null) {
+                    Box(
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        Text("User data is empty")
                     }
                 } else {
-                    NavHost(navController = navController, startDestination = getStartDestination(action)) {
+                    NavHost(
+                        navController = navController,
+                        startDestination = getStartDestination(action)
+                    ) {
                         composable(Screen.CreateGame.route) {
-                            CreateGameScreen(user,navController)
+                            CreateGameScreen(user, navController)
                         }
                         composable(Screen.AvailableGameList.route) {
                             AvailableGameListScreen(user, navController)
                         }
                         composable(Screen.Lobby.route + "/{gameId}") { backStackEntry ->
 
-                            LobbyScreen(user, navController, gameId = backStackEntry.arguments?.getString("gameId"))
+                            backStackEntry.arguments?.getString("gameId")
+                                ?.let { LobbyScreen(user, navController, it) }
                         }
 
                         composable(Screen.Quiz.route + "/{gameId}") { backStackEntry ->
 
-                            QuizScreen(gameId = backStackEntry.arguments?.getString("gameId"))
+                            backStackEntry.arguments?.getString("gameId")
+                                ?.let { QuizScreen(it) }
                         }
                     }
                 }
             }
         }
     }
+
     private fun getStartDestination(action: String): String {
-        return if(action == "createGame") Screen.CreateGame.route else Screen.AvailableGameList.route
+        return if (action == "createGame") Screen.CreateGame.route else Screen.AvailableGameList.route
     }
 }
