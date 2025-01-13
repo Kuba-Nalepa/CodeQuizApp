@@ -4,7 +4,9 @@ import com.google.firebase.database.PropertyName
 
 data class Question(
     var id: Long? = null,
-    var question: String? = null,
+    @set:PropertyName("question")
+    @get:PropertyName("question")
+    var title: String? = null,
     var description: String = "",
     var answers: Answers? = null,
     @set:PropertyName("multiple_correct_answers")

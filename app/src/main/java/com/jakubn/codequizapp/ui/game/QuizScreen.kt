@@ -1,5 +1,7 @@
 package com.jakubn.codequizapp.ui.game
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -7,15 +9,22 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.paint
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -23,12 +32,27 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.jakubn.codequizapp.R
+import com.jakubn.codequizapp.domain.model.Answers
+import com.jakubn.codequizapp.domain.model.CustomState
+import com.jakubn.codequizapp.domain.model.Question
 import com.jakubn.codequizapp.theme.Typography
+import com.jakubn.codequizapp.ui.game.availableGames.QuizViewModel
 import kotlinx.coroutines.delay
+import kotlin.reflect.full.memberProperties
 
 @Composable
-fun QuizScreen(gameId: String) {
+fun QuizScreen(gameId: String, viewModel: QuizViewModel = hiltViewModel()) {
+    viewModel.getGameData(gameId)
+    val gameState by viewModel.state.collectAsState()
+    var isCounterFinished by remember { mutableStateOf(false) }
+    var selectedOption by remember { mutableStateOf<Int?>(null) }
+    var currentIndex by remember { mutableIntStateOf(0) }
+    var isQuizFinished by remember { mutableStateOf(false) }
+    val selectedAnswers = remember { mutableListOf<Int>() }
+
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -41,30 +65,156 @@ fun QuizScreen(gameId: String) {
 
         CodeQuizText()
 
-        Counter()
+        if (!isCounterFinished) {
+            Counter {
+                isCounterFinished = true
+            }
+        }
+
+        when (val currentGameState = gameState) {
+            is CustomState.Success -> {
+                val question = currentGameState.result?.questions?.get(currentIndex)
+
+                if(isQuizFinished) {
+                    // listening on other player finished quiz and displaying the results
+                }
+                else {
+                    if (question != null) {
+                        QuestionTemplate(
+                            question = question,
+                            selectedOption = selectedOption,
+                            onOptionSelected = { index ->
+                                selectedOption = index
+                            },
+                            onClick = {
+                                selectedOption?.let { selectedAnswers.add(it) }
+                                selectedOption = null
+
+                                if(currentIndex == currentGameState.result.questions?.lastIndex) isQuizFinished = true
+                                else currentIndex++
+
+                            }
+                        )
+                    }
+                }
+            }
+
+            is CustomState.Failure -> {
+                Box(modifier = Modifier.fillMaxSize()) {
+                    Text(currentGameState.message.toString(), style = Typography.titleLarge)
+                }
+            }
+
+            CustomState.Loading -> {
+                Box(modifier = Modifier.fillMaxSize()) {
+                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                }
+            }
+
+            CustomState.Idle -> {}
+        }
     }
 }
 
 @Composable
-fun Counter() {
-    var timeLeft by remember { mutableIntStateOf(5) }
+fun Counter(onTimerFinished: () -> Unit) {
+    var count by remember { mutableIntStateOf(5) }
     LaunchedEffect(Unit) {
-        while (timeLeft > 1) {
+        while (count > 0) {
             delay(1000L)
-            timeLeft -= 1
+            count--
         }
+
+        onTimerFinished()
 
     }
     Box(modifier = Modifier.fillMaxSize()) {
+        Text(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(top = 54.dp),
+            text = "Quiz starts in...",
+            textAlign = TextAlign.Center,
+            style = Typography.titleLarge,
+        )
+        Text(
+            modifier = Modifier.align(Alignment.Center),
+            text = count.toString(),
+            style = Typography.titleLarge,
+            fontSize = 88.sp
+        )
+    }
+}
+
+@Composable
+fun QuestionTemplate(
+    question: Question,
+    selectedOption: Int?,
+    onOptionSelected: (Int) -> Unit,
+    onClick: () -> Unit
+) {
+    Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.SpaceEvenly) {
+
+        question.title?.let {
             Text(
-                modifier = Modifier.align(Alignment.TopCenter).padding(top = 54.dp),
-                text = "Quiz starts in...",
+                text = it,
                 textAlign = TextAlign.Center,
-                style = Typography.titleLarge,
+                style = Typography.titleMedium,
+                color = Color.White
             )
-            Text(modifier = Modifier.align(Alignment.Center) ,text = timeLeft.toString(), style = Typography.titleLarge, fontSize = 88.sp)
+        }
 
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(20.dp))
+                .background(Color(0x80FFFFFF))
+                .padding(24.dp)
+        ) {
+            for ((index, prop) in Answers::class.memberProperties.withIndex()) {
+                val isSelected = index == selectedOption
+                val answer = question.answers?.let { prop.get(it) }
 
+                if (answer != null) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp)
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(
+                                color = if (isSelected)
+                                    Color(0x8000FF00)
+                                else Color(0x40FFFFFF)
+                            )
+                            .clickable { onOptionSelected(index) }
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+
+                        RadioButton(
+                            selected = isSelected,
+                            onClick = null // Click handled by parent
+                        )
+
+                        Text(
+                            text = answer.toString(),
+                            color = Color.Black,
+                            style = Typography.labelSmall
+                        )
+
+                    }
+                }
+            }
+        }
+
+        Button(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 50.dp),
+            enabled = selectedOption != null,
+            onClick = onClick
+        ) { Text("Submit") }
     }
 }
 
@@ -75,9 +225,8 @@ fun CodeQuizText() {
             modifier = Modifier
                 .padding(top = 20.dp),
             text = "<CODE/QUIZ>",
-            style = Typography.bodyMedium,
+            style = Typography.bodySmall,
             color = Color(0xff7BAFC4)
         )
     }
-
 }

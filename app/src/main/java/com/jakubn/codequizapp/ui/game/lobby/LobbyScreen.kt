@@ -86,8 +86,8 @@ fun LobbyScreen(
             override fun handleOnBackPressed() {
                 if (viewModel.isCurrentUserMember(user)) {
                     navController.popBackStack()
-                    viewModel.removeFromLobby(gameId, user)
                 }
+                viewModel.removeFromLobby(gameId, user)
             }
         }
 
