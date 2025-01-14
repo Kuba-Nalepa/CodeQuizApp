@@ -65,7 +65,12 @@ class GameActivity : ComponentActivity() {
                         composable(Screen.Quiz.route + "/{gameId}") { backStackEntry ->
 
                             backStackEntry.arguments?.getString("gameId")
-                                ?.let { QuizScreen(it) }
+                                ?.let { QuizScreen(navController, it) }
+                        }
+
+                        composable(Screen.GameOver.route + "/{gameId}") { backStackEntry ->
+                            backStackEntry.arguments?.getString("gameId")
+
                         }
                     }
                 }

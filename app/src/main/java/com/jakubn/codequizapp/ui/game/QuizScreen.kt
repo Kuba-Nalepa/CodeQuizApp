@@ -33,17 +33,23 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
 import com.jakubn.codequizapp.R
 import com.jakubn.codequizapp.domain.model.Answers
 import com.jakubn.codequizapp.domain.model.CustomState
 import com.jakubn.codequizapp.domain.model.Question
+import com.jakubn.codequizapp.navigation.Screen
 import com.jakubn.codequizapp.theme.Typography
 import com.jakubn.codequizapp.ui.game.availableGames.QuizViewModel
 import kotlinx.coroutines.delay
 import kotlin.reflect.full.memberProperties
 
 @Composable
-fun QuizScreen(gameId: String, viewModel: QuizViewModel = hiltViewModel()) {
+fun QuizScreen(
+    navController: NavController,
+    gameId: String,
+    viewModel: QuizViewModel = hiltViewModel()
+) {
     viewModel.getGameData(gameId)
     val gameState by viewModel.state.collectAsState()
     var isCounterFinished by remember { mutableStateOf(false) }
@@ -51,6 +57,11 @@ fun QuizScreen(gameId: String, viewModel: QuizViewModel = hiltViewModel()) {
     var currentIndex by remember { mutableIntStateOf(0) }
     var isQuizFinished by remember { mutableStateOf(false) }
     val selectedAnswers = remember { mutableListOf<Int>() }
+
+
+    LaunchedEffect(isQuizFinished) {
+        if (isQuizFinished) navController.navigate(Screen.GameOver.route + "/$gameId")
+    }
 
 
     Column(
@@ -75,28 +86,25 @@ fun QuizScreen(gameId: String, viewModel: QuizViewModel = hiltViewModel()) {
             is CustomState.Success -> {
                 val question = currentGameState.result?.questions?.get(currentIndex)
 
-                if(isQuizFinished) {
-                    // listening on other player finished quiz and displaying the results
-                }
-                else {
-                    if (question != null) {
-                        QuestionTemplate(
-                            question = question,
-                            selectedOption = selectedOption,
-                            onOptionSelected = { index ->
-                                selectedOption = index
-                            },
-                            onClick = {
-                                selectedOption?.let { selectedAnswers.add(it) }
-                                selectedOption = null
+                if (question != null) {
+                    QuestionTemplate(
+                        question = question,
+                        selectedOption = selectedOption,
+                        onOptionSelected = { index ->
+                            selectedOption = index
+                        },
+                        onClick = {
+                            selectedOption?.let { selectedAnswers.add(it) }
+                            selectedOption = null
 
-                                if(currentIndex == currentGameState.result.questions?.lastIndex) isQuizFinished = true
-                                else currentIndex++
+                            if (currentIndex == currentGameState.result.questions?.lastIndex) isQuizFinished =
+                                true
+                            else currentIndex++
 
-                            }
-                        )
-                    }
+                        }
+                    )
                 }
+
             }
 
             is CustomState.Failure -> {
