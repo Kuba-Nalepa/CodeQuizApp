@@ -59,8 +59,4 @@ class QuizViewModel @Inject constructor(
     fun setCounterFinished() = run { _isCounterFinished.value = true }
 
     fun setGameFinished() = run { _isGameFinished.value = true }
-
-    fun saveUserAnswers(answers: List<Int>) {
-        // saving user's answers
-    }
 }

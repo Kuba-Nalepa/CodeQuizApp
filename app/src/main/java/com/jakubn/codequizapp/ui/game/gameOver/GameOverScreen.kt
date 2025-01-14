@@ -12,7 +12,7 @@ import androidx.compose.ui.unit.dp
 import com.jakubn.codequizapp.R
 
 @Composable
-fun GameOverScreen(gameId: String) {
+fun GameOverScreen(gameId: String, selectedAnswers: List<Int>) {
 
     Column(
         modifier = Modifier
@@ -24,6 +24,6 @@ fun GameOverScreen(gameId: String) {
             .padding(horizontal = 24.dp)
     ) {
 
-    }
 
+    }
 }

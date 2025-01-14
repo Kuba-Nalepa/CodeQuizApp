@@ -19,8 +19,10 @@ import com.jakubn.codequizapp.theme.CodeQuizAppTheme
 import com.jakubn.codequizapp.ui.game.QuizScreen
 import com.jakubn.codequizapp.ui.game.availableGames.AvailableGameListScreen
 import com.jakubn.codequizapp.ui.game.createGame.CreateGameScreen
+import com.jakubn.codequizapp.ui.game.gameOver.GameOverScreen
 import com.jakubn.codequizapp.ui.game.lobby.LobbyScreen
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.serialization.json.Json
 
 @AndroidEntryPoint
 class GameActivity : ComponentActivity() {
@@ -68,8 +70,18 @@ class GameActivity : ComponentActivity() {
                                 ?.let { QuizScreen(navController, it) }
                         }
 
-                        composable(Screen.GameOver.route + "/{gameId}") { backStackEntry ->
-                            backStackEntry.arguments?.getString("gameId")
+                        composable(Screen.GameOver.route + "/{gameId}" + "/{selectedAnswers}") { backStackEntry ->
+                            val gameId = backStackEntry.arguments?.getString("gameId")
+                            val selectedAnswersJson = backStackEntry.arguments?.getString("selectedAnswers")
+                            val selectedAnswers: List<Int>? = selectedAnswersJson?.let {
+                                Json.decodeFromString(it)
+                            }
+                            gameId?.let { id ->
+                                selectedAnswers?.let { answers ->
+                                    GameOverScreen(id, answers)
+                                }
+                            }
+
 
                         }
                     }

@@ -41,6 +41,8 @@ import com.jakubn.codequizapp.domain.model.Question
 import com.jakubn.codequizapp.navigation.Screen
 import com.jakubn.codequizapp.theme.Typography
 import com.jakubn.codequizapp.ui.game.availableGames.QuizViewModel
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import kotlin.reflect.full.memberProperties
 
 @Composable
@@ -55,11 +57,14 @@ fun QuizScreen(
     val isCounterFinished by viewModel.isCounterFinished.collectAsState()
     var selectedOption by remember { mutableStateOf<Int?>(null) }
     var currentQuestionIndex by remember { mutableIntStateOf(0) }
-    val selectedAnswers = remember { mutableListOf<Int>() }
+    val selectedAnswers = remember { arrayListOf<Int>() }
 
 
     LaunchedEffect(isGameFinished) {
-        if (isGameFinished) navController.navigate(Screen.GameOver.route + "/$gameId")
+        if (isGameFinished) {
+            val selectedAnswersJson = Json.encodeToString(selectedAnswers)
+            navController.navigate(Screen.GameOver.route + "/$gameId" + "/$selectedAnswersJson")
+        }
     }
 
 
@@ -148,7 +153,6 @@ fun Counter(viewModel: QuizViewModel, onTimerFinished: () -> Unit) {
         )
     }
 }
-
 
 @Composable
 fun QuestionTemplate(
