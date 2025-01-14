@@ -41,7 +41,6 @@ import com.jakubn.codequizapp.domain.model.Question
 import com.jakubn.codequizapp.navigation.Screen
 import com.jakubn.codequizapp.theme.Typography
 import com.jakubn.codequizapp.ui.game.availableGames.QuizViewModel
-import kotlinx.coroutines.delay
 import kotlin.reflect.full.memberProperties
 
 @Composable
@@ -52,15 +51,15 @@ fun QuizScreen(
 ) {
     viewModel.getGameData(gameId)
     val gameState by viewModel.state.collectAsState()
-    var isCounterFinished by remember { mutableStateOf(false) }
+    val isGameFinished by viewModel.isGameFinished.collectAsState()
+    val isCounterFinished by viewModel.isCounterFinished.collectAsState()
     var selectedOption by remember { mutableStateOf<Int?>(null) }
-    var currentIndex by remember { mutableIntStateOf(0) }
-    var isQuizFinished by remember { mutableStateOf(false) }
+    var currentQuestionIndex by remember { mutableIntStateOf(0) }
     val selectedAnswers = remember { mutableListOf<Int>() }
 
 
-    LaunchedEffect(isQuizFinished) {
-        if (isQuizFinished) navController.navigate(Screen.GameOver.route + "/$gameId")
+    LaunchedEffect(isGameFinished) {
+        if (isGameFinished) navController.navigate(Screen.GameOver.route + "/$gameId")
     }
 
 
@@ -77,65 +76,61 @@ fun QuizScreen(
         CodeQuizText()
 
         if (!isCounterFinished) {
-            Counter {
-                isCounterFinished = true
-            }
+            Counter(viewModel, onTimerFinished = { viewModel.setCounterFinished() })
         }
+        else {
+            when (val currentGameState = gameState) {
+                is CustomState.Success -> {
+                    val question = currentGameState.result?.questions?.get(currentQuestionIndex)
 
-        when (val currentGameState = gameState) {
-            is CustomState.Success -> {
-                val question = currentGameState.result?.questions?.get(currentIndex)
+                    if (question != null) {
+                        QuestionTemplate(
+                            question = question,
+                            selectedOption = selectedOption,
+                            onOptionSelected = { index ->
+                                selectedOption = index
+                            },
+                            onClick = {
+                                selectedOption?.let { selectedAnswers.add(it) }
+                                selectedOption = null
 
-                if (question != null) {
-                    QuestionTemplate(
-                        question = question,
-                        selectedOption = selectedOption,
-                        onOptionSelected = { index ->
-                            selectedOption = index
-                        },
-                        onClick = {
-                            selectedOption?.let { selectedAnswers.add(it) }
-                            selectedOption = null
+                                if (currentQuestionIndex == currentGameState.result.questions?.lastIndex) {
+                                    viewModel.setGameFinished()
+                                }
+                                else currentQuestionIndex++
 
-                            if (currentIndex == currentGameState.result.questions?.lastIndex) isQuizFinished =
-                                true
-                            else currentIndex++
+                            }
+                        )
+                    }
 
-                        }
-                    )
                 }
 
-            }
-
-            is CustomState.Failure -> {
-                Box(modifier = Modifier.fillMaxSize()) {
-                    Text(currentGameState.message.toString(), style = Typography.titleLarge)
+                is CustomState.Failure -> {
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        Text(currentGameState.message.toString(), style = Typography.titleLarge)
+                    }
                 }
-            }
 
-            CustomState.Loading -> {
-                Box(modifier = Modifier.fillMaxSize()) {
-                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                CustomState.Loading -> {
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                    }
                 }
-            }
 
-            CustomState.Idle -> {}
+                CustomState.Idle -> {}
+            }
         }
     }
 }
 
 @Composable
-fun Counter(onTimerFinished: () -> Unit) {
-    var count by remember { mutableIntStateOf(5) }
+fun Counter(viewModel: QuizViewModel, onTimerFinished: () -> Unit) {
+    val count by viewModel.countDownValue.collectAsState()
+
     LaunchedEffect(Unit) {
-        while (count > 0) {
-            delay(1000L)
-            count--
-        }
-
-        onTimerFinished()
-
+        viewModel.startCountdown(onTimerFinished)
     }
+
     Box(modifier = Modifier.fillMaxSize()) {
         Text(
             modifier = Modifier
@@ -153,6 +148,7 @@ fun Counter(onTimerFinished: () -> Unit) {
         )
     }
 }
+
 
 @Composable
 fun QuestionTemplate(
