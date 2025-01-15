@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.RadioButton
@@ -82,32 +83,42 @@ fun QuizScreen(
 
         if (!isCounterFinished) {
             Counter(viewModel, onTimerFinished = { viewModel.setCounterFinished() })
-        }
-        else {
+        } else {
             when (val currentGameState = gameState) {
                 is CustomState.Success -> {
                     val question = currentGameState.result?.questions?.get(currentQuestionIndex)
 
                     if (question != null) {
-                        QuestionTemplate(
-                            question = question,
-                            selectedOption = selectedOption,
-                            onOptionSelected = { index ->
-                                selectedOption = index
-                            },
-                            onClick = {
-                                selectedOption?.let { selectedAnswers.add(it) }
-                                selectedOption = null
+                        currentGameState.result.questionDuration?.let {
+                            QuestionTemplate(
+                                question = question,
+                                selectedOption = selectedOption,
+                                onOptionSelected = { index ->
+                                    selectedOption = index
+                                },
+                                onClick = {
+                                    selectedOption?.let { selectedAnswers.add(it) }
+                                    selectedOption = null
 
-                                if (currentQuestionIndex == currentGameState.result.questions?.lastIndex) {
-                                    viewModel.setGameFinished()
+                                    if (currentQuestionIndex == currentGameState.result.questions?.lastIndex) {
+                                        viewModel.setGameFinished()
+                                    } else {
+                                        currentQuestionIndex++
+                                        viewModel.resetTimer()
+                                    }
+                                },
+                                duration = it,
+                                onTimeFinished = {
+                                    if (currentQuestionIndex == currentGameState.result.questions?.lastIndex) {
+                                        viewModel.setGameFinished()
+                                    } else {
+                                        currentQuestionIndex++
+                                        viewModel.resetTimer()
+                                    }
                                 }
-                                else currentQuestionIndex++
-
-                            }
-                        )
+                            )
+                        }
                     }
-
                 }
 
                 is CustomState.Failure -> {
@@ -159,9 +170,29 @@ fun QuestionTemplate(
     question: Question,
     selectedOption: Int?,
     onOptionSelected: (Int) -> Unit,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    duration: Int,
+    viewModel: QuizViewModel = hiltViewModel(),
+    onTimeFinished: () -> Unit,
 ) {
+    val timerProgress = viewModel.timerProgress.collectAsState()
+    val isTimeUp by viewModel.isTimeUp.collectAsState()
+
+    LaunchedEffect(question) {
+        viewModel.startTimer(duration)
+    }
+
+    if (isTimeUp) {
+        onTimeFinished()
+    }
+
     Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.SpaceEvenly) {
+        LinearProgressIndicator(
+            progress = { timerProgress.value },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp),
+        )
 
         question.title?.let {
             Text(
@@ -199,7 +230,6 @@ fun QuestionTemplate(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-
                         RadioButton(
                             selected = isSelected,
                             onClick = null // Click handled by parent
@@ -210,7 +240,6 @@ fun QuestionTemplate(
                             color = Color.Black,
                             style = Typography.labelSmall
                         )
-
                     }
                 }
             }
