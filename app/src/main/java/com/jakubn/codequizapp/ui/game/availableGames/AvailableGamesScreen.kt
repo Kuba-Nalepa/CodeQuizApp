@@ -31,7 +31,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -53,25 +52,9 @@ fun AvailableGameListScreen(
 ) {
     val gamesState by viewModel.state.collectAsState()
 
-    LaunchedEffect(gamesState) {
-        when (gamesState) {
-            is CustomState.Success -> {
-
-            }
-
-            is CustomState.Failure -> {
-
-            }
-
-            CustomState.Loading -> {
-            }
-
-            CustomState.Idle -> {
-                viewModel.getGamesList()
-            }
-        }
+    LaunchedEffect(Unit) {
+        viewModel.getGamesList()
     }
-
 
     Column(
         modifier = Modifier
@@ -83,33 +66,17 @@ fun AvailableGameListScreen(
     ) {
         when (val currentGamesState = gamesState) {
             is CustomState.Success -> {
-
                 SetGamesList(
-                    currentGamesState.result,
-                    errorMessage = null,
+                    games = currentGamesState.result,
                     onClick = { gameId ->
-
                         viewModel.addUserToLobby(gameId, user)
-                        navController.navigate(route = Screen.Lobby.route + "/$gameId")
-
-                    })
-
+                        navController.navigate(Screen.Lobby.route + "/$gameId")
+                    }
+                )
             }
-
-            is CustomState.Failure -> {
-                SetGamesList(null, errorMessage = currentGamesState.message, onClick = null)
-
-            }
-
-            CustomState.Loading -> {
-                SetGamesList(null, isLoading = true, errorMessage = null, onClick = null)
-
-            }
-
-            CustomState.Idle -> {
-                SetGamesList(null, errorMessage = null, onClick = null)
-
-            }
+            is CustomState.Failure -> ErrorState(currentGamesState.message)
+            CustomState.Loading -> LoadingState()
+            CustomState.Idle -> LoadingState()
         }
     }
 }
@@ -117,69 +84,67 @@ fun AvailableGameListScreen(
 @Composable
 fun SetGamesList(
     games: List<Game>?,
-    isLoading: Boolean = false,
-    errorMessage: String?,
     onClick: ((gameId: String) -> Unit)?
 ) {
-    when {
-        isLoading -> {
-            Column(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                CircularProgressIndicator()
-            }
-        }
-
-        !games.isNullOrEmpty() -> {
-            LazyColumn(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(8.dp), // Add spacing between items
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                items(games) { game ->
-                    GamesListItem(
-                        data = game,
-                        onClick = {
-                            game.gameId?.let { gameId ->
-                                onClick?.invoke(gameId)
-                            }
-                        }
-                    )
-                }
-            }
-        }
-        games.isNullOrEmpty() -> {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
-            ) {
-                Text(
-                    textAlign = TextAlign.Center,
-                    style = Typography.bodyMedium,
-                    text = "There are no available games right now",
-                    color = Color.White
+    if (games.isNullOrEmpty()) {
+        EmptyState()
+    } else {
+        LazyColumn(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            items(games) { game ->
+                GamesListItem(
+                    data = game,
+                    onClick = {
+                        game.gameId?.let { onClick?.invoke(it) }
+                    }
                 )
             }
         }
+    }
+}
 
-        else -> {
-            Row(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
-            ) {
-                errorMessage?.let {
-                    Text(text = it, color = Color.White)
-                }
-            }
-        }
+@Composable
+fun LoadingState() {
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        CircularProgressIndicator()
+    }
+}
+
+@Composable
+fun EmptyState() {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(
+            text = "There are no available games right now",
+            textAlign = TextAlign.Center,
+            style = Typography.bodyMedium,
+            color = Color.White
+        )
+    }
+}
+
+@Composable
+fun ErrorState(errorMessage: String?) {
+    Row(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center
+    ) {
+        Text(text = errorMessage ?: "Unknown error", color = Color.White)
     }
 }
 
@@ -191,140 +156,104 @@ fun GamesListItem(data: Game, onClick: () -> Unit) {
             .padding(vertical = 10.dp, horizontal = 20.dp)
             .border(1.dp, Color.Gray, RoundedCornerShape(20.dp))
             .clip(RoundedCornerShape(20.dp))
-            .clickable(true, onClick = onClick)
+            .clickable(onClick = onClick)
             .background(Color(0x80FFFFFF))
             .padding(horizontal = 20.dp, vertical = 10.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        FounderInfo(data)
+        GameDetails(data)
+    }
+}
 
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally
+@Composable
+fun FounderInfo(data: Game) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    AsyncImage(
-                        modifier = Modifier
-                            .size(50.dp)
-                            .shadow(5.dp, shape = CircleShape)
-                            .border(1.dp, Color.Black, CircleShape),
-                        model = ImageRequest.Builder(LocalContext.current)
-                            .data(data.lobby?.founder?.imageUri ?: R.drawable.sample_avatar)
-                            .crossfade(true)
-                            .build(),
-                        placeholder = painterResource(R.drawable.sample_avatar),
-                        contentDescription = stringResource(R.string.app_name),
-                        contentScale = ContentScale.Crop
-                    )
-                    data.lobby?.founder?.name?.let { Text(text = it) }
-                }
-
-                data.category?.let {
-                    Text(
-                        modifier = Modifier
-                            .border(1.dp, Color(0xFF006134), RoundedCornerShape(5.dp))
-                            .clip(RoundedCornerShape(5.dp))
-                            .background(color = MaterialTheme.colorScheme.primary)
-                            .padding(4.dp),
-                        text = it, style = Typography.labelMedium
-                    )
-                }
-            }
-
-
-            Column(
+            AsyncImage(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 10.dp)
-                    .border(1.dp, Color.Gray, RoundedCornerShape(15.dp))
-                    .clip(RoundedCornerShape(15.dp))
-                    .background(Color(0x4DFFFFFF))
-                    .padding(horizontal = 20.dp, vertical = 10.dp),
-                verticalArrangement = Arrangement.spacedBy(5.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
+                    .size(50.dp)
+                    .shadow(5.dp, CircleShape)
+                    .border(1.dp, Color.Black, CircleShape),
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(data.lobby?.founder?.imageUri ?: R.drawable.sample_avatar)
+                    .crossfade(true)
+                    .build(),
+                placeholder = painterResource(R.drawable.sample_avatar),
+                contentDescription = null,
+                contentScale = ContentScale.Crop
+            )
+            Text(text = data.lobby?.founder?.name ?: "Unknown")
+        }
 
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_players),
-                            contentDescription = "Question quantity"
-                        )
-                        Text(style = Typography.labelMedium, text = "players:")
-
-                    }
-
-                    Text(
-                        style = Typography.labelMedium,
-                        color = if (data.lobby?.member == null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
-                        text = if (data.lobby?.member == null) "1/2" else "2/2"
-                    )
-                }
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-
-                        Icon(
-                            painter = painterResource(R.drawable.ic_quantity),
-                            contentDescription = "Question quantity"
-                        )
-                        Text(style = Typography.labelMedium, text = "question quantity:")
-
-
-                    }
-                    Text(
-                        style = Typography.labelMedium,
-                        color = Color.Black,
-                        text = "${data.questions?.size}"
-                    )
-                }
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-
-                        Icon(
-                            painter = painterResource(R.drawable.ic_duration),
-                            contentDescription = "Question duration"
-                        )
-                        Text(style = Typography.labelMedium, text = "question duration:")
-
-
-                    }
-                    Text(
-                        style = Typography.labelMedium,
-                        color = Color.Black,
-                        text = "${data.questionDuration} s"
-                    )
-                }
-            }
+        data.category?.let {
+            Text(
+                modifier = Modifier
+                    .border(1.dp, Color(0xFF006134), RoundedCornerShape(5.dp))
+                    .clip(RoundedCornerShape(5.dp))
+                    .background(MaterialTheme.colorScheme.primary)
+                    .padding(4.dp),
+                text = it,
+                style = Typography.labelMedium
+            )
         }
     }
 }
+
+@Composable
+fun GameDetails(data: Game) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 10.dp)
+            .border(1.dp, Color.Gray, RoundedCornerShape(15.dp))
+            .clip(RoundedCornerShape(15.dp))
+            .background(Color(0x4DFFFFFF))
+            .padding(horizontal = 20.dp, vertical = 10.dp),
+        verticalArrangement = Arrangement.spacedBy(5.dp)
+    ) {
+        DetailRow(
+            iconRes = R.drawable.ic_players,
+            label = "Players:",
+            value = if (data.lobby?.member == null) "1/2" else "2/2",
+            valueColor = if (data.lobby?.member == null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+        )
+
+        DetailRow(
+            iconRes = R.drawable.ic_quantity,
+            label = "Question quantity:",
+            value = "${data.questions?.size}"
+        )
+
+        DetailRow(
+            iconRes = R.drawable.ic_duration,
+            label = "Question duration:",
+            value = "${data.questionDuration} s"
+        )
+    }
+}
+
+@Composable
+fun DetailRow(iconRes: Int, label: String, value: String, valueColor: Color = Color.Black) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Icon(painter = painterResource(iconRes), contentDescription = null)
+            Text(text = label, style = Typography.labelMedium)
+        }
+        Text(text = value, style = Typography.labelMedium, color = valueColor)
+    }
+}
+
