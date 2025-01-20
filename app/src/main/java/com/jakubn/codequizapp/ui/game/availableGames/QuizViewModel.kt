@@ -6,6 +6,7 @@ import com.jakubn.codequizapp.domain.model.CustomState
 import com.jakubn.codequizapp.domain.model.Game
 import com.jakubn.codequizapp.domain.usecases.GetGameDataUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -40,7 +41,7 @@ class QuizViewModel @Inject constructor(
     private var timerJob: Job? = null
 
     fun getGameData(gameId: String) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             getGameDataUseCase.getGameData(gameId)
                 .onStart {
                     _state.value = CustomState.Loading
@@ -55,7 +56,7 @@ class QuizViewModel @Inject constructor(
     }
 
     fun startCountdown(onTimerFinished: () -> Unit) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.Main) {
             while (_countDownValue.value > 0) {
                 delay(1000L)
                 _countDownValue.value -= 1
@@ -66,7 +67,7 @@ class QuizViewModel @Inject constructor(
     }
 
     fun startTimer(duration: Int) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.Main) {
             _isTimeUp.value = false
             _timerProgress.value = 0f
 

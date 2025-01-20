@@ -89,7 +89,7 @@ fun QuizScreen(
                     val question = currentGameState.result?.questions?.get(currentQuestionIndex)
 
                     if (question != null) {
-                        currentGameState.result.questionDuration?.let {
+                        currentGameState.result.questionDuration?.let { duration ->
                             QuestionTemplate(
                                 question = question,
                                 selectedOption = selectedOption,
@@ -97,7 +97,7 @@ fun QuizScreen(
                                     selectedOption = index
                                 },
                                 onClick = {
-                                    selectedOption?.let { selectedAnswers.add(it) }
+                                    selectedOption?.let { option -> selectedAnswers.add(option) }
                                     selectedOption = null
 
                                     if (currentQuestionIndex == currentGameState.result.questions?.lastIndex) {
@@ -107,8 +107,11 @@ fun QuizScreen(
                                         viewModel.resetTimer()
                                     }
                                 },
-                                duration = it,
+                                duration = duration,
                                 onTimeFinished = {
+                                    selectedOption?.let { option -> selectedAnswers.add(option) }
+                                    selectedOption = null
+
                                     if (currentQuestionIndex == currentGameState.result.questions?.lastIndex) {
                                         viewModel.setGameFinished()
                                     } else {
