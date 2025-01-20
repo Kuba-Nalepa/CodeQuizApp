@@ -33,7 +33,7 @@ class LobbyViewModel @Inject constructor(
     private val _lobby = MutableStateFlow<CustomState<Lobby?>>(CustomState.Idle)
     val lobby: StateFlow<CustomState<Lobby?>> = _lobby
 
-    fun getLobbyData(gameId: String) {
+    fun getGameData(gameId: String) {
         viewModelScope.launch {
             getGameDataUseCase.getGameData(gameId)
                 .onStart {

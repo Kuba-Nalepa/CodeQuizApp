@@ -77,8 +77,8 @@ class GameActivity : ComponentActivity() {
                                 Json.decodeFromString(it)
                             }
                             gameId?.let { id ->
-                                selectedAnswers?.let { answers ->
-                                    GameOverScreen(id, answers)
+                                selectedAnswers?.let { playerAnswers ->
+                                    GameOverScreen(id, playerAnswers, navController)
                                 }
                             }
 

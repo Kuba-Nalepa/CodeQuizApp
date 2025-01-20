@@ -76,7 +76,7 @@ fun LobbyScreen(
                 Toast.LENGTH_SHORT
             ).show()
 
-            CustomState.Idle -> viewModel.getLobbyData(gameId)
+            CustomState.Idle -> viewModel.getGameData(gameId)
             CustomState.Loading -> {}
         }
     }
