@@ -88,8 +88,11 @@ data class Lobby(
     @get:PropertyName("isFounderReady")
     @set:PropertyName("isFounderReady")
     var isFounderReady: Boolean = false,
+    var founderPoints: Int = 0,
     var member: User? = null,
     @get:PropertyName("isMemberReady")
     @set:PropertyName("isMemberReady")
-    var isMemberReady: Boolean = false
+    var isMemberReady: Boolean = false,
+    var memberPoints: Int = 0,
+
 )

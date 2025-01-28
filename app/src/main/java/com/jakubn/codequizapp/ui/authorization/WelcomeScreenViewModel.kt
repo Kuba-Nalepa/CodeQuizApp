@@ -1,7 +1,7 @@
 package com.jakubn.codequizapp.ui.authorization
 
 import androidx.lifecycle.ViewModel
-import com.jakubn.codequizapp.domain.usecases.GetCurrentUserUseCase
+import com.jakubn.codequizapp.domain.usecases.user.GetCurrentUserUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 

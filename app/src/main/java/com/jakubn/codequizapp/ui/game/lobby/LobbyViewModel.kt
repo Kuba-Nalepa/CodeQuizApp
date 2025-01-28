@@ -6,11 +6,11 @@ import com.jakubn.codequizapp.domain.model.CustomState
 import com.jakubn.codequizapp.domain.model.Game
 import com.jakubn.codequizapp.domain.model.Lobby
 import com.jakubn.codequizapp.domain.model.User
-import com.jakubn.codequizapp.domain.usecases.ChangeUserReadinessStatusUseCase
-import com.jakubn.codequizapp.domain.usecases.DeleteLobbyUseCase
-import com.jakubn.codequizapp.domain.usecases.GetGameDataUseCase
-import com.jakubn.codequizapp.domain.usecases.RemoveMemberFromLobbyUseCase
-import com.jakubn.codequizapp.domain.usecases.StartGameUseCase
+import com.jakubn.codequizapp.domain.usecases.game.ChangeUserReadinessStatusUseCase
+import com.jakubn.codequizapp.domain.usecases.game.DeleteLobbyUseCase
+import com.jakubn.codequizapp.domain.usecases.game.GetGameDataUseCase
+import com.jakubn.codequizapp.domain.usecases.game.RemoveMemberFromLobbyUseCase
+import com.jakubn.codequizapp.domain.usecases.game.StartGameUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

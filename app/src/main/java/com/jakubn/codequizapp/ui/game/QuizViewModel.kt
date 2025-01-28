@@ -1,10 +1,15 @@
-package com.jakubn.codequizapp.ui.game.availableGames
+package com.jakubn.codequizapp.ui.game
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.jakubn.codequizapp.domain.model.CorrectAnswers
 import com.jakubn.codequizapp.domain.model.CustomState
 import com.jakubn.codequizapp.domain.model.Game
-import com.jakubn.codequizapp.domain.usecases.GetGameDataUseCase
+import com.jakubn.codequizapp.domain.model.Lobby
+import com.jakubn.codequizapp.domain.model.Question
+import com.jakubn.codequizapp.domain.model.User
+import com.jakubn.codequizapp.domain.usecases.game.GetGameDataUseCase
+import com.jakubn.codequizapp.domain.usecases.game.SaveUserGamePointsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -15,10 +20,12 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import kotlin.reflect.full.memberProperties
 
 @HiltViewModel
 class QuizViewModel @Inject constructor(
-    private val getGameDataUseCase: GetGameDataUseCase
+    private val getGameDataUseCase: GetGameDataUseCase,
+    private val saveUserGamePointsUseCase: SaveUserGamePointsUseCase
 ) : ViewModel() {
     private val _state = MutableStateFlow<CustomState<Game?>>(CustomState.Idle)
     val state: StateFlow<CustomState<Game?>> = _state
@@ -52,6 +59,27 @@ class QuizViewModel @Inject constructor(
                 .collect { game ->
                     _state.value = CustomState.Success(game)
                 }
+        }
+    }
+
+    fun calculatePoints(questionList: List<Question>, playersAnswers: List<Int>): Int {
+        var sum = 0
+        questionList.forEachIndexed { index, question ->
+            val answer = playersAnswers[index]
+            if(answer == -1) return@forEachIndexed
+            val string = question.correctAnswers?.let { CorrectAnswers::class.memberProperties.toList()[answer].get(it) } as String
+
+            if(string == "true") {
+                sum += 10
+            }
+        }
+
+        return sum
+    }
+
+    fun saveUserGamePoints(gameId: String, lobby: Lobby, user: User, points: Int) {
+        viewModelScope.launch(Dispatchers.IO) {
+            saveUserGamePointsUseCase.saveUserGamePoints(gameId, lobby, user, points)
         }
     }
 

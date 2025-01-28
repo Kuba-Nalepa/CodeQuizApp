@@ -22,7 +22,6 @@ import com.jakubn.codequizapp.ui.game.createGame.CreateGameScreen
 import com.jakubn.codequizapp.ui.game.gameOver.GameOverScreen
 import com.jakubn.codequizapp.ui.game.lobby.LobbyScreen
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.serialization.json.Json
 
 @AndroidEntryPoint
 class GameActivity : ComponentActivity() {
@@ -67,30 +66,22 @@ class GameActivity : ComponentActivity() {
                         composable(Screen.Quiz.route + "/{gameId}") { backStackEntry ->
 
                             backStackEntry.arguments?.getString("gameId")
-                                ?.let { QuizScreen(navController, it) }
+                                ?.let { QuizScreen(user, navController, it) }
                         }
 
-                        composable(Screen.GameOver.route + "/{gameId}" + "/{selectedAnswers}") { backStackEntry ->
+                        composable(Screen.GameOver.route + "/{gameId}") { backStackEntry ->
                             val gameId = backStackEntry.arguments?.getString("gameId")
-                            val selectedAnswersJson = backStackEntry.arguments?.getString("selectedAnswers")
-                            val selectedAnswers: List<Int>? = selectedAnswersJson?.let {
-                                Json.decodeFromString(it)
-                            }
                             gameId?.let { id ->
-                                selectedAnswers?.let { playerAnswers ->
-                                    GameOverScreen(id, playerAnswers, navController)
-                                }
+                                GameOverScreen(id, navController)
                             }
-
-
                         }
                     }
                 }
             }
         }
     }
+}
 
-    private fun getStartDestination(action: String): String {
-        return if (action == "createGame") Screen.CreateGame.route else Screen.AvailableGameList.route
-    }
+private fun getStartDestination(action: String): String {
+    return if (action == "createGame") Screen.CreateGame.route else Screen.AvailableGameList.route
 }

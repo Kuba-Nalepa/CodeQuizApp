@@ -1,4 +1,4 @@
-package com.jakubn.codequizapp.domain.usecases
+package com.jakubn.codequizapp.domain.usecases.game
 
 import com.jakubn.codequizapp.domain.model.User
 import com.jakubn.codequizapp.data.repositoryImpl.GameRepositoryImpl

@@ -2,7 +2,7 @@ package com.jakubn.codequizapp.data
 
 import com.jakubn.codequizapp.domain.model.CustomState
 import com.jakubn.codequizapp.domain.model.User
-import com.jakubn.codequizapp.domain.usecases.GetUserDataUseCase
+import com.jakubn.codequizapp.domain.usecases.user.GetUserDataUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch

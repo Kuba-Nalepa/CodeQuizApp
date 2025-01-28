@@ -31,15 +31,14 @@ import com.jakubn.codequizapp.theme.Typography
 import kotlin.reflect.full.memberProperties
 
 @Composable
-fun GameOverScreen(gameId: String, playerAnswers: List<Int>, navController: NavController, viewModel: GameOverViewModel = hiltViewModel()) {
+fun GameOverScreen(gameId: String, navController: NavController, viewModel: GameOverViewModel = hiltViewModel()) {
     val gameState by viewModel.state.collectAsState()
     val context = LocalContext.current
-    var userPoints by remember { mutableIntStateOf(0) }
 
     LaunchedEffect(gameState) {
         when(val currentState = gameState) {
             is CustomState.Success -> {
-                currentState.result?.questions?.let { userPoints = calculatePoints(it, playerAnswers) }
+
             }
 
             is CustomState.Failure -> Toast.makeText(
@@ -67,21 +66,6 @@ fun GameOverScreen(gameId: String, playerAnswers: List<Int>, navController: NavC
 
 
     }
-}
-
-private fun calculatePoints(questionList: List<Question>, playersAnswers: List<Int>): Int {
-    var sum = 0
-    questionList.forEachIndexed { index, question ->
-        val answer = playersAnswers[index]
-        val string = question.correctAnswers?.let { CorrectAnswers::class.memberProperties.toList()[answer].get(it) } as String
-
-        if(string == "true") {
-            sum += 10
-        }
-
-    }
-
-        return sum
 }
 
 @Composable

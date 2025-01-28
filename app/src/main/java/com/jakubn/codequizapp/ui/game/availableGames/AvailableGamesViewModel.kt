@@ -5,8 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.jakubn.codequizapp.domain.model.CustomState
 import com.jakubn.codequizapp.domain.model.Game
 import com.jakubn.codequizapp.domain.model.User
-import com.jakubn.codequizapp.domain.usecases.AddUserToLobbyUseCase
-import com.jakubn.codequizapp.domain.usecases.GetGamesListUseCase
+import com.jakubn.codequizapp.domain.usecases.game.AddUserToLobbyUseCase
+import com.jakubn.codequizapp.domain.usecases.game.GetGamesListUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

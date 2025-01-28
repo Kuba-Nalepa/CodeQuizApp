@@ -1,5 +1,6 @@
 package com.jakubn.codequizapp.ui.game
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -22,6 +23,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -29,6 +31,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.paint
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -39,65 +42,69 @@ import com.jakubn.codequizapp.R
 import com.jakubn.codequizapp.domain.model.Answers
 import com.jakubn.codequizapp.domain.model.CustomState
 import com.jakubn.codequizapp.domain.model.Question
+import com.jakubn.codequizapp.domain.model.User
 import com.jakubn.codequizapp.navigation.Screen
 import com.jakubn.codequizapp.theme.Typography
-import com.jakubn.codequizapp.ui.game.availableGames.QuizViewModel
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
 import kotlin.reflect.full.memberProperties
 
 @Composable
 fun QuizScreen(
+    user: User,
     navController: NavController,
     gameId: String,
     viewModel: QuizViewModel = hiltViewModel()
 ) {
     viewModel.getGameData(gameId)
+    val context = LocalContext.current
     val gameState by viewModel.state.collectAsState()
     val isGameFinished by viewModel.isGameFinished.collectAsState()
     val isCounterFinished by viewModel.isCounterFinished.collectAsState()
+
     var selectedOption by remember { mutableStateOf<Int?>(null) }
     var currentQuestionIndex by remember { mutableIntStateOf(0) }
     val selectedAnswers = remember { arrayListOf<Int>() }
 
+    val gameStateSnapshot by rememberUpdatedState(gameState)
 
     LaunchedEffect(isGameFinished) {
         if (isGameFinished) {
-            val selectedAnswersJson = Json.encodeToString(selectedAnswers)
-            navController.navigate(Screen.GameOver.route + "/$gameId" + "/$selectedAnswersJson")
+            when (val currentState = gameStateSnapshot) {
+                is CustomState.Success -> {
+                    currentState.result?.questions?.let { questions ->
+                        val points = viewModel.calculatePoints(questions, selectedAnswers)
+                        currentState.result.lobby?.let { lobby ->
+                            viewModel.saveUserGamePoints(gameId, lobby, user, points)
+                        }
+                    }
+                    navController.navigate(Screen.GameOver.route + "/$gameId")
+                }
+                is CustomState.Failure -> Toast.makeText(context, currentState.message, Toast.LENGTH_SHORT).show()
+                else -> {}
+            }
         }
     }
-
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .paint(
-                painterResource(R.drawable.background_auth),
-                contentScale = ContentScale.FillBounds
-            )
+            .paint(painterResource(R.drawable.background_auth), contentScale = ContentScale.FillBounds)
             .padding(horizontal = 24.dp)
     ) {
-
         CodeQuizText()
 
         if (!isCounterFinished) {
-            Counter(viewModel, onTimerFinished = { viewModel.setCounterFinished() })
+            Counter(viewModel) { viewModel.setCounterFinished() }
         } else {
             when (val currentGameState = gameState) {
                 is CustomState.Success -> {
-                    val question = currentGameState.result?.questions?.get(currentQuestionIndex)
-
-                    if (question != null) {
+                    currentGameState.result?.questions?.getOrNull(currentQuestionIndex)?.let { question ->
                         currentGameState.result.questionDuration?.let { duration ->
                             QuestionTemplate(
                                 question = question,
                                 selectedOption = selectedOption,
-                                onOptionSelected = { index ->
-                                    selectedOption = index
-                                },
+                                onOptionSelected = { index -> selectedOption = index },
                                 onClick = {
-                                    selectedOption?.let { option -> selectedAnswers.add(option) }
+                                    selectedOption?.let { selectedAnswers.add(it) }
                                     selectedOption = null
 
                                     if (currentQuestionIndex == currentGameState.result.questions?.lastIndex) {
@@ -109,7 +116,7 @@ fun QuizScreen(
                                 },
                                 duration = duration,
                                 onTimeFinished = {
-                                    selectedOption?.let { option -> selectedAnswers.add(option) }
+                                    selectedAnswers.add(selectedOption ?: -1)
                                     selectedOption = null
 
                                     if (currentQuestionIndex == currentGameState.result.questions?.lastIndex) {
@@ -124,21 +131,25 @@ fun QuizScreen(
                     }
                 }
 
-                is CustomState.Failure -> {
-                    Box(modifier = Modifier.fillMaxSize()) {
-                        Text(currentGameState.message.toString(), style = Typography.titleLarge)
-                    }
-                }
-
-                CustomState.Loading -> {
-                    Box(modifier = Modifier.fillMaxSize()) {
-                        CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-                    }
-                }
-
+                is CustomState.Failure -> ErrorScreen(currentGameState.message.toString())
+                CustomState.Loading -> LoadingScreen()
                 CustomState.Idle -> {}
             }
         }
+    }
+}
+
+@Composable
+fun ErrorScreen(errorMessage: String) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        Text(errorMessage, style = Typography.titleLarge)
+    }
+}
+
+@Composable
+fun LoadingScreen() {
+    Box(modifier = Modifier.fillMaxSize()) {
+        CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
     }
 }
 
@@ -152,9 +163,7 @@ fun Counter(viewModel: QuizViewModel, onTimerFinished: () -> Unit) {
 
     Box(modifier = Modifier.fillMaxSize()) {
         Text(
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .padding(top = 54.dp),
+            modifier = Modifier.align(Alignment.TopCenter).padding(top = 54.dp),
             text = "Quiz starts in...",
             textAlign = TextAlign.Center,
             style = Typography.titleLarge,

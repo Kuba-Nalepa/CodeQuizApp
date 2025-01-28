@@ -1,4 +1,4 @@
-package com.jakubn.codequizapp.domain.usecases
+package com.jakubn.codequizapp.domain.usecases.user
 
 import com.jakubn.codequizapp.data.repositoryImpl.UserDataRepositoryImpl
 import javax.inject.Inject
