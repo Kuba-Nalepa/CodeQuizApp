@@ -166,4 +166,20 @@ class GameRepositoryImpl @Inject constructor(
                 .updateChildren(hashMapOf<String, Any>(it to points)).await()
         }
     }
+
+    override suspend fun setUserFinishedGame(gameId: String, lobby: Lobby, user: User, hasFinished: Boolean) {
+
+        val userFinishedKey = when (user.uid) {
+            lobby.founder?.uid -> "hasFounderFinishedGame"
+            lobby.member?.uid -> "hasMemberFinishedGame"
+            else -> null
+        }
+
+        userFinishedKey?.let {
+            firebaseDatabase.reference.child("games")
+                .child(gameId)
+                .child("lobby")
+                .updateChildren(hashMapOf<String, Any>(it to hasFinished)).await()
+        }
+    }
 }

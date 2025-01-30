@@ -26,4 +26,6 @@ interface GameRepository {
 
     suspend fun saveUserGamePoints(gameId: String, lobby: Lobby, user: User, points: Int)
 
+    suspend fun setUserFinishedGame(gameId: String, lobby: Lobby, user: User, hasFinished: Boolean)
+
 }

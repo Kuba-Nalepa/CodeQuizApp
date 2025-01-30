@@ -74,6 +74,7 @@ fun QuizScreen(
                         val points = viewModel.calculatePoints(questions, selectedAnswers)
                         currentState.result.lobby?.let { lobby ->
                             viewModel.saveUserGamePoints(gameId, lobby, user, points)
+                            viewModel.setUserFinishedGame(gameId, lobby, user, true)
                         }
                     }
                     navController.navigate(Screen.GameOver.route + "/$gameId")

@@ -10,6 +10,7 @@ import com.jakubn.codequizapp.domain.model.Question
 import com.jakubn.codequizapp.domain.model.User
 import com.jakubn.codequizapp.domain.usecases.game.GetGameDataUseCase
 import com.jakubn.codequizapp.domain.usecases.game.SaveUserGamePointsUseCase
+import com.jakubn.codequizapp.domain.usecases.game.SetUserFinishedGameUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -25,7 +26,8 @@ import kotlin.reflect.full.memberProperties
 @HiltViewModel
 class QuizViewModel @Inject constructor(
     private val getGameDataUseCase: GetGameDataUseCase,
-    private val saveUserGamePointsUseCase: SaveUserGamePointsUseCase
+    private val saveUserGamePointsUseCase: SaveUserGamePointsUseCase,
+    private val setUserFinishedGameUseCase: SetUserFinishedGameUseCase
 ) : ViewModel() {
     private val _state = MutableStateFlow<CustomState<Game?>>(CustomState.Idle)
     val state: StateFlow<CustomState<Game?>> = _state
@@ -120,4 +122,10 @@ class QuizViewModel @Inject constructor(
     fun setCounterFinished() = run { _isCounterFinished.value = true }
 
     fun setGameFinished() = run { _isGameFinished.value = true }
+
+    fun setUserFinishedGame(gameId: String, lobby: Lobby, user: User, hasFinished: Boolean) {
+        viewModelScope.launch {
+            setUserFinishedGameUseCase.setUserFinishedGame.invoke(gameId, lobby, user, hasFinished)
+        }
+    }
 }
