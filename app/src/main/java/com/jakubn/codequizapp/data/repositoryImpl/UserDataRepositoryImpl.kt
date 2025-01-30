@@ -11,6 +11,8 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
+import java.math.BigDecimal
+import java.math.RoundingMode
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -33,34 +35,42 @@ class UserDataRepositoryImpl @Inject constructor(
         }.flowOn(Dispatchers.IO)
     }
 
-    override suspend fun updateUserData(score: Int, hasUserWon: Boolean) {
+    override suspend fun updateUserData(user: User, score: Int, hasCurrentUserWon: Boolean) {
         withContext(Dispatchers.IO) {
-            val currentUser = firebaseAuth.currentUser
-            currentUser?.uid?.let { userId ->
-                if (hasUserWon) {
-                    val userDocRef = firebaseFirestore.collection("users").document(userId)
 
-                    val documentSnapshot = userDocRef.get().await()
-                    val currentWins = documentSnapshot.getLong("wins") ?: 0
-                    val currentGamesPlayed = documentSnapshot.getLong("gamesPlayed") ?: 0
+            val userId = user.uid ?: throw Exception("User not authenticated")
+            val userDocRef = firebaseFirestore.collection("users").document(userId)
 
-                    val updatedWins = currentWins + 1
-                    val updatedGamesPlayed = currentGamesPlayed + 1
-                    val winRatio = if (updatedGamesPlayed > 0) {
-                        updatedWins.toDouble() / updatedGamesPlayed.toDouble()
-                    } else {
-                        0.0
-                    }
+            try {
+                val document = userDocRef.get().await()
+                if (!document.exists()) throw Exception("User document not found")
 
-                    userDocRef.update(
-                        "score", FieldValue.increment(score.toDouble()),
-                        "gamesPlayed", FieldValue.increment(1),
-                        "wins", FieldValue.increment(1),
-                        "winRatio", winRatio
-                    ).await()
+                val currentWins = document.getLong("wins") ?: 0L
+                val currentGamesPlayed = document.getLong("gamesPlayed") ?: 0L
+
+                val winsIncrement = if (hasCurrentUserWon) 1L else 0L
+                val updatedWins = currentWins + winsIncrement
+                val updatedGamesPlayed = currentGamesPlayed + 1L
+
+                val winRatio = when {
+                    updatedGamesPlayed == 0L -> 0.000
+                    else -> BigDecimal(updatedWins.toDouble() / updatedGamesPlayed.toDouble())
+                        .setScale(3, RoundingMode.HALF_UP)
+                        .toDouble()
                 }
-            } ?: throw Exception("Failed updating users data")
+
+                val updates = mapOf(
+                    "score" to FieldValue.increment(score.toLong()),
+                    "gamesPlayed" to FieldValue.increment(1L),
+                    "wins" to FieldValue.increment(winsIncrement),
+                    "winRatio" to winRatio
+                )
+
+                userDocRef.update(updates).await()
+
+            } catch (e: Exception) {
+                throw Exception("Failed to update user data: ${e.message}")
+            }
         }
     }
-
 }

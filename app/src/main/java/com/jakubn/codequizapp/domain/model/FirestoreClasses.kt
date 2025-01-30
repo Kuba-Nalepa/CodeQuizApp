@@ -74,9 +74,7 @@ data class Tag(
 
 data class Game(
     var gameId: String? = null,
-    @get:PropertyName("isGameStarted")
-    @set:PropertyName("isGameStarted")
-    var isGameStarted: Boolean = false,
+    var gameInProgress: Boolean = false,
     var category: String? = null,
     var questions: List<Question>? = null,
     var lobby: Lobby? = null,

@@ -8,7 +8,7 @@ interface UserDataRepository {
 
     suspend fun getUserData(): Flow<User>
 
-    suspend fun updateUserData(score: Int, hasUserWon: Boolean)
+    suspend fun updateUserData(user: User, score: Int, hasCurrentUserWon: Boolean)
 
 
 }

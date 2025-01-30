@@ -57,9 +57,9 @@ class GameRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun startGame(gameId: String) {
+    override suspend fun manageGameState(gameId: String, state: Boolean) {
         firebaseDatabase.getReference("games").child(gameId).updateChildren(
-            hashMapOf<String, Any>("isGameStarted" to true))
+            hashMapOf<String, Any>("gameInProgress" to state))
     }
 
     override suspend fun getGameData(gameId: String): Flow<Game?> {

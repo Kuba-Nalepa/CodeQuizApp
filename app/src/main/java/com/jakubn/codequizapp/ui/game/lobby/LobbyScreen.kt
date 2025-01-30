@@ -67,7 +67,7 @@ fun LobbyScreen(
         when (val currentState = gameState) {
             is CustomState.Success -> {
                 if (currentState.result == null) navController.popBackStack()
-                else if (currentState.result.isGameStarted) navController.navigate(Screen.Quiz.route + "/$gameId")
+                else if (currentState.result.gameInProgress) navController.navigate(Screen.Quiz.route + "/$gameId")
             }
 
             is CustomState.Failure -> Toast.makeText(
@@ -140,7 +140,7 @@ fun LobbyScreen(
                         playGame = {
 
                             gameId.let {
-                                viewModel.startGame(it)
+                                viewModel.startGame(it, true)
                                 navController.navigate(Screen.Quiz.route + "/$it")
 
                             }

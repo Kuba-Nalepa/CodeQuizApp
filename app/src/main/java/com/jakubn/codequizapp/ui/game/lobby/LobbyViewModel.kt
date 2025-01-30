@@ -9,8 +9,9 @@ import com.jakubn.codequizapp.domain.model.User
 import com.jakubn.codequizapp.domain.usecases.game.ChangeUserReadinessStatusUseCase
 import com.jakubn.codequizapp.domain.usecases.game.DeleteLobbyUseCase
 import com.jakubn.codequizapp.domain.usecases.game.GetGameDataUseCase
+import com.jakubn.codequizapp.domain.usecases.game.ManageGameStateUseCase
 import com.jakubn.codequizapp.domain.usecases.game.RemoveMemberFromLobbyUseCase
-import com.jakubn.codequizapp.domain.usecases.game.StartGameUseCase
+//import com.jakubn.codequizapp.domain.usecases.game.StartGameUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -25,7 +26,8 @@ class LobbyViewModel @Inject constructor(
     private val removeUserFromLobbyUseCase: RemoveMemberFromLobbyUseCase,
     private val deleteLobbyUseCase: DeleteLobbyUseCase,
     private val changeUserReadinessStatusUseCase: ChangeUserReadinessStatusUseCase,
-    private val startGameUseCase: StartGameUseCase
+//    private val startGameUseCase: StartGameUseCase,
+    private val manageGameStateUseCase: ManageGameStateUseCase
 ) : ViewModel() {
     private val _state = MutableStateFlow<CustomState<Game?>>(CustomState.Idle)
     val state: StateFlow<CustomState<Game?>> = _state
@@ -80,14 +82,15 @@ class LobbyViewModel @Inject constructor(
         }
     }
 
-    fun startGame(gameId: String) {
+    fun startGame(gameId: String, state: Boolean) {
         val gameState = _state.value
 
         viewModelScope.launch {
-            startGameUseCase.startGame.invoke(gameId)
+            manageGameStateUseCase.manageGameState.invoke(gameId, state)
+//            startGameUseCase.startGame.invoke(gameId)
 
             if(gameState is CustomState.Success && gameState.result != null) {
-                gameState.result.isGameStarted = true
+                gameState.result.gameInProgress = true
             }
         }
     }
