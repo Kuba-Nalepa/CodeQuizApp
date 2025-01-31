@@ -140,7 +140,7 @@ fun LobbyScreen(
                         playGame = {
 
                             gameId.let {
-                                viewModel.startGame(it, true)
+                                viewModel.startGame(it)
                                 navController.navigate(Screen.Quiz.route + "/$it")
 
                             }

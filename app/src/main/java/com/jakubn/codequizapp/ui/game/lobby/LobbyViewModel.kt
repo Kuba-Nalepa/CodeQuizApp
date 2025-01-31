@@ -11,7 +11,6 @@ import com.jakubn.codequizapp.domain.usecases.game.DeleteLobbyUseCase
 import com.jakubn.codequizapp.domain.usecases.game.GetGameDataUseCase
 import com.jakubn.codequizapp.domain.usecases.game.ManageGameStateUseCase
 import com.jakubn.codequizapp.domain.usecases.game.RemoveMemberFromLobbyUseCase
-//import com.jakubn.codequizapp.domain.usecases.game.StartGameUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -26,9 +25,9 @@ class LobbyViewModel @Inject constructor(
     private val removeUserFromLobbyUseCase: RemoveMemberFromLobbyUseCase,
     private val deleteLobbyUseCase: DeleteLobbyUseCase,
     private val changeUserReadinessStatusUseCase: ChangeUserReadinessStatusUseCase,
-//    private val startGameUseCase: StartGameUseCase,
     private val manageGameStateUseCase: ManageGameStateUseCase
 ) : ViewModel() {
+
     private val _state = MutableStateFlow<CustomState<Game?>>(CustomState.Idle)
     val state: StateFlow<CustomState<Game?>> = _state
 
@@ -38,12 +37,8 @@ class LobbyViewModel @Inject constructor(
     fun getGameData(gameId: String) {
         viewModelScope.launch {
             getGameDataUseCase.getGameData(gameId)
-                .onStart {
-                    _state.value = CustomState.Loading
-                }
-                .catch { throwable ->
-                    _state.value = CustomState.Failure(throwable.message)
-                }
+                .onStart { _state.value = CustomState.Loading }
+                .catch { e -> _state.value = CustomState.Failure(e.message) }
                 .collect { game ->
                     _lobby.value = CustomState.Success(game?.lobby)
                     _state.value = CustomState.Success(game)
@@ -52,79 +47,55 @@ class LobbyViewModel @Inject constructor(
     }
 
     fun removeFromLobby(gameId: String, user: User) {
-        if (isCurrentUserFounder(user)) deleteLobby(gameId) else removeMemberFromLobby(gameId)
+        viewModelScope.launch {
+            if (isCurrentUserFounder(user)) {
+                deleteLobbyUseCase.deleteLobby(gameId)
+            } else {
+                removeUserFromLobbyUseCase.removeMemberFromLobby(gameId)
+            }
+        }
     }
 
     fun changeUserReadinessStatus(gameId: String, user: User) {
         viewModelScope.launch {
-            val lobbyState = _lobby.value
+            when (val lobbyState = _lobby.value) {
+                is CustomState.Success -> lobbyState.result?.let { lobby ->
+                    val newStatus = when (user.uid) {
+                        lobby.founder?.uid -> !lobby.isFounderReady
+                        lobby.member?.uid -> !lobby.isMemberReady
+                        else -> return@launch
+                    }
 
-            if (lobbyState !is CustomState.Success || lobbyState.result == null) {
-                return@launch
+                    changeUserReadinessStatusUseCase.changeUserReadinessStatus(
+                        gameId, lobby, user, newStatus
+                    )
+
+                    _lobby.value = CustomState.Success(
+                        lobby.copy(
+                            isFounderReady = if (user.uid == lobby.founder?.uid) newStatus else lobby.isFounderReady,
+                            isMemberReady = if (user.uid == lobby.member?.uid) newStatus else lobby.isMemberReady
+                        )
+                    )
+                }
+                else -> Unit
             }
-
-            val lobbyData = lobbyState.result
-
-            val newStatus = when (user.uid) {
-                lobbyData.founder?.uid -> !lobbyData.isFounderReady
-                lobbyData.member?.uid -> !lobbyData.isMemberReady
-                else -> return@launch
-            }
-
-            changeUserReadinessStatusUseCase.changeUserReadinessStatus(gameId, lobbyData, user, newStatus)
-
-            val updatedLobby = if (user.uid == lobbyData.founder?.uid) {
-                lobbyData.copy(isFounderReady = newStatus)
-            } else {
-                lobbyData.copy(isMemberReady = newStatus)
-            }
-            _lobby.value = CustomState.Success(updatedLobby)
         }
     }
 
-    fun startGame(gameId: String, state: Boolean) {
-        val gameState = _state.value
-
+    fun startGame(gameId: String) {
         viewModelScope.launch {
-            manageGameStateUseCase.manageGameState.invoke(gameId, state)
-//            startGameUseCase.startGame.invoke(gameId)
-
-            if(gameState is CustomState.Success && gameState.result != null) {
-                gameState.result.gameInProgress = true
-            }
+            manageGameStateUseCase.manageGameState(gameId, true)
+            _state.value = (_state.value as? CustomState.Success)?.let {
+                it.copy(result = it.result?.copy(gameInProgress = true))
+            } ?: return@launch
         }
     }
 
+    fun isCurrentUserFounder(user: User): Boolean = checkUserRole(user) { it.founder?.uid }
+    fun isCurrentUserMember(user: User): Boolean = checkUserRole(user) { it.member?.uid }
 
-    private fun removeMemberFromLobby(gameId: String) {
-        viewModelScope.launch {
-            removeUserFromLobbyUseCase.removeMemberFromLobby.invoke(gameId)
-        }
-    }
-
-    private fun deleteLobby(gameId: String) {
-        viewModelScope.launch {
-            deleteLobbyUseCase.deleteLobby.invoke(gameId)
-        }
-    }
-
-    fun isCurrentUserFounder(user: User): Boolean {
-        val lobbyState = _lobby.value
-
-        return if (lobbyState is CustomState.Success && lobbyState.result != null) {
-            user.uid == lobbyState.result.founder?.uid
-        } else {
-            false
-        }
-    }
-
-    fun isCurrentUserMember(user: User): Boolean {
-        val lobbyState = _lobby.value
-
-        return if (lobbyState is CustomState.Success && lobbyState.result != null) {
-            user.uid == lobbyState.result.member?.uid
-        } else {
-            false
-        }
-    }
+    private inline fun checkUserRole(user: User, crossinline roleSelector: (Lobby) -> String?) =
+        (_lobby.value as? CustomState.Success)?.result?.let { lobby ->
+            user.uid == roleSelector(lobby)
+        } ?: false
 }
