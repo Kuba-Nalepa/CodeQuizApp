@@ -64,24 +64,25 @@ class QuizViewModel @Inject constructor(
         }
     }
 
-    fun calculatePoints(questionList: List<Question>, playersAnswers: List<Int>): Int {
-        var sum = 0
+    fun checkAnswers(questionList: List<Question>, playersAnswers: List<Int>): Int {
+        var correctAnswers = 0
         questionList.forEachIndexed { index, question ->
             val answer = playersAnswers[index]
             if(answer == -1) return@forEachIndexed
             val string = question.correctAnswers?.let { CorrectAnswers::class.memberProperties.toList()[answer].get(it) } as String
 
             if(string == "true") {
-                sum += 10
+                correctAnswers += 1
             }
         }
 
-        return sum
+        return correctAnswers
     }
 
-    fun saveUserGamePoints(gameId: String, lobby: Lobby, user: User, points: Int) {
+    fun saveUserGamePoints(gameId: String, lobby: Lobby, user: User, correctAnswersQuantity: Int) {
         viewModelScope.launch(Dispatchers.IO) {
-            saveUserGamePointsUseCase.saveUserGamePoints(gameId, lobby, user, points)
+            val points = correctAnswersQuantity * 10
+            saveUserGamePointsUseCase.saveUserGamePoints(gameId, lobby, user, correctAnswersQuantity, points)
         }
     }
 

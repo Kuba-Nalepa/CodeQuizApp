@@ -71,9 +71,9 @@ fun QuizScreen(
             when (val currentState = gameStateSnapshot) {
                 is CustomState.Success -> {
                     currentState.result?.questions?.let { questions ->
-                        val points = viewModel.calculatePoints(questions, selectedAnswers)
+                        val correctAnswersQuantity = viewModel.checkAnswers(questions, selectedAnswers)
                         currentState.result.lobby?.let { lobby ->
-                            viewModel.saveUserGamePoints(gameId, lobby, user, points)
+                            viewModel.saveUserGamePoints(gameId, lobby, user, correctAnswersQuantity)
                             viewModel.setUserFinishedGame(gameId, lobby, user, true)
                         }
                     }
@@ -264,7 +264,7 @@ fun QuestionTemplate(
                 .padding(horizontal = 50.dp),
             enabled = selectedOption != null,
             onClick = onClick
-        ) { Text("Submit") }
+        ) { Text("submit") }
     }
 }
 

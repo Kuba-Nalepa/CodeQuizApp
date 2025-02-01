@@ -10,8 +10,8 @@ data class SaveUserGamePointsUseCase @Inject constructor(
 ) {
 
     class SaveUserGamePoints @Inject constructor(private val gameRepositoryImpl: GameRepositoryImpl) {
-        suspend operator fun invoke(gameId: String, lobby: Lobby, user: User, points: Int)
-        = gameRepositoryImpl.saveUserGamePoints(gameId, lobby, user, points)
+        suspend operator fun invoke(gameId: String, lobby: Lobby, user: User, correctAnswersQuantity: Int, points: Int)
+        = gameRepositoryImpl.saveUserGamePoints(gameId, lobby, user, correctAnswersQuantity, points)
 
     }
 }

@@ -28,7 +28,7 @@ interface GameRepository {
 
     suspend fun getGamesList(): Flow<List<Game>>
 
-    suspend fun saveUserGamePoints(gameId: String, lobby: Lobby, user: User, points: Int)
+    suspend fun saveUserGamePoints(gameId: String, lobby: Lobby, user: User, correctAnswersQuantity: Int, points: Int)
 
     suspend fun setUserFinishedGame(gameId: String, lobby: Lobby, user: User, hasFinished: Boolean)
 

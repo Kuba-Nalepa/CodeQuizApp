@@ -30,6 +30,9 @@ class GameOverViewModel @Inject constructor(
     private val _lobby = MutableStateFlow<CustomState<Lobby?>>(CustomState.Idle)
     val lobby: StateFlow<CustomState<Lobby?>> = _lobby
 
+    private val _haveUsersFinishedGame = MutableStateFlow(false)
+    val haveUsersFinishedGame: StateFlow<Boolean> = _haveUsersFinishedGame
+
     fun getGameData(gameId: String) {
         viewModelScope.launch {
             getGameDataUseCase.getGameData(gameId)
@@ -52,7 +55,7 @@ class GameOverViewModel @Inject constructor(
         }
     }
 
-    fun finishGame(gameId: String, state: Boolean) {
+    fun changeGameInProgressStatus(gameId: String, state: Boolean) {
         viewModelScope.launch {
             manageGameState.manageGameState(gameId, state)
         }
@@ -60,7 +63,12 @@ class GameOverViewModel @Inject constructor(
 
     fun haveUsersFinishedGame(): Boolean {
         val lobby = (_lobby.value as? CustomState.Success)?.result
-        return lobby?.hasMemberFinishedGame == true && lobby.hasFounderFinishedGame == true
+        if(lobby?.hasMemberFinishedGame == true && lobby.hasFounderFinishedGame == true) {
+            _haveUsersFinishedGame.value = true
+            return true
+        }
+
+        return false
     }
 
     fun getUserScore(user: User): Int? {
@@ -69,20 +77,77 @@ class GameOverViewModel @Inject constructor(
     }
 
     fun hasCurrentUserWon(user: User): Boolean {
-        val winner = determineWinner(_lobby.value)
-        return winner?.uid == user.uid
+        val lobbyState = _lobby.value
+        if(lobbyState is CustomState.Success) {
+            val winner = determineWinner(lobbyState.result)
+            return winner?.uid == user.uid
+
+        }
+
+        return false
     }
 
-    private fun determineWinner(lobbyState: CustomState<Lobby?>): User? {
-        if (lobbyState !is CustomState.Success) return null
-
-        val lobby = lobbyState.result
-        val founderPoints = lobby?.founderPoints ?: 0
-        val memberPoints = lobby?.memberPoints ?: 0
+    fun determineWinner(lobby: Lobby?): User? {
+        if (lobby == null) return null
+        
+        val founderPoints = lobby.founderPoints ?: 0
+        val memberPoints = lobby.memberPoints ?: 0
 
         return when {
-            founderPoints > memberPoints -> lobby?.founder
-            founderPoints < memberPoints -> lobby?.member
+            founderPoints > memberPoints -> lobby.founder
+            founderPoints < memberPoints -> lobby.member
+            else -> null // It's a tie
+        }
+    }
+
+    fun determineLoser(lobby: Lobby?): User? {
+        if (lobby == null) return null
+        val founderPoints = lobby.founderPoints ?: 0
+        val memberPoints = lobby.memberPoints ?: 0
+
+        return when {
+            founderPoints > memberPoints -> lobby.member
+            founderPoints < memberPoints -> lobby.founder
+            else -> null // It's a tie
+        }
+    }
+
+    fun getWinnerPoints(lobby: Lobby?): Int? {
+        if (lobby == null) return null
+
+        val founderPoints = lobby.founderPoints ?: 0
+        val memberPoints = lobby.memberPoints ?: 0
+
+        return when {
+            founderPoints > memberPoints -> founderPoints
+            founderPoints < memberPoints -> memberPoints
+            else -> null // It's a tie
+        }
+    }
+
+    fun getLoserPoints(lobby: Lobby?): Int? {
+        if (lobby == null) return null
+
+
+        val founderPoints = lobby.founderPoints ?: 0
+        val memberPoints = lobby.memberPoints ?: 0
+
+        return when {
+            founderPoints > memberPoints -> memberPoints
+            founderPoints < memberPoints -> founderPoints
+            else -> null // It's a tie
+        }
+    }
+
+    fun getCorrectAnswersQuantity(lobby: Lobby?): Int? {
+        if (lobby == null) return null
+
+        val founderCorrectAnswersQuantity = lobby.founderCorrectAnswersQuantity ?: 0
+        val memberCorrectAnswersQuantity = lobby.memberCorrectAnswersQuantity ?: 0
+
+        return when {
+            founderCorrectAnswersQuantity > memberCorrectAnswersQuantity -> founderCorrectAnswersQuantity
+            founderCorrectAnswersQuantity < memberCorrectAnswersQuantity -> memberCorrectAnswersQuantity
             else -> null // It's a tie
         }
     }
