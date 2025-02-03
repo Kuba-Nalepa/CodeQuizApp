@@ -35,7 +35,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
@@ -44,7 +43,6 @@ import coil.request.ImageRequest
 import com.jakubn.codequizapp.R
 import com.jakubn.codequizapp.domain.model.CustomState
 import com.jakubn.codequizapp.domain.model.User
-import com.jakubn.codequizapp.theme.CodeQuizAppTheme
 import com.jakubn.codequizapp.theme.Typography
 
 @Composable
@@ -177,14 +175,13 @@ fun WinnerContainer(
         textAlign = TextAlign.Center
     )
     val borderColors = arrayOf(
-        0.20f to Color(0xCBFF9800),
+        0.20f to Color(0xFFA3FF0D),
         0.50f to Color(0xCCFFFFFF),
         1f to Color(0xFF032956)
     )
 
     val backgroundColors = arrayOf(
-        0.20f to Color(0xFFEC971D),
-        0.50f to Color(0x99FFFFFF),
+        0.50f to Color(0xCC344D67),
         0.85f to Color(0xFF061E3B)
     )
 
@@ -195,7 +192,6 @@ fun WinnerContainer(
         .background(brush = Brush.verticalGradient(colorStops = backgroundColors))
     ) {
 
-        // Winner section
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -356,13 +352,13 @@ fun LoserContainer(
     val borderColors = arrayOf(
         0.20f to Color(0xFF032956),
         0.50f to Color(0xCCFFFFFF),
-        1f to Color(0xCBFF9800)
+        1f to Color(0xFFA3FF0D)
     )
 
     val backgroundColors = arrayOf(
-        0.20f to Color(0xFF061E3B),
-        0.50f to Color(0x99FFFFFF),
-        0.85f to Color(0xFFEC971D)
+        0.50f to Color(0xFF061E3B),
+        0.85f to Color(0xCC344D67)
+
     )
 
     Column(modifier = Modifier
@@ -372,8 +368,6 @@ fun LoserContainer(
         .background(brush = Brush.verticalGradient(colorStops = backgroundColors))
     ) {
 
-
-        // Loser section
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -458,7 +452,6 @@ fun LoserContainer(
             }
         }
 
-        // Winner section
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -526,26 +519,5 @@ fun ErrorState(errorMessage: String?) {
         horizontalArrangement = Arrangement.Center
     ) {
         Text(text = errorMessage ?: "Unknown error", color = Color.White)
-    }
-}
-
-@Composable
-@Preview
-fun WinnerContainerPreview() {
-    CodeQuizAppTheme {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .paint(
-                    painterResource(R.drawable.background_auth),
-                    contentScale = ContentScale.FillBounds
-                )
-                .padding(horizontal = 24.dp),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            WinnerContainer(User(name = "Xondix"), User(name = "cichacz"), 10, 1,5,5)
-
-        }
     }
 }
