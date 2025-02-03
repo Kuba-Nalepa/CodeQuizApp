@@ -12,10 +12,6 @@ interface GameRepository {
 
     suspend fun manageGameState(gameId: String, state: Boolean)
 
-//    suspend fun startGame(gameId: String)
-
-//    suspend fun finishGame(gameId: String)
-
     suspend fun getGameData(gameId: String): Flow<Game?>
 
     suspend fun addMemberToLobby(gameId: String, user: User)

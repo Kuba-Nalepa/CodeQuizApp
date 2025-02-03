@@ -356,8 +356,8 @@ fun LoserContainer(
     )
 
     val backgroundColors = arrayOf(
-        0.50f to Color(0xFF061E3B),
-        0.85f to Color(0xCC344D67)
+        0.50f to Color(0xCC061E3B),
+        0.85f to Color(0xFF344D67)
 
     )
 
