@@ -1,7 +1,6 @@
 package com.jakubn.codequizapp.ui.game.gameOver
 
 
-import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -16,7 +15,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -27,23 +25,22 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.paint
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
-import coil.request.ImageRequest
 import com.jakubn.codequizapp.R
 import com.jakubn.codequizapp.domain.model.CustomState
+import com.jakubn.codequizapp.domain.model.GameResult
 import com.jakubn.codequizapp.domain.model.User
 import com.jakubn.codequizapp.theme.Typography
+import com.jakubn.codequizapp.ui.game.availableGames.LoadingState
 
 @Composable
 fun GameOverScreen(
@@ -52,128 +49,62 @@ fun GameOverScreen(
     navController: NavController,
     viewModel: GameOverViewModel = hiltViewModel()
 ) {
-    val gameState by viewModel.state.collectAsState()
-    val lobbyState by viewModel.lobby.collectAsState()
-    val context = LocalContext.current
-    val haveUsersFinishedGame by viewModel.haveUsersFinishedGame.collectAsState()
+    val loadingState by viewModel.state.collectAsState()
+    val gameResult by viewModel.gameResult.collectAsState()
 
-    LaunchedEffect(key1 = lobbyState) {
-        when (val currentState = lobbyState) {
-            is CustomState.Success -> {
-                if (viewModel.haveUsersFinishedGame()) {
-                    viewModel.changeGameInProgressStatus(gameId, false)
-                    viewModel.getUserScore(user)?.let { score ->
-                        viewModel.updateUserData(user, score)
-                    }
-                }
-            }
+    LaunchedEffect(gameId) {
+        viewModel.getGameData(gameId, user)
+    }
 
-            is CustomState.Failure -> Toast.makeText(
-                context,
-                currentState.message,
-                Toast.LENGTH_SHORT
-            ).show()
-
-            CustomState.Loading -> {}
-            CustomState.Idle -> viewModel.getGameData(gameId)
+    LaunchedEffect(gameResult) {
+        gameResult?.let {
+            viewModel.handleGameCleanup(gameId)
+            viewModel.updateUserData(user, calculateUserScore(it, user))
         }
     }
 
     Column(
         modifier = Modifier
-            .fillMaxSize()
+            .fillMaxWidth()
             .paint(
                 painterResource(R.drawable.background_auth),
                 contentScale = ContentScale.FillBounds
             )
-            .padding(horizontal = 24.dp),
+            .padding(24.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        when (val currentState = gameState) {
-            is CustomState.Success -> {
-                if (haveUsersFinishedGame) {
-                    val hasWon = viewModel.hasCurrentUserWon(user)
-                    val winner = viewModel.determineWinner(currentState.result?.lobby)
-                    val winnerPoints = viewModel.getWinnerPoints(currentState.result?.lobby)
-                    val loser = viewModel.determineLoser(currentState.result?.lobby)
-                    val loserPoints = viewModel.getLoserPoints(currentState.result?.lobby)
-                    val correctAnswersQuantity = viewModel.getCorrectAnswersQuantity(currentState.result?.lobby)
-                    val questionsQuantity = currentState.result?.questions?.size
+        when (loadingState) {
+            is CustomState.Success -> gameResult?.let { result ->
+                GameResultContent(result, user)
+            } ?: FailureState("No game results available")
 
-
-                    // get rid of these null checks soon
-                    if (winner != null) {
-                        if (loser != null) {
-                            if (winnerPoints != null) {
-                                if (loserPoints != null) {
-                                    if (correctAnswersQuantity != null) {
-                                        if (questionsQuantity != null) {
-                                            MainContainer(hasWon, winner, loser, winnerPoints, loserPoints, correctAnswersQuantity, questionsQuantity)
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                } else {
-                    Text(
-                        "Waiting for other player...",
-                        style = Typography.titleLarge,
-                        textAlign = TextAlign.Center
-                    )
-                    CircularProgressIndicator()
-                }
-            }
-
-            is CustomState.Failure -> ErrorState(currentState.message)
-            CustomState.Loading -> {}
+            is CustomState.Failure -> FailureState((loadingState as CustomState.Failure).message)
+            is CustomState.Loading -> LoadingState()
             CustomState.Idle -> {}
         }
     }
 }
 
 @Composable
-fun MainContainer(
-    hasWon: Boolean,
-    winner: User,
-    loser: User,
-    winnerPoints: Int,
-    loserPoints: Int,
-    correctAnswersQuantity: Int,
-    questionsQuantity: Int
-) {
+private fun GameResultContent(result: GameResult, currentUser: User) {
     Column(
         modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 20.dp),
+            .padding(24.dp)
+            .fillMaxSize(),
         verticalArrangement = Arrangement.SpaceAround
     ) {
-        when (hasWon) {
-            true -> WinnerContainer(winner, loser, winnerPoints, loserPoints, correctAnswersQuantity, questionsQuantity)
-
-            false -> LoserContainer(winner, loser, winnerPoints, loserPoints, correctAnswersQuantity, questionsQuantity)
+        when (result) {
+            is GameResult.Win -> WinnerContainer(result)
+            is GameResult.Lose -> LoserContainer(result)
+            is GameResult.Tie -> TieContainer(result, currentUser)
         }
-
     }
+
 }
 
 @Composable
-fun WinnerContainer(
-    winner: User,
-    loser: User,
-    winnerPoints: Int,
-    loserPoints: Int,
-    correctAnswersQuantity: Int,
-    questionsQuantity: Int
-) {
-    Text(
-        modifier = Modifier.fillMaxWidth(),
-        text = "You won!",
-        style = Typography.titleLarge,
-        textAlign = TextAlign.Center
-    )
+private fun WinnerContainer(result: GameResult.Win) {
     val borderColors = arrayOf(
         0.20f to Color(0xFFA3FF0D),
         0.50f to Color(0xCCFFFFFF),
@@ -185,170 +116,40 @@ fun WinnerContainer(
         0.85f to Color(0xFF061E3B)
     )
 
-    Column(modifier = Modifier
-        .border(5.dp, Brush.verticalGradient(colorStops = borderColors), RoundedCornerShape(20.dp))
-        .clip(RoundedCornerShape(20.dp))
-        .fillMaxWidth()
-        .background(brush = Brush.verticalGradient(colorStops = backgroundColors))
-    ) {
+    Text(modifier = Modifier.fillMaxWidth(), text = "You won!", style = Typography.titleLarge, textAlign = TextAlign.Center)
 
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(intrinsicSize = IntrinsicSize.Max)
-                .padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(15.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            AsyncImage(
-                modifier = Modifier
-                    .size(150.dp)
-                    .shadow(5.dp, shape = CircleShape)
-                    .border(1.dp, Color.Black, CircleShape),
-                model = ImageRequest.Builder(LocalContext.current)
-                    .data(winner.imageUri ?: R.drawable.sample_avatar)
-                    .crossfade(true)
-                    .build(),
-                placeholder = painterResource(R.drawable.sample_avatar),
-                contentDescription = stringResource(R.string.app_name),
-                contentScale = ContentScale.Crop
-            )
-            Text(
-                text = winner.name ?: "",
-                style = Typography.bodyLarge,
-                softWrap = true,
-                color = Color.White
-            )
-
-            Text(
-                text = "$winnerPoints points",
-                style = Typography.titleSmall,
-                softWrap = true,
-                color = MaterialTheme.colorScheme.primary
-            )
-
-            Row(modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically) {
-                Column(modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally) {
-
-                    Text(
-                        text = "answered questions:",
-                        style = Typography.bodyMedium,
-                        softWrap = true,
-                        color = Color.White
-                    )
-
-                    Text(
-                        text = "$correctAnswersQuantity / $questionsQuantity",
-                        style = Typography.bodyMedium,
-                        softWrap = true,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-
-                }
-            }
-
-            Row(modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically) {
-                Column(modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally) {
-
-                    Text(
-                        text = "total games played:",
-                        style = Typography.bodyMedium,
-                        softWrap = true,
-                        color = Color.White
-                    )
-
-                    Text(
-                        text = "${winner.gamesPlayed}",
-                        style = Typography.bodyMedium,
-                        softWrap = true,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-
-                }
-            }
-        }
-
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(20.dp)
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp), // Adjust horizontal padding as needed
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceEvenly,
-            ) {
-                AsyncImage(
-                    modifier = Modifier
-                        .size(80.dp)
-                        .shadow(5.dp, shape = CircleShape)
-                        .border(1.dp, Color.Black, CircleShape),
-                    model = ImageRequest.Builder(LocalContext.current)
-                        .data(loser.imageUri ?: R.drawable.sample_avatar)
-                        .crossfade(true)
-                        .build(),
-                    placeholder = painterResource(R.drawable.sample_avatar),
-                    contentDescription = stringResource(R.string.app_name),
-                    contentScale = ContentScale.Crop
-                )
-
-                Column(
-                    verticalArrangement = Arrangement.SpaceEvenly,
-                    horizontalAlignment = Alignment.Start
-                ) {
-                    Text(
-                        text = loser.name ?: "",
-                        style = Typography.bodySmall,
-                        softWrap = true,
-                        color = Color.White,
-                    )
-
-                    Text(
-                        text = "$loserPoints points",
-                        style = Typography.bodySmall,
-                        softWrap = true,
-                        color = Color.White
-                    )
-                }
-            }
-        }
-    }
-
-    Button(
+    Column(
         modifier = Modifier
+            .border(
+                5.dp,
+                Brush.verticalGradient(colorStops = borderColors),
+                RoundedCornerShape(20.dp)
+            )
+            .clip(RoundedCornerShape(20.dp))
             .fillMaxWidth()
-            .padding(horizontal = 20.dp), onClick = { }
+            .height(intrinsicSize = IntrinsicSize.Min)
+            .background(brush = Brush.verticalGradient(colorStops = backgroundColors))
+            .padding(20.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.SpaceAround
     ) {
-        Text(text = "show answers", textAlign = TextAlign.Center, softWrap = true)
+
+        UserProfileSection(user = result.winner, points = result.winnerPoints)
+        GameStatsSection(
+            correctAnswers = result.correctAnswers,
+            totalQuestions = result.totalQuestions,
+            gamesPlayed = result.winner.gamesPlayed,
+            color = MaterialTheme.colorScheme.primary
+        )
+        OpponentSection(user = result.loser, points = result.loserPoints)
     }
+
+    ActionButton() { /* Handle action */ }
+
 }
 
 @Composable
-fun LoserContainer(
-    winner: User,
-    loser: User,
-    winnerPoints: Int,
-    loserPoints: Int,
-    correctAnswersQuantity: Int,
-    questionsQuantity: Int
-) {
-    Text(
-        modifier = Modifier.fillMaxWidth(),
-        text = "You lost!",
-        style = Typography.titleLarge,
-        textAlign = TextAlign.Center
-    )
-
+private fun LoserContainer(result: GameResult.Lose) {
     val borderColors = arrayOf(
         0.20f to Color(0xFF032956),
         0.50f to Color(0xCCFFFFFF),
@@ -361,156 +162,201 @@ fun LoserContainer(
 
     )
 
-    Column(modifier = Modifier
-        .border(5.dp, Brush.verticalGradient(colorStops = borderColors), RoundedCornerShape(20.dp))
-        .clip(RoundedCornerShape(20.dp))
-        .fillMaxWidth()
-        .background(brush = Brush.verticalGradient(colorStops = backgroundColors))
+    Text(modifier = Modifier.fillMaxWidth(), text = "You lost!", style = Typography.titleLarge, textAlign = TextAlign.Center)
+
+    Column(
+        modifier = Modifier
+            .border(
+                5.dp,
+                Brush.verticalGradient(colorStops = borderColors),
+                RoundedCornerShape(20.dp)
+            )
+            .clip(RoundedCornerShape(20.dp))
+            .fillMaxWidth()
+            .background(brush = Brush.verticalGradient(colorStops = backgroundColors))
+            .padding(20.dp)
     ) {
 
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(intrinsicSize = IntrinsicSize.Max)
-                .padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(15.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            AsyncImage(
-                modifier = Modifier
-                    .size(150.dp)
-                    .shadow(5.dp, shape = CircleShape)
-                    .border(1.dp, Color.Black, CircleShape),
-                model = ImageRequest.Builder(LocalContext.current)
-                    .data(winner.imageUri ?: R.drawable.sample_avatar)
-                    .crossfade(true)
-                    .build(),
-                placeholder = painterResource(R.drawable.sample_avatar),
-                contentDescription = stringResource(R.string.app_name),
-                contentScale = ContentScale.Crop
-            )
-            Text(
-                text = loser.name ?: "",
-                style = Typography.bodyLarge,
-                softWrap = true,
-                color = Color.White
-            )
-
-            Text(
-                text = "$loserPoints points",
-                style = Typography.titleSmall,
-                softWrap = true,
-                color = Color.White
-            )
-
-            Row(modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically) {
-                Column(modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally) {
-
-                    Text(
-                        text = "answered questions:",
-                        style = Typography.bodyMedium,
-                        softWrap = true,
-                        color = Color.White
-                    )
-
-                    Text(
-                        text = "$correctAnswersQuantity / $questionsQuantity",
-                        style = Typography.bodyMedium,
-                        softWrap = true,
-                        color = Color.White
-                    )
-
-                }
-            }
-
-            Row(modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically) {
-                Column(modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally) {
-
-                    Text(
-                        text = "total games played:",
-                        style = Typography.bodyMedium,
-                        softWrap = true,
-                        color = Color.White
-                    )
-
-                    Text(
-                        text = "${loser.gamesPlayed}",
-                        style = Typography.bodyMedium,
-                        softWrap = true,
-                        color = Color.White
-                    )
-
-                }
-            }
-        }
-
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(20.dp)
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp), // Adjust horizontal padding as needed
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceEvenly,
-            ) {
-                AsyncImage(
-                    modifier = Modifier
-                        .size(80.dp)
-                        .shadow(5.dp, shape = CircleShape)
-                        .border(1.dp, Color.Black, CircleShape),
-                    model = ImageRequest.Builder(LocalContext.current)
-                        .data(loser.imageUri ?: R.drawable.sample_avatar)
-                        .crossfade(true)
-                        .build(),
-                    placeholder = painterResource(R.drawable.sample_avatar),
-                    contentDescription = stringResource(R.string.app_name),
-                    contentScale = ContentScale.Crop
-                )
-
-                Column(
-                    verticalArrangement = Arrangement.SpaceEvenly,
-                    horizontalAlignment = Alignment.Start
-                ) {
-                    Text(
-                        text = winner.name ?: "",
-                        style = Typography.bodySmall,
-                        softWrap = true,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-
-                    Text(
-                        text = "$winnerPoints points",
-                        style = Typography.bodySmall,
-                        softWrap = true,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
-            }
-        }
+        UserProfileSection(user = result.loser, points = result.loserPoints)
+        GameStatsSection(
+            correctAnswers = result.correctAnswers,
+            totalQuestions = result.totalQuestions,
+            gamesPlayed = result.loser.gamesPlayed,
+            color = Color.White
+        )
+        OpponentSection(user = result.winner, points = result.winnerPoints)
     }
+    ActionButton() { /* Handle action */ }
+}
 
-    Button(
+@Composable
+private fun TieContainer(result: GameResult.Tie, currentUser: User) {
+    val borderColors = arrayOf(
+        0.20f to Color(0xFF032956),
+        0.50f to Color(0xCCFFFFFF),
+        1f to Color(0xFF032956)
+    )
+
+    val backgroundColors = arrayOf(
+        0.50f to Color(0xCC344D67),
+        0.85f to Color(0xFF061E3B)
+    )
+
+    Text(modifier = Modifier.fillMaxWidth(), text = "It's a tie!", style = Typography.titleLarge, textAlign = TextAlign.Center)
+
+    Column(
+        modifier = Modifier
+            .border(
+                5.dp,
+                Brush.verticalGradient(colorStops = borderColors),
+                RoundedCornerShape(20.dp)
+            )
+            .clip(RoundedCornerShape(20.dp))
+            .fillMaxWidth()
+            .background(brush = Brush.verticalGradient(colorStops = backgroundColors))
+    ) {
+        UserProfileSection(
+            user = if (result.firstUser.uid == currentUser.uid) result.firstUser else result.secondUser,
+            points = if (result.firstUser.uid == currentUser.uid) result.firstUserPoints else result.secondUserPoints
+        )
+
+        OpponentSection(
+            user = if (result.firstUser.uid == currentUser.uid) result.firstUser else result.secondUser,
+            points = if (result.secondUser.uid == currentUser.uid) result.secondUserPoints else result.firstUserPoints
+        )
+    }
+    ActionButton() { /* Handle action */ }
+
+}
+
+@Composable
+private fun OpponentSection(user: User, points: Int) {
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 20.dp), onClick = { }
+            .padding(16.dp),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(text = "show answers", textAlign = TextAlign.Center, softWrap = true)
+        // Opponent Image
+        AsyncImage(
+            modifier = Modifier
+                .size(80.dp)
+                .clip(CircleShape)
+                .border(1.dp, Color.LightGray, CircleShape),
+            model = user.imageUri ?: R.drawable.sample_avatar,
+            contentDescription = "Opponent profile",
+            contentScale = ContentScale.Crop
+        )
+
+        // Opponent Details
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .padding(start = 16.dp),
+            horizontalAlignment = Alignment.Start
+        ) {
+            Text(
+                text = "Opponent",
+                style = Typography.labelSmall,
+                color = Color.LightGray
+            )
+            Text(
+                modifier = Modifier.padding(top = 5.dp),
+                text = user.name ?: "Unknown Player",
+                style = Typography.bodyMedium,
+                color = Color.White,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            Text(
+                text = "$points points",
+                style = Typography.bodySmall,
+                color = MaterialTheme.colorScheme.primary
+            )
+        }
     }
 }
 
 @Composable
-fun ErrorState(errorMessage: String?) {
+private fun UserProfileSection(user: User, points: Int) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        AsyncImage(
+            modifier = Modifier
+                .size(120.dp)
+                .clip(CircleShape)
+                .border(2.dp, Color.Black, CircleShape),
+            model = user.imageUri ?: R.drawable.sample_avatar,
+            contentDescription = "User profile"
+        )
+        Text(
+            modifier = Modifier.padding(top = 15.dp),
+            text = user.name ?: "",
+            style = Typography.titleMedium,
+            color = Color.White
+        )
+        Text(
+            modifier = Modifier.padding(top = 5.dp),
+            text = "$points points",
+            style = Typography.bodyLarge,
+            color = MaterialTheme.colorScheme.primary
+        )
+    }
+}
+
+@Composable
+private fun GameStatsSection(
+    correctAnswers: Int,
+    totalQuestions: Int,
+    gamesPlayed: Int,
+    color: Color
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 15.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.SpaceEvenly
+    ) {
+        StatItem("Correct Answers", "$correctAnswers / $totalQuestions", color)
+        StatItem("Total Games Played", gamesPlayed.toString(), color)
+    }
+}
+
+@Composable
+private fun StatItem(label: String, value: String, color: Color) {
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(top = 5.dp),
+        verticalArrangement = Arrangement.SpaceEvenly,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            modifier = Modifier.padding(bottom = 5.dp),
+            text = label,
+            style = Typography.bodyMedium,
+            color = Color.White
+        )
+        Text(text = value, style = Typography.bodyMedium, color = color)
+    }
+}
+
+@Composable
+private fun ActionButton(onClick: () -> Unit) {
+    Button(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 16.dp),
+        onClick = onClick
+    ) {
+        Text("show answers")
+    }
+}
+
+@Composable
+fun FailureState(errorMessage: String?) {
     Row(
         modifier = Modifier
             .fillMaxSize()
@@ -519,5 +365,33 @@ fun ErrorState(errorMessage: String?) {
         horizontalArrangement = Arrangement.Center
     ) {
         Text(text = errorMessage ?: "Unknown error", color = Color.White)
+    }
+}
+
+private fun calculateUserScore(result: GameResult, currentUser: User): Int {
+    return when (result) {
+        is GameResult.Win -> {
+            when (currentUser.uid) {
+                result.winner.uid -> result.winnerPoints
+                result.loser.uid -> result.loserPoints
+                else -> throw IllegalStateException("User not part of this game result")
+            }
+        }
+
+        is GameResult.Lose -> {
+            when (currentUser.uid) {
+                result.loser.uid -> result.loserPoints
+                result.winner.uid -> result.winnerPoints
+                else -> throw IllegalStateException("User not part of this game result")
+            }
+        }
+
+        is GameResult.Tie -> {
+            when (currentUser.uid) {
+                result.firstUser.uid -> result.firstUserPoints
+                result.secondUser.uid -> result.secondUserPoints
+                else -> throw IllegalStateException("User not part of this game result")
+            }
+        }
     }
 }
