@@ -45,6 +45,7 @@ import com.jakubn.codequizapp.domain.model.Question
 import com.jakubn.codequizapp.domain.model.User
 import com.jakubn.codequizapp.navigation.Screen
 import com.jakubn.codequizapp.theme.Typography
+import kotlinx.coroutines.delay
 import kotlin.reflect.full.memberProperties
 
 @Composable
@@ -54,26 +55,29 @@ fun QuizScreen(
     gameId: String,
     viewModel: QuizViewModel = hiltViewModel()
 ) {
-    viewModel.getGameData(gameId)
     val context = LocalContext.current
     val gameState by viewModel.state.collectAsState()
     val isGameFinished by viewModel.isGameFinished.collectAsState()
-    val isCounterFinished by viewModel.isCounterFinished.collectAsState()
 
+    var isCounterActive by remember { mutableStateOf(true) }
     var selectedOption by remember { mutableStateOf<Int?>(null) }
     var currentQuestionIndex by remember { mutableIntStateOf(0) }
     val selectedAnswers = remember { arrayListOf<Int>() }
 
     val gameStateSnapshot by rememberUpdatedState(gameState)
 
+    LaunchedEffect(gameId) {
+        viewModel.getGameData(gameId) // Fetch data only once
+    }
+
     LaunchedEffect(isGameFinished) {
         if (isGameFinished) {
             when (val currentState = gameStateSnapshot) {
                 is CustomState.Success -> {
                     currentState.result?.questions?.let { questions ->
-                        val correctAnswersQuantity = viewModel.checkAnswers(questions, selectedAnswers)
+                        val correctAnswers = viewModel.checkAnswers(questions, selectedAnswers)
                         currentState.result.lobby?.let { lobby ->
-                            viewModel.saveUserGamePoints(gameId, lobby, user, correctAnswersQuantity)
+                            viewModel.saveUserGamePoints(gameId, lobby, user, correctAnswers)
                             viewModel.setUserFinishedGame(gameId, lobby, user, true)
                         }
                     }
@@ -92,51 +96,144 @@ fun QuizScreen(
             .padding(horizontal = 24.dp)
     ) {
         CodeQuizText()
-
-        if (!isCounterFinished) {
-            Counter(viewModel) { viewModel.setCounterFinished() }
+        if (isCounterActive) {
+            Counter(
+                onTimerFinished = { isCounterActive = false },
+                modifier = Modifier.fillMaxSize()
+            )
         } else {
             when (val currentGameState = gameState) {
                 is CustomState.Success -> {
                     currentGameState.result?.questions?.getOrNull(currentQuestionIndex)?.let { question ->
-                        currentGameState.result.questionDuration?.let { duration ->
-                            QuestionTemplate(
-                                question = question,
-                                selectedOption = selectedOption,
-                                onOptionSelected = { index -> selectedOption = index },
-                                onClick = {
-                                    selectedOption?.let { selectedAnswers.add(it) }
-                                    selectedOption = null
+                        QuestionTemplate(
+                            question = question,
+                            selectedOption = selectedOption,
+                            onOptionSelected = { selectedOption = it },
+                            onClick = {
+                                selectedOption?.let { selectedAnswers.add(it) }
+                                selectedOption = null
 
-                                    if (currentQuestionIndex == currentGameState.result.questions?.lastIndex) {
-                                        viewModel.setGameFinished()
-                                    } else {
-                                        currentQuestionIndex++
-                                        viewModel.resetTimer()
-                                    }
-                                },
-                                duration = duration,
-                                onTimeFinished = {
-                                    selectedAnswers.add(selectedOption ?: -1)
-                                    selectedOption = null
-
-                                    if (currentQuestionIndex == currentGameState.result.questions?.lastIndex) {
-                                        viewModel.setGameFinished()
-                                    } else {
-                                        currentQuestionIndex++
-                                        viewModel.resetTimer()
-                                    }
+                                if (currentQuestionIndex == currentGameState.result.questions?.lastIndex) {
+                                    viewModel.setGameFinished()
+                                } else {
+                                    currentQuestionIndex++
                                 }
-                            )
-                        }
+                            },
+                            duration = currentGameState.result.questionDuration ?: 10,
+                            onTimeFinished = {
+                                selectedAnswers.add(selectedOption ?: -1)
+                                selectedOption = null
+
+                                if (currentQuestionIndex == currentGameState.result.questions?.lastIndex) {
+                                    viewModel.setGameFinished()
+                                } else {
+                                    currentQuestionIndex++
+                                }
+                            }
+                        )
                     }
                 }
-
                 is CustomState.Failure -> ErrorScreen(currentGameState.message.toString())
                 CustomState.Loading -> LoadingScreen()
                 CustomState.Idle -> {}
             }
         }
+    }
+}
+
+@Composable
+fun QuestionTemplate(
+    question: Question,
+    selectedOption: Int?,
+    onOptionSelected: (Int) -> Unit,
+    onClick: () -> Unit,
+    duration: Int,  // Duration in seconds
+    onTimeFinished: () -> Unit,  // Callback when time runs out
+) {
+
+    var timerProgress by remember { androidx.compose.runtime.mutableFloatStateOf(0f) }
+    var isTimeUp by remember { mutableStateOf(false) }
+
+    LaunchedEffect(question) {
+        timerProgress = 0f
+        isTimeUp = false
+
+        val tickInterval = 100L
+        val totalTicks = duration * 1000 / tickInterval
+
+        for (tick in 0..totalTicks) {
+            timerProgress = tick.toFloat() / totalTicks
+            delay(tickInterval)
+        }
+
+        isTimeUp = true
+        onTimeFinished() // Move to the next question
+    }
+
+    Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.SpaceEvenly) {
+        LinearProgressIndicator(
+            progress = { timerProgress },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp),
+        )
+
+        Text(
+            text = question.title.orEmpty(),
+            textAlign = TextAlign.Center,
+            style = Typography.titleMedium,
+            color = Color.White
+        )
+
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(20.dp))
+                .background(Color(0x80FFFFFF))
+                .padding(24.dp)
+        ) {
+            question.answers?.let { answers ->
+                Answers::class.memberProperties.forEachIndexed { index, prop ->
+                    val answerText = prop.get(answers)?.toString()
+                    if (!answerText.isNullOrBlank()) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 8.dp)
+                                .clip(RoundedCornerShape(20.dp))
+                                .background(
+                                    color = if (index == selectedOption)
+                                        Color(0x8000FF00)
+                                    else Color(0x40FFFFFF)
+                                )
+                                .clickable { onOptionSelected(index) }
+                                .padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            RadioButton(
+                                selected = index == selectedOption,
+                                onClick = null // Click handled by parent
+                            )
+
+                            Text(
+                                text = answerText,
+                                color = Color.Black,
+                                style = Typography.labelSmall
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        Button(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 50.dp),
+            enabled = selectedOption != null,
+            onClick = onClick
+        ) { Text("Submit") }
     }
 }
 
@@ -155,14 +252,21 @@ fun LoadingScreen() {
 }
 
 @Composable
-fun Counter(viewModel: QuizViewModel, onTimerFinished: () -> Unit) {
-    val count by viewModel.countDownValue.collectAsState()
+fun Counter(
+    onTimerFinished: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var count by remember { mutableIntStateOf(5) }
 
     LaunchedEffect(Unit) {
-        viewModel.startCountdown(onTimerFinished)
+        while (count > 0) {
+            delay(1000L)
+            count--
+        }
+        onTimerFinished()
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    Box(modifier = modifier) {
         Text(
             modifier = Modifier.align(Alignment.TopCenter).padding(top = 54.dp),
             text = "Quiz starts in...",
@@ -175,96 +279,6 @@ fun Counter(viewModel: QuizViewModel, onTimerFinished: () -> Unit) {
             style = Typography.titleLarge,
             fontSize = 88.sp
         )
-    }
-}
-
-@Composable
-fun QuestionTemplate(
-    question: Question,
-    selectedOption: Int?,
-    onOptionSelected: (Int) -> Unit,
-    onClick: () -> Unit,
-    duration: Int,
-    viewModel: QuizViewModel = hiltViewModel(),
-    onTimeFinished: () -> Unit,
-) {
-    val timerProgress = viewModel.timerProgress.collectAsState()
-    val isTimeUp by viewModel.isTimeUp.collectAsState()
-
-    LaunchedEffect(question) {
-        viewModel.startTimer(duration)
-    }
-
-    if (isTimeUp) {
-        onTimeFinished()
-    }
-
-    Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.SpaceEvenly) {
-        LinearProgressIndicator(
-            progress = { timerProgress.value },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp),
-        )
-
-        question.title?.let {
-            Text(
-                text = it,
-                textAlign = TextAlign.Center,
-                style = Typography.titleMedium,
-                color = Color.White
-            )
-        }
-
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(20.dp))
-                .background(Color(0x80FFFFFF))
-                .padding(24.dp)
-        ) {
-            for ((index, prop) in Answers::class.memberProperties.withIndex()) {
-                val isSelected = index == selectedOption
-                val answer = question.answers?.let { prop.get(it) }
-
-                if (answer != null) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 8.dp)
-                            .clip(RoundedCornerShape(20.dp))
-                            .background(
-                                color = if (isSelected)
-                                    Color(0x8000FF00)
-                                else Color(0x40FFFFFF)
-                            )
-                            .clickable { onOptionSelected(index) }
-                            .padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        RadioButton(
-                            selected = isSelected,
-                            onClick = null // Click handled by parent
-                        )
-
-                        Text(
-                            text = answer.toString(),
-                            color = Color.Black,
-                            style = Typography.labelSmall
-                        )
-                    }
-                }
-            }
-        }
-
-        Button(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 50.dp),
-            enabled = selectedOption != null,
-            onClick = onClick
-        ) { Text("submit") }
     }
 }
 
