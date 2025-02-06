@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -214,11 +215,14 @@ private fun TieContainer(result: GameResult.Tie, currentUser: User) {
             .clip(RoundedCornerShape(20.dp))
             .fillMaxWidth()
             .background(brush = Brush.verticalGradient(colorStops = backgroundColors))
+            .padding(24.dp)
     ) {
         UserProfileSection(
             user = if (result.firstUser.uid == currentUser.uid) result.firstUser else result.secondUser,
             points = if (result.firstUser.uid == currentUser.uid) result.firstUserPoints else result.secondUserPoints
         )
+
+        Spacer(Modifier.size(50.dp))
 
         OpponentSection(
             user = if (result.firstUser.uid == currentUser.uid) result.firstUser else result.secondUser,
