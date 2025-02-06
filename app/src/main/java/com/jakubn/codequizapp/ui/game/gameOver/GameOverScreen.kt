@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -52,6 +53,7 @@ fun GameOverScreen(
 ) {
     val loadingState by viewModel.state.collectAsState()
     val gameResult by viewModel.gameResult.collectAsState()
+    val bothUsersFinished by viewModel.bothUsersFinished.collectAsState()
 
     LaunchedEffect(gameId) {
         viewModel.getGameData(gameId, user)
@@ -75,14 +77,12 @@ fun GameOverScreen(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        when (loadingState) {
-            is CustomState.Success -> gameResult?.let { result ->
-                GameResultContent(result, user)
-            } ?: FailureState("No game results available")
-
-            is CustomState.Failure -> FailureState((loadingState as CustomState.Failure).message)
-            is CustomState.Loading -> LoadingState()
-            CustomState.Idle -> {}
+        when {
+            !bothUsersFinished -> WaitingForOpponent()
+            loadingState is CustomState.Loading -> LoadingState()
+            loadingState is CustomState.Failure -> FailureState((loadingState as CustomState.Failure).message)
+            gameResult != null -> GameResultContent(gameResult!!, user)
+            else -> FailureState("No game results available")
         }
     }
 }
@@ -253,7 +253,6 @@ private fun OpponentSection(user: User, points: Int) {
             contentScale = ContentScale.Crop
         )
 
-        // Opponent Details
         Column(
             modifier = Modifier
                 .weight(1f)
@@ -279,6 +278,26 @@ private fun OpponentSection(user: User, points: Int) {
                 color = MaterialTheme.colorScheme.primary
             )
         }
+    }
+}
+
+@Composable
+private fun WaitingForOpponent() {
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = "Waiting for opponent to finish...",
+            style = Typography.titleMedium,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(16.dp),
+            color = Color.White
+        )
+        CircularProgressIndicator(
+            modifier = Modifier.padding(16.dp)
+        )
     }
 }
 

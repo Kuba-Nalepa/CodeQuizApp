@@ -30,23 +30,39 @@ class GameOverViewModel @Inject constructor(
     private val _state = MutableStateFlow<CustomState<GameResult>>(CustomState.Idle)
     val state: StateFlow<CustomState<GameResult>> = _state
 
-    fun getGameData(gameId: String, currentUser: User) {
+    private val _bothUsersFinished = MutableStateFlow(false)
+    val bothUsersFinished: StateFlow<Boolean> = _bothUsersFinished
+
+    fun getGameData(gameId: String, user: User) {
         viewModelScope.launch {
             getGameDataUseCase.getGameData(gameId)
-                .onStart {
-                    _state.value = CustomState.Loading
-                }
+                .onStart { _state.value = CustomState.Loading }
                 .catch { e ->
                     _state.value = CustomState.Failure(e.message)
                 }
                 .collect { game ->
-                    game?.let { handleGameData(it, currentUser) }
+                    game?.let { handleGameData(it, user) }
                         ?: run { _state.value = CustomState.Failure("Game data not found") }
                 }
         }
     }
 
-    private fun handleGameData(game: Game, currentUser: User) {
+    private fun handleGameData(game: Game, user: User) {
+        val lobby = game.lobby
+
+        // Check if both users have finished
+        val bothFinished = lobby?.hasFounderFinishedGame == true &&
+                lobby.hasMemberFinishedGame == true
+
+        _bothUsersFinished.value = bothFinished
+
+        if (bothFinished) {
+            // Only process results if both users have finished
+            processGameResults(game, user)
+        }
+    }
+
+    private fun processGameResults(game: Game, currentUser: User) {
         val lobby = game.lobby
         val questionsSize = game.questions?.size
 
@@ -68,6 +84,7 @@ class GameOverViewModel @Inject constructor(
                             totalQuestions = it
                         )
                     }
+
                 } else {
                     questionsSize?.let {
                         GameResult.Lose(
@@ -79,6 +96,7 @@ class GameOverViewModel @Inject constructor(
                             totalQuestions = it
                         )
                     }
+
                 }
             }
             memberPoints > founderPoints -> {
@@ -93,6 +111,7 @@ class GameOverViewModel @Inject constructor(
                             totalQuestions = it
                         )
                     }
+
                 } else {
                     questionsSize?.let {
                         GameResult.Lose(
@@ -104,8 +123,9 @@ class GameOverViewModel @Inject constructor(
                             totalQuestions = it
                         )
                     }
+                    }
                 }
-            }
+
             else -> {
                 questionsSize?.let {
                     GameResult.Tie(
@@ -121,7 +141,7 @@ class GameOverViewModel @Inject constructor(
         }
 
         _gameResult.value = result
-        if(result == null) return
+        if (result == null) return
         _state.value = CustomState.Success(result)
     }
 
