@@ -1,6 +1,9 @@
 package com.jakubn.codequizapp.ui.game.gameOver
 
 
+import androidx.activity.ComponentActivity
+import androidx.activity.OnBackPressedCallback
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -15,14 +18,20 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -30,6 +39,7 @@ import androidx.compose.ui.draw.paint
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -49,11 +59,14 @@ fun GameOverScreen(
     user: User,
     gameId: String,
     navController: NavController,
-    viewModel: GameOverViewModel = hiltViewModel()
+    viewModel: GameOverViewModel = hiltViewModel(),
+    leaveGameOverScreen:  () -> Unit
 ) {
+    val context = LocalContext.current
     val loadingState by viewModel.state.collectAsState()
     val gameResult by viewModel.gameResult.collectAsState()
     val bothUsersFinished by viewModel.bothUsersFinished.collectAsState()
+    var dialogState by remember { mutableStateOf(false) }
 
     LaunchedEffect(gameId) {
         viewModel.getGameData(gameId, user)
@@ -65,6 +78,33 @@ fun GameOverScreen(
             viewModel.updateUserData(user, calculateUserScore(it, user))
         }
     }
+
+    DisposableEffect(Unit) {
+        val callback = object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                dialogState = true
+            }
+        }
+
+        (context as? ComponentActivity)?.onBackPressedDispatcher?.addCallback(callback)
+
+        onDispose {
+            callback.remove()
+        }
+    }
+
+    if (dialogState) ShowExitDialog(
+        onConfirm = {
+            dialogState = false
+            leaveGameOverScreen()
+        },
+        onDismiss = {
+            dialogState = false
+        },
+        onDismissRequest = {
+            dialogState = false
+        }
+    )
 
     Column(
         modifier = Modifier
@@ -117,7 +157,12 @@ private fun WinnerContainer(result: GameResult.Win) {
         0.85f to Color(0xFF061E3B)
     )
 
-    Text(modifier = Modifier.fillMaxWidth(), text = "You won!", style = Typography.titleLarge, textAlign = TextAlign.Center)
+    Text(
+        modifier = Modifier.fillMaxWidth(),
+        text = "You won!",
+        style = Typography.titleLarge,
+        textAlign = TextAlign.Center
+    )
 
     Column(
         modifier = Modifier
@@ -163,7 +208,12 @@ private fun LoserContainer(result: GameResult.Lose) {
 
     )
 
-    Text(modifier = Modifier.fillMaxWidth(), text = "You lost!", style = Typography.titleLarge, textAlign = TextAlign.Center)
+    Text(
+        modifier = Modifier.fillMaxWidth(),
+        text = "You lost!",
+        style = Typography.titleLarge,
+        textAlign = TextAlign.Center
+    )
 
     Column(
         modifier = Modifier
@@ -203,7 +253,12 @@ private fun TieContainer(result: GameResult.Tie, currentUser: User) {
         0.85f to Color(0xFF061E3B)
     )
 
-    Text(modifier = Modifier.fillMaxWidth(), text = "It's a tie!", style = Typography.titleLarge, textAlign = TextAlign.Center)
+    Text(
+        modifier = Modifier.fillMaxWidth(),
+        text = "It's a tie!",
+        style = Typography.titleLarge,
+        textAlign = TextAlign.Center
+    )
 
     Column(
         modifier = Modifier
@@ -352,7 +407,9 @@ private fun GameStatsSection(
 @Composable
 private fun StatItem(label: String, value: String, color: Color) {
     Column(
-        modifier = Modifier.fillMaxWidth().padding(top = 5.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 5.dp),
         verticalArrangement = Arrangement.SpaceEvenly,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -389,6 +446,53 @@ fun FailureState(errorMessage: String?) {
     ) {
         Text(text = errorMessage ?: "Unknown error", color = Color.White)
     }
+}
+
+@Composable
+private fun ShowExitDialog(onDismiss: () -> Unit, onConfirm: () -> Unit, onDismissRequest: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = { onDismissRequest() },
+        title = {
+            Text(
+                color = MaterialTheme.colorScheme.secondary,
+                style = Typography.titleSmall,
+                text = "Exit Confirmation"
+            )
+        },
+        text = {
+            Text(
+                style = Typography.bodySmall,
+                text = "Are you sure you want leave?"
+            )
+        },
+        confirmButton = {
+            Button(
+                onClick = { onConfirm() },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.errorContainer, // Light Pink
+                    contentColor = MaterialTheme.colorScheme.error // Dark Red
+                ),
+                shape = RoundedCornerShape(50),
+                border = BorderStroke(2.dp, Color(0xFF8B0000)), // Dark Red Border
+            ) {
+                Text(text = "Yes")
+            }
+        },
+        dismissButton = {
+            Button(
+                onClick = { onDismiss() },
+                colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.secondary, // Dark Purple
+                contentColor = MaterialTheme.colorScheme.primary // Neon Green
+            ),
+            shape = RoundedCornerShape(50),
+            border = BorderStroke(2.dp, Color(0xFF032956)), // Matching Border
+            modifier = Modifier.padding(end = 8.dp)
+        ) {
+            Text(text = "No")
+        }
+        }
+    )
 }
 
 private fun calculateUserScore(result: GameResult, currentUser: User): Int {

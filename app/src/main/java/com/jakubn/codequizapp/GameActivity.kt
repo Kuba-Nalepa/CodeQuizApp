@@ -72,7 +72,7 @@ class GameActivity : ComponentActivity() {
                         composable(Screen.GameOver.route + "/{gameId}") { backStackEntry ->
                             val gameId = backStackEntry.arguments?.getString("gameId")
                             gameId?.let { id ->
-                                GameOverScreen(user, id, navController)
+                                GameOverScreen(user, id, navController, leaveGameOverScreen = { finish() })
                             }
                         }
                     }
