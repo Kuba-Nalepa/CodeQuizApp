@@ -156,4 +156,8 @@ class GameOverViewModel @Inject constructor(
             manageGameState.manageGameState(gameId, false)
         }
     }
+
+    fun archiveGame(game: Game) {
+
+    }
 }

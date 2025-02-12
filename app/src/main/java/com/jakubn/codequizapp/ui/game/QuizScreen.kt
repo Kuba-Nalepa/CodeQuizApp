@@ -67,7 +67,7 @@ fun QuizScreen(
     val gameStateSnapshot by rememberUpdatedState(gameState)
 
     LaunchedEffect(gameId) {
-        viewModel.getGameData(gameId) // Fetch data only once
+        viewModel.getGameData(gameId)
     }
 
     LaunchedEffect(isGameFinished) {
@@ -77,7 +77,7 @@ fun QuizScreen(
                     currentState.result?.questions?.let { questions ->
                         val correctAnswers = viewModel.checkAnswers(questions, selectedAnswers)
                         currentState.result.lobby?.let { lobby ->
-                            viewModel.saveUserGamePoints(gameId, lobby, user, correctAnswers)
+                            viewModel.saveUserGameStats(gameId, lobby, user, selectedAnswers, correctAnswers)
                             viewModel.setUserFinishedGame(gameId, lobby, user, true)
                         }
                     }

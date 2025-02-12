@@ -136,10 +136,11 @@ class GameRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun saveUserGamePoints(
+    override suspend fun saveUserGameStats(
         gameId: String,
         lobby: Lobby,
         user: User,
+        answersList: List<Int>,
         correctAnswersQuantity: Int,
         points: Int
     ) {
@@ -167,6 +168,19 @@ class GameRepositoryImpl @Inject constructor(
                 .child(gameId)
                 .child("lobby")
                 .updateChildren(hashMapOf(key to correctAnswersQuantity) as Map<String, Any>).await()
+        }
+
+        val userAnswersListKey = when (user.uid) {
+            lobby.founder?.uid -> "founderAnswersList"
+            lobby.member?.uid -> "memberAnswersList"
+            else -> null
+        }
+
+        userAnswersListKey?.let { key ->
+            firebaseDatabase.reference.child("games")
+                .child(gameId)
+                .child("lobby")
+                .updateChildren(hashMapOf(key to answersList) as Map<String, Any>).await()
         }
     }
 

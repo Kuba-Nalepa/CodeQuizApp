@@ -9,7 +9,7 @@ import com.jakubn.codequizapp.domain.model.Lobby
 import com.jakubn.codequizapp.domain.model.Question
 import com.jakubn.codequizapp.domain.model.User
 import com.jakubn.codequizapp.domain.usecases.game.GetGameDataUseCase
-import com.jakubn.codequizapp.domain.usecases.game.SaveUserGamePointsUseCase
+import com.jakubn.codequizapp.domain.usecases.game.SaveUserGameStatsUseCase
 import com.jakubn.codequizapp.domain.usecases.game.SetUserFinishedGameUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -24,7 +24,7 @@ import kotlin.reflect.full.memberProperties
 @HiltViewModel
 class QuizViewModel @Inject constructor(
     private val getGameDataUseCase: GetGameDataUseCase,
-    private val saveUserGamePointsUseCase: SaveUserGamePointsUseCase,
+    private val saveUserGameStatsUseCase: SaveUserGameStatsUseCase,
     private val setUserFinishedGameUseCase: SetUserFinishedGameUseCase
 ) : ViewModel() {
     private val _state = MutableStateFlow<CustomState<Game?>>(CustomState.Idle)
@@ -63,10 +63,10 @@ class QuizViewModel @Inject constructor(
         return correctAnswers
     }
 
-    fun saveUserGamePoints(gameId: String, lobby: Lobby, user: User, correctAnswersQuantity: Int) {
+    fun saveUserGameStats(gameId: String, lobby: Lobby, user: User, answersList: List<Int>, correctAnswersQuantity: Int) {
         viewModelScope.launch(Dispatchers.IO) {
             val points = correctAnswersQuantity * 10
-            saveUserGamePointsUseCase.saveUserGamePoints(gameId, lobby, user, correctAnswersQuantity, points)
+            saveUserGameStatsUseCase.saveUserGameStats(gameId, lobby, user, answersList, correctAnswersQuantity, points)
         }
     }
 

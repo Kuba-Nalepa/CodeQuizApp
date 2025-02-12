@@ -68,6 +68,8 @@ fun GameOverScreen(
     val bothUsersFinished by viewModel.bothUsersFinished.collectAsState()
     var dialogState by remember { mutableStateOf(false) }
 
+    // make the archive for the games completed
+
     LaunchedEffect(gameId) {
         viewModel.getGameData(gameId, user)
     }
@@ -119,9 +121,13 @@ fun GameOverScreen(
     ) {
         when {
             !bothUsersFinished -> WaitingForOpponent()
-            loadingState is CustomState.Loading -> LoadingState()
+            gameResult != null -> {
+                GameResultContent(gameResult!!, user)
+
+
+            }
             loadingState is CustomState.Failure -> FailureState((loadingState as CustomState.Failure).message)
-            gameResult != null -> GameResultContent(gameResult!!, user)
+            loadingState is CustomState.Loading -> LoadingState()
             else -> FailureState("No game results available")
         }
     }
@@ -297,7 +303,7 @@ private fun OpponentSection(user: User, points: Int) {
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Opponent Image
+
         AsyncImage(
             modifier = Modifier
                 .size(80.dp)
