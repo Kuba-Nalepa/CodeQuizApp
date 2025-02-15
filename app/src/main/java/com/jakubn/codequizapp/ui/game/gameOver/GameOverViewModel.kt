@@ -6,7 +6,7 @@ import com.jakubn.codequizapp.domain.model.CustomState
 import com.jakubn.codequizapp.domain.model.Game
 import com.jakubn.codequizapp.domain.model.GameResult
 import com.jakubn.codequizapp.domain.model.User
-import com.jakubn.codequizapp.domain.usecases.game.GetGameDataUseCase
+import com.jakubn.codequizapp.domain.usecases.game.ListenGameDataChangesUseCase
 import com.jakubn.codequizapp.domain.usecases.game.ManageGameStateUseCase
 import com.jakubn.codequizapp.domain.usecases.user.UpdateUserDataUsecase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -19,7 +19,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class GameOverViewModel @Inject constructor(
-    private val getGameDataUseCase: GetGameDataUseCase,
+    private val listenGameDataChangesUseCase: ListenGameDataChangesUseCase,
     private val updateUserDataUseCase: UpdateUserDataUsecase,
     private val manageGameState: ManageGameStateUseCase
 ) : ViewModel() {
@@ -35,14 +35,13 @@ class GameOverViewModel @Inject constructor(
 
     fun getGameData(gameId: String, user: User) {
         viewModelScope.launch {
-            getGameDataUseCase.getGameData(gameId)
+            listenGameDataChangesUseCase.listenGameDataChanges(gameId)
                 .onStart { _state.value = CustomState.Loading }
                 .catch { e ->
                     _state.value = CustomState.Failure(e.message)
                 }
                 .collect { game ->
-                    game?.let { handleGameData(it, user) }
-                        ?: run { _state.value = CustomState.Failure("Game data not found") }
+                    handleGameData(game, user)
                 }
         }
     }
@@ -50,14 +49,12 @@ class GameOverViewModel @Inject constructor(
     private fun handleGameData(game: Game, user: User) {
         val lobby = game.lobby
 
-        // Check if both users have finished
         val bothFinished = lobby?.hasFounderFinishedGame == true &&
                 lobby.hasMemberFinishedGame == true
 
         _bothUsersFinished.value = bothFinished
 
         if (bothFinished) {
-            // Only process results if both users have finished
             processGameResults(game, user)
         }
     }
@@ -155,9 +152,5 @@ class GameOverViewModel @Inject constructor(
         viewModelScope.launch {
             manageGameState.manageGameState(gameId, false)
         }
-    }
-
-    fun archiveGame(game: Game) {
-
     }
 }

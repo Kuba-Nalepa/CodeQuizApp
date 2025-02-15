@@ -8,7 +8,7 @@ import com.jakubn.codequizapp.domain.model.Game
 import com.jakubn.codequizapp.domain.model.Lobby
 import com.jakubn.codequizapp.domain.model.Question
 import com.jakubn.codequizapp.domain.model.User
-import com.jakubn.codequizapp.domain.usecases.game.GetGameDataUseCase
+import com.jakubn.codequizapp.domain.usecases.game.ListenGameDataChangesUseCase
 import com.jakubn.codequizapp.domain.usecases.game.SaveUserGameStatsUseCase
 import com.jakubn.codequizapp.domain.usecases.game.SetUserFinishedGameUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -23,7 +23,7 @@ import kotlin.reflect.full.memberProperties
 
 @HiltViewModel
 class QuizViewModel @Inject constructor(
-    private val getGameDataUseCase: GetGameDataUseCase,
+    private val listenGameDataChangesUseCase: ListenGameDataChangesUseCase,
     private val saveUserGameStatsUseCase: SaveUserGameStatsUseCase,
     private val setUserFinishedGameUseCase: SetUserFinishedGameUseCase
 ) : ViewModel() {
@@ -33,9 +33,9 @@ class QuizViewModel @Inject constructor(
     private val _isGameFinished = MutableStateFlow(false)
     val isGameFinished: StateFlow<Boolean> = _isGameFinished
 
-    fun getGameData(gameId: String) {
+    fun listenGameData(gameId: String) {
         viewModelScope.launch(Dispatchers.IO) {
-            getGameDataUseCase.getGameData(gameId)
+            listenGameDataChangesUseCase.listenGameDataChanges(gameId)
                 .onStart {
                     _state.value = CustomState.Loading
                 }

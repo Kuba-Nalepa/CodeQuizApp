@@ -59,12 +59,13 @@ class GameRepositoryImpl @Inject constructor(
             hashMapOf("gameInProgress" to state) as Map<String, Any>
         ).await()
     }
-
-    override suspend fun getGameData(gameId: String): Flow<Game?> = callbackFlow {
+    override suspend fun listenGameDataChanges(gameId: String): Flow<Game> = callbackFlow {
         val listener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 val game = snapshot.getValue(Game::class.java)
-                trySend(game)
+                if (game != null) {
+                    trySend(game)
+                }
             }
 
             override fun onCancelled(error: DatabaseError) {
@@ -77,6 +78,16 @@ class GameRepositoryImpl @Inject constructor(
 
         awaitClose {
             gameRef.removeEventListener(listener)
+        }
+    }
+
+    override suspend fun getGameData(gameId: String): Flow<Game> = flow {
+        val gameSnapshot = firebaseDatabase.getReference("games").child(gameId).get().await()
+        val game = gameSnapshot.getValue(Game::class.java)
+        if (gameSnapshot != null) {
+            if (game != null) {
+                emit(game)
+            }
         }
     }
 

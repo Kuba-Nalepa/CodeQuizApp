@@ -8,7 +8,7 @@ import com.jakubn.codequizapp.domain.model.Lobby
 import com.jakubn.codequizapp.domain.model.User
 import com.jakubn.codequizapp.domain.usecases.game.ChangeUserReadinessStatusUseCase
 import com.jakubn.codequizapp.domain.usecases.game.DeleteLobbyUseCase
-import com.jakubn.codequizapp.domain.usecases.game.GetGameDataUseCase
+import com.jakubn.codequizapp.domain.usecases.game.ListenGameDataChangesUseCase
 import com.jakubn.codequizapp.domain.usecases.game.ManageGameStateUseCase
 import com.jakubn.codequizapp.domain.usecases.game.RemoveMemberFromLobbyUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -21,7 +21,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class LobbyViewModel @Inject constructor(
-    private val getGameDataUseCase: GetGameDataUseCase,
+    private val listenGameDataChangesUseCase: ListenGameDataChangesUseCase,
     private val removeUserFromLobbyUseCase: RemoveMemberFromLobbyUseCase,
     private val deleteLobbyUseCase: DeleteLobbyUseCase,
     private val changeUserReadinessStatusUseCase: ChangeUserReadinessStatusUseCase,
@@ -36,11 +36,11 @@ class LobbyViewModel @Inject constructor(
 
     fun getGameData(gameId: String) {
         viewModelScope.launch {
-            getGameDataUseCase.getGameData(gameId)
+            listenGameDataChangesUseCase.listenGameDataChanges(gameId)
                 .onStart { _state.value = CustomState.Loading }
                 .catch { e -> _state.value = CustomState.Failure(e.message) }
                 .collect { game ->
-                    _lobby.value = CustomState.Success(game?.lobby)
+                    _lobby.value = CustomState.Success(game.lobby)
                     _state.value = CustomState.Success(game)
                 }
         }

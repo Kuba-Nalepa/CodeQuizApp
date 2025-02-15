@@ -67,7 +67,7 @@ fun QuizScreen(
     val gameStateSnapshot by rememberUpdatedState(gameState)
 
     LaunchedEffect(gameId) {
-        viewModel.getGameData(gameId)
+        viewModel.listenGameData(gameId)
     }
 
     LaunchedEffect(isGameFinished) {
@@ -147,8 +147,8 @@ fun QuestionTemplate(
     selectedOption: Int?,
     onOptionSelected: (Int) -> Unit,
     onClick: () -> Unit,
-    duration: Int,  // Duration in seconds
-    onTimeFinished: () -> Unit,  // Callback when time runs out
+    duration: Int,
+    onTimeFinished: () -> Unit
 ) {
 
     var timerProgress by remember { androidx.compose.runtime.mutableFloatStateOf(0f) }
@@ -167,7 +167,7 @@ fun QuestionTemplate(
         }
 
         isTimeUp = true
-        onTimeFinished() // Move to the next question
+        onTimeFinished()
     }
 
     Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.SpaceEvenly) {
@@ -213,7 +213,7 @@ fun QuestionTemplate(
                         ) {
                             RadioButton(
                                 selected = index == selectedOption,
-                                onClick = null // Click handled by parent
+                                onClick = null
                             )
 
                             Text(
@@ -287,7 +287,7 @@ fun CodeQuizText() {
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
         Text(
             modifier = Modifier
-                .padding(top = 20.dp),
+                .padding(top = 22.dp),
             text = "<CODE/QUIZ>",
             style = Typography.bodySmall,
             color = Color(0xff7BAFC4)
