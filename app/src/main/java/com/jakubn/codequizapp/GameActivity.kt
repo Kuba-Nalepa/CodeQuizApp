@@ -21,6 +21,7 @@ import com.jakubn.codequizapp.ui.game.availableGames.AvailableGameListScreen
 import com.jakubn.codequizapp.ui.game.createGame.CreateGameScreen
 import com.jakubn.codequizapp.ui.game.gameOver.GameOverScreen
 import com.jakubn.codequizapp.ui.game.lobby.LobbyScreen
+import com.jakubn.codequizapp.ui.game.quizReviewScreen.QuizReviewScreen
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -70,10 +71,16 @@ class GameActivity : ComponentActivity() {
                         }
 
                         composable(Screen.GameOver.route + "/{gameId}") { backStackEntry ->
-                            val gameId = backStackEntry.arguments?.getString("gameId")
-                            gameId?.let { id ->
+                            backStackEntry.arguments?.getString("gameId")?.let { id ->
                                 GameOverScreen(user, id, navController, leaveGameOverScreen = { finish() })
                             }
+                        }
+
+                        composable(Screen.QuizReviewScreen.route + "/{gameId}") { backStackEntry ->
+                            backStackEntry.arguments?.getString("gameId")?.let { id ->
+                                QuizReviewScreen(user, id)
+                            }
+
                         }
                     }
                 }

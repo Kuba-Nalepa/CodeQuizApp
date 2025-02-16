@@ -34,6 +34,8 @@ sealed class Screen(
     @Serializable
     object GameOver : Screen("game_over_screen")
     @Serializable
+    object QuizReviewScreen : Screen("quiz_review_screen")
+    @Serializable
     object Settings : Screen("settings_screen")
     @Serializable
     object UserProfile : Screen("user_profile_screen")

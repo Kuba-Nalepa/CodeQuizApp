@@ -51,6 +51,7 @@ import com.jakubn.codequizapp.R
 import com.jakubn.codequizapp.domain.model.CustomState
 import com.jakubn.codequizapp.domain.model.GameResult
 import com.jakubn.codequizapp.domain.model.User
+import com.jakubn.codequizapp.navigation.Screen
 import com.jakubn.codequizapp.theme.Typography
 import com.jakubn.codequizapp.ui.game.availableGames.LoadingState
 
@@ -67,8 +68,6 @@ fun GameOverScreen(
     val gameResult by viewModel.gameResult.collectAsState()
     val bothUsersFinished by viewModel.bothUsersFinished.collectAsState()
     var dialogState by remember { mutableStateOf(false) }
-
-    // make the archive for the games completed
 
     LaunchedEffect(gameId) {
         viewModel.getGameData(gameId, user)
@@ -122,8 +121,7 @@ fun GameOverScreen(
         when {
             !bothUsersFinished -> WaitingForOpponent()
             gameResult != null -> {
-                GameResultContent(gameResult!!, user)
-
+                GameResultContent(gameResult!!, user, navController, gameId)
 
             }
             loadingState is CustomState.Failure -> FailureState((loadingState as CustomState.Failure).message)
@@ -134,7 +132,7 @@ fun GameOverScreen(
 }
 
 @Composable
-private fun GameResultContent(result: GameResult, currentUser: User) {
+private fun GameResultContent(result: GameResult, currentUser: User, navController: NavController, gameId: String) {
     Column(
         modifier = Modifier
             .padding(24.dp)
@@ -142,16 +140,16 @@ private fun GameResultContent(result: GameResult, currentUser: User) {
         verticalArrangement = Arrangement.SpaceAround
     ) {
         when (result) {
-            is GameResult.Win -> WinnerContainer(result)
-            is GameResult.Lose -> LoserContainer(result)
-            is GameResult.Tie -> TieContainer(result, currentUser)
+            is GameResult.Win -> WinnerContainer(result, navController, gameId)
+            is GameResult.Lose -> LoserContainer(result, navController, gameId)
+            is GameResult.Tie -> TieContainer(result, currentUser, navController, gameId)
         }
     }
 
 }
 
 @Composable
-private fun WinnerContainer(result: GameResult.Win) {
+private fun WinnerContainer(result: GameResult.Win, navController: NavController, gameId: String) {
     val borderColors = arrayOf(
         0.20f to Color(0xFFA3FF0D),
         0.50f to Color(0xCCFFFFFF),
@@ -196,12 +194,12 @@ private fun WinnerContainer(result: GameResult.Win) {
         OpponentSection(user = result.loser, points = result.loserPoints)
     }
 
-    ActionButton() { /* Handle action */ }
+    ActionButton { navController.navigate(Screen.QuizReviewScreen.route + "/$gameId") }
 
 }
 
 @Composable
-private fun LoserContainer(result: GameResult.Lose) {
+private fun LoserContainer(result: GameResult.Lose, navController: NavController, gameId: String) {
     val borderColors = arrayOf(
         0.20f to Color(0xFF032956),
         0.50f to Color(0xCCFFFFFF),
@@ -243,11 +241,11 @@ private fun LoserContainer(result: GameResult.Lose) {
         )
         OpponentSection(user = result.winner, points = result.winnerPoints)
     }
-    ActionButton() { /* Handle action */ }
+    ActionButton { navController.navigate(Screen.QuizReviewScreen.route + "/$gameId") }
 }
 
 @Composable
-private fun TieContainer(result: GameResult.Tie, currentUser: User) {
+private fun TieContainer(result: GameResult.Tie, currentUser: User, navController: NavController, gameId: String) {
     val borderColors = arrayOf(
         0.20f to Color(0xFF032956),
         0.50f to Color(0xCCFFFFFF),
@@ -290,7 +288,7 @@ private fun TieContainer(result: GameResult.Tie, currentUser: User) {
             points = if (result.secondUser.uid == currentUser.uid) result.secondUserPoints else result.firstUserPoints
         )
     }
-    ActionButton() { /* Handle action */ }
+    ActionButton { navController.navigate(Screen.QuizReviewScreen.route + "/$gameId") }
 
 }
 

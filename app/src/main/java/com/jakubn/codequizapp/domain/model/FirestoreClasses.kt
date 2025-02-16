@@ -86,14 +86,16 @@ data class Lobby(
     @get:PropertyName("isFounderReady")
     @set:PropertyName("isFounderReady")
     var isFounderReady: Boolean = false,
+    var founderPoints: Int? = null,
+    var founderCorrectAnswersQuantity: Int? = null,
+    var hasFounderFinishedGame: Boolean? = null,
+    var founderAnswersList: List<Int>? = null,
     var member: User? = null,
     @get:PropertyName("isMemberReady")
     @set:PropertyName("isMemberReady")
     var isMemberReady: Boolean = false,
-    var founderPoints: Int? = null,
-    var founderCorrectAnswersQuantity: Int? = null,
     var memberPoints: Int? = null,
     var memberCorrectAnswersQuantity: Int? = null,
-    var hasFounderFinishedGame: Boolean? = null,
-    var hasMemberFinishedGame: Boolean? = null
+    var hasMemberFinishedGame: Boolean? = null,
+    var memberAnswersList: List<Int>? = null
 )
