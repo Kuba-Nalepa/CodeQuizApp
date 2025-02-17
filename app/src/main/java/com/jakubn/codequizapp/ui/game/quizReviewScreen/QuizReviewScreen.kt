@@ -68,6 +68,7 @@ fun QuizReviewScreen(
                     val userAnswerList = viewModel.getUserAnswersList(user).orEmpty()
 
                     if (questionList.isNotEmpty() && userAnswerList.isNotEmpty()) {
+
                         VerticalListComposable(questionList, userAnswerList, viewModel)
                     } else {
                         Text(text = "No questions or answers found", color = Color.White)

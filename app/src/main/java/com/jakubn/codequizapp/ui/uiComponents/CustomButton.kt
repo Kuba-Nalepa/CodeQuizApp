@@ -11,7 +11,6 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.jakubn.codequizapp.theme.Typography
 
 @Composable
 fun CustomButton(
@@ -38,9 +37,8 @@ fun CustomButton(
             modifier = Modifier
                 .padding(top = 2.dp, bottom = 2.dp),
             color = textColor,
-            text = text.uppercase(),
-            textAlign = TextAlign.Center,
-            style = Typography.bodyLarge
+            text = text,
+            textAlign = TextAlign.Center
         )
     }
 }

@@ -54,6 +54,7 @@ import com.jakubn.codequizapp.domain.model.User
 import com.jakubn.codequizapp.navigation.Screen
 import com.jakubn.codequizapp.theme.Typography
 import com.jakubn.codequizapp.ui.game.availableGames.LoadingState
+import com.jakubn.codequizapp.ui.uiComponents.CustomButton
 
 @Composable
 fun GameOverScreen(
@@ -109,7 +110,7 @@ fun GameOverScreen(
 
     Column(
         modifier = Modifier
-            .fillMaxWidth()
+            .fillMaxSize()
             .paint(
                 painterResource(R.drawable.background_auth),
                 contentScale = ContentScale.FillBounds
@@ -128,6 +129,20 @@ fun GameOverScreen(
             loadingState is CustomState.Loading -> LoadingState()
             else -> FailureState("No game results available")
         }
+
+        Button(
+            modifier = Modifier
+                .fillMaxWidth(),
+            onClick = { dialogState = true },
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color(0xFF8B0000),
+                contentColor = Color.White
+            ),
+            shape = RoundedCornerShape(50),
+            border = BorderStroke(2.dp, Color(0xFFB22222))
+        ) {
+            Text(text = "Exit Game")
+        }
     }
 }
 
@@ -136,7 +151,7 @@ private fun GameResultContent(result: GameResult, currentUser: User, navControll
     Column(
         modifier = Modifier
             .padding(24.dp)
-            .fillMaxSize(),
+            .fillMaxWidth(),
         verticalArrangement = Arrangement.SpaceAround
     ) {
         when (result) {
@@ -162,7 +177,7 @@ private fun WinnerContainer(result: GameResult.Win, navController: NavController
     )
 
     Text(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp),
         text = "You won!",
         style = Typography.titleLarge,
         textAlign = TextAlign.Center
@@ -213,7 +228,7 @@ private fun LoserContainer(result: GameResult.Lose, navController: NavController
     )
 
     Text(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp),
         text = "You lost!",
         style = Typography.titleLarge,
         textAlign = TextAlign.Center
@@ -258,7 +273,7 @@ private fun TieContainer(result: GameResult.Tie, currentUser: User, navControlle
     )
 
     Text(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp),
         text = "It's a tie!",
         style = Typography.titleLarge,
         textAlign = TextAlign.Center
@@ -429,14 +444,16 @@ private fun StatItem(label: String, value: String, color: Color) {
 
 @Composable
 private fun ActionButton(onClick: () -> Unit) {
-    Button(
+    CustomButton(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = 16.dp),
-        onClick = onClick
-    ) {
-        Text("show answers")
-    }
+            .padding(vertical = 24.dp),
+        text = "show answers",
+        backgroundColor = Color(0xff003963),
+        textColor = MaterialTheme.colorScheme.primary,
+        onClick = onClick,
+        enabled = true
+    )
 }
 
 @Composable
@@ -473,11 +490,11 @@ private fun ShowExitDialog(onDismiss: () -> Unit, onConfirm: () -> Unit, onDismi
             Button(
                 onClick = { onConfirm() },
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.errorContainer, // Light Pink
-                    contentColor = MaterialTheme.colorScheme.error // Dark Red
+                    containerColor = MaterialTheme.colorScheme.errorContainer,
+                    contentColor = MaterialTheme.colorScheme.error
                 ),
                 shape = RoundedCornerShape(50),
-                border = BorderStroke(2.dp, Color(0xFF8B0000)), // Dark Red Border
+                border = BorderStroke(2.dp, Color(0xFF8B0000)),
             ) {
                 Text(text = "Yes")
             }
@@ -486,11 +503,11 @@ private fun ShowExitDialog(onDismiss: () -> Unit, onConfirm: () -> Unit, onDismi
             Button(
                 onClick = { onDismiss() },
                 colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.secondary, // Dark Purple
-                contentColor = MaterialTheme.colorScheme.primary // Neon Green
+                containerColor = MaterialTheme.colorScheme.secondary,
+                contentColor = MaterialTheme.colorScheme.primary
             ),
             shape = RoundedCornerShape(50),
-            border = BorderStroke(2.dp, Color(0xFF032956)), // Matching Border
+            border = BorderStroke(2.dp, Color(0xFF032956)),
             modifier = Modifier.padding(end = 8.dp)
         ) {
             Text(text = "No")
