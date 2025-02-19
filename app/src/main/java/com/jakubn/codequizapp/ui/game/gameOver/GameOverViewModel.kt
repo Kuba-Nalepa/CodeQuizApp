@@ -30,8 +30,6 @@ class GameOverViewModel @Inject constructor(
     private val _state = MutableStateFlow<CustomState<GameResult>>(CustomState.Idle)
     val state: StateFlow<CustomState<GameResult>> = _state
 
-    private val _bothUsersFinished = MutableStateFlow(false)
-    val bothUsersFinished: StateFlow<Boolean> = _bothUsersFinished
 
     fun getGameData(gameId: String, user: User) {
         viewModelScope.launch {
@@ -51,8 +49,6 @@ class GameOverViewModel @Inject constructor(
 
         val bothFinished = lobby?.hasFounderFinishedGame == true &&
                 lobby.hasMemberFinishedGame == true
-
-        _bothUsersFinished.value = bothFinished
 
         if (bothFinished) {
             processGameResults(game, user)

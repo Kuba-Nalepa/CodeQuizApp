@@ -53,7 +53,6 @@ import com.jakubn.codequizapp.domain.model.GameResult
 import com.jakubn.codequizapp.domain.model.User
 import com.jakubn.codequizapp.navigation.Screen
 import com.jakubn.codequizapp.theme.Typography
-import com.jakubn.codequizapp.ui.game.availableGames.LoadingState
 import com.jakubn.codequizapp.ui.uiComponents.CustomButton
 
 @Composable
@@ -65,9 +64,8 @@ fun GameOverScreen(
     leaveGameOverScreen:  () -> Unit
 ) {
     val context = LocalContext.current
-    val loadingState by viewModel.state.collectAsState()
+    val state by viewModel.state.collectAsState()
     val gameResult by viewModel.gameResult.collectAsState()
-    val bothUsersFinished by viewModel.bothUsersFinished.collectAsState()
     var dialogState by remember { mutableStateOf(false) }
 
     LaunchedEffect(gameId) {
@@ -119,29 +117,27 @@ fun GameOverScreen(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        when {
-            !bothUsersFinished -> WaitingForOpponent()
-            gameResult != null -> {
-                GameResultContent(gameResult!!, user, navController, gameId)
+        when(val currentState = state) {
+            is CustomState.Success -> {
+                GameResultContent(currentState.result, user, navController, gameId)
 
+                Button(
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    onClick = { dialogState = true },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF8B0000),
+                        contentColor = Color.White
+                    ),
+                    shape = RoundedCornerShape(50),
+                    border = BorderStroke(2.dp, Color(0xFFB22222))
+                ) {
+                    Text(text = "Exit Game")
+                }
             }
-            loadingState is CustomState.Failure -> FailureState((loadingState as CustomState.Failure).message)
-            loadingState is CustomState.Loading -> LoadingState()
-            else -> FailureState("No game results available")
-        }
-
-        Button(
-            modifier = Modifier
-                .fillMaxWidth(),
-            onClick = { dialogState = true },
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFF8B0000),
-                contentColor = Color.White
-            ),
-            shape = RoundedCornerShape(50),
-            border = BorderStroke(2.dp, Color(0xFFB22222))
-        ) {
-            Text(text = "Exit Game")
+            is CustomState.Failure -> FailureState(currentState.message)
+            CustomState.Loading -> WaitingForOpponent()
+            CustomState.Idle -> {}
         }
     }
 }
@@ -272,6 +268,18 @@ private fun TieContainer(result: GameResult.Tie, currentUser: User, navControlle
         0.85f to Color(0xFF061E3B)
     )
 
+    val (currentUserProfile, currentUserPoints) = if (result.firstUser.uid == currentUser.uid) {
+        result.firstUser to result.firstUserPoints
+    } else {
+        result.secondUser to result.secondUserPoints
+    }
+
+    val (opponentProfile, opponentPoints) = if (result.secondUser.uid != currentUser.uid) {
+        result.secondUser to result.secondUserPoints
+    } else {
+        result.firstUser to result.firstUserPoints
+    }
+
     Text(
         modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp),
         text = "It's a tie!",
@@ -291,17 +299,12 @@ private fun TieContainer(result: GameResult.Tie, currentUser: User, navControlle
             .background(brush = Brush.verticalGradient(colorStops = backgroundColors))
             .padding(24.dp)
     ) {
-        UserProfileSection(
-            user = if (result.firstUser.uid == currentUser.uid) result.firstUser else result.secondUser,
-            points = if (result.firstUser.uid == currentUser.uid) result.firstUserPoints else result.secondUserPoints
-        )
+
+        UserProfileSection(user = currentUserProfile, points = currentUserPoints)
 
         Spacer(Modifier.size(50.dp))
 
-        OpponentSection(
-            user = if (result.firstUser.uid == currentUser.uid) result.firstUser else result.secondUser,
-            points = if (result.secondUser.uid == currentUser.uid) result.secondUserPoints else result.firstUserPoints
-        )
+        OpponentSection(user = opponentProfile, points = opponentPoints)
     }
     ActionButton { navController.navigate(Screen.QuizReviewScreen.route + "/$gameId") }
 
