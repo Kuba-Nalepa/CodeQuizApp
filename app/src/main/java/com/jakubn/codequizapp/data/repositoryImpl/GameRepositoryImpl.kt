@@ -59,6 +59,7 @@ class GameRepositoryImpl @Inject constructor(
             hashMapOf("gameInProgress" to state) as Map<String, Any>
         ).await()
     }
+
     override suspend fun listenGameDataChanges(gameId: String): Flow<Game> = callbackFlow {
         val listener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
@@ -213,5 +214,32 @@ class GameRepositoryImpl @Inject constructor(
                 .child("lobby")
                 .updateChildren(hashMapOf(key to hasFinished) as Map<String, Any>).await()
         }
+    }
+
+    override suspend fun setUserLeftGame(
+        game: Game,
+        user: User,
+        hasLeft: Boolean
+    ) {
+        val userLeftGameKey = when (user.uid) {
+            game.lobby?.founder?.uid -> "hasFounderLeftGame"
+            game.lobby?.member?.uid -> "hasMemberLeftGame"
+            else -> null
+        }
+
+        userLeftGameKey?.let { key ->
+            firebaseDatabase.reference.child("games")
+                .child(game.gameId)
+                .child("lobby")
+                .updateChildren(hashMapOf(key to hasLeft) as Map<String, Any>).await()
+        }
+    }
+
+    override suspend fun archiveGame(game: Game) {
+        firebaseDatabase.reference.child("archivedGames").child(game.gameId).setValue(game).await()
+    }
+
+    override suspend fun deleteGame(game: Game) {
+        firebaseDatabase.reference.child("games").child(game.gameId).removeValue().await()
     }
 }

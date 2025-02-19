@@ -30,4 +30,10 @@ interface GameRepository {
 
     suspend fun setUserFinishedGame(gameId: String, lobby: Lobby, user: User, hasFinished: Boolean)
 
+    suspend fun setUserLeftGame(game: Game, user: User, hasLeft: Boolean)
+
+    suspend fun archiveGame(game: Game)
+
+    suspend fun deleteGame(game: Game)
+
 }

@@ -73,7 +73,7 @@ data class Tag(
 )
 
 data class Game(
-    var gameId: String? = null,
+    var gameId: String = "",
     var gameInProgress: Boolean = false,
     var category: String? = null,
     var questions: List<Question>? = null,
@@ -87,15 +87,17 @@ data class Lobby(
     @set:PropertyName("isFounderReady")
     var isFounderReady: Boolean = false,
     var founderPoints: Int? = null,
+    var founderAnswersList: List<Int>? = null,
     var founderCorrectAnswersQuantity: Int? = null,
     var hasFounderFinishedGame: Boolean? = null,
-    var founderAnswersList: List<Int>? = null,
+    var hasFounderLeftGame: Boolean? = null,
     var member: User? = null,
     @get:PropertyName("isMemberReady")
     @set:PropertyName("isMemberReady")
     var isMemberReady: Boolean = false,
     var memberPoints: Int? = null,
+    var memberAnswersList: List<Int>? = null,
     var memberCorrectAnswersQuantity: Int? = null,
     var hasMemberFinishedGame: Boolean? = null,
-    var memberAnswersList: List<Int>? = null
+    var hasMemberLeftGame: Boolean? = null
 )

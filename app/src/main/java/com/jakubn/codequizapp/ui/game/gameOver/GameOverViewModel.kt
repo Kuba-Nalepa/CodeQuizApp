@@ -6,8 +6,11 @@ import com.jakubn.codequizapp.domain.model.CustomState
 import com.jakubn.codequizapp.domain.model.Game
 import com.jakubn.codequizapp.domain.model.GameResult
 import com.jakubn.codequizapp.domain.model.User
+import com.jakubn.codequizapp.domain.usecases.game.ArchiveGameUseCase
+import com.jakubn.codequizapp.domain.usecases.game.DeleteGameUseCase
 import com.jakubn.codequizapp.domain.usecases.game.ListenGameDataChangesUseCase
 import com.jakubn.codequizapp.domain.usecases.game.ManageGameStateUseCase
+import com.jakubn.codequizapp.domain.usecases.game.SetUserLeftGameUseCase
 import com.jakubn.codequizapp.domain.usecases.user.UpdateUserDataUsecase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,11 +24,17 @@ import javax.inject.Inject
 class GameOverViewModel @Inject constructor(
     private val listenGameDataChangesUseCase: ListenGameDataChangesUseCase,
     private val updateUserDataUseCase: UpdateUserDataUsecase,
-    private val manageGameState: ManageGameStateUseCase
+    private val manageGameStateUseCase: ManageGameStateUseCase,
+    private val archiveGameUseCase: ArchiveGameUseCase,
+    private val setUserLeftGameUseCase: SetUserLeftGameUseCase,
+    private val deleteGameUseCase: DeleteGameUseCase
 ) : ViewModel() {
 
     private val _gameResult = MutableStateFlow<GameResult?>(null)
     val gameResult: StateFlow<GameResult?> = _gameResult
+
+    private val _game = MutableStateFlow<Game?>(null)
+    val game: StateFlow<Game?> = _game
 
     private val _state = MutableStateFlow<CustomState<GameResult>>(CustomState.Idle)
     val state: StateFlow<CustomState<GameResult>> = _state
@@ -39,8 +48,29 @@ class GameOverViewModel @Inject constructor(
                     _state.value = CustomState.Failure(e.message)
                 }
                 .collect { game ->
+                    _game.value = game // Update the game object
                     handleGameData(game, user)
                 }
+        }
+    }
+
+    fun updateUserData(user: User, score: Int) {
+        viewModelScope.launch {
+            updateUserDataUseCase.updateUserData(user, score, _gameResult.value is GameResult.Win)
+        }
+    }
+
+    fun handleGameCleanup(gameId: String) {
+        viewModelScope.launch {
+            manageGameStateUseCase.manageGameState(gameId, false)
+        }
+    }
+
+    fun setUserLeftGame(game: Game?, user: User) {
+        viewModelScope.launch {
+            if (game != null) {
+                setUserLeftGameUseCase.setUserLeftGame(game, user, true)
+            }
         }
     }
 
@@ -52,6 +82,14 @@ class GameOverViewModel @Inject constructor(
 
         if (bothFinished) {
             processGameResults(game, user)
+            archiveGame(game)
+        }
+
+        val bothLeft = lobby?.hasFounderLeftGame == true &&
+                lobby.hasMemberLeftGame == true
+
+        if (bothLeft) {
+            deleteGame(game)
         }
     }
 
@@ -92,6 +130,7 @@ class GameOverViewModel @Inject constructor(
 
                 }
             }
+
             memberPoints > founderPoints -> {
                 if (currentUser.uid == lobby?.member?.uid) {
                     questionsSize?.let {
@@ -116,8 +155,8 @@ class GameOverViewModel @Inject constructor(
                             totalQuestions = it
                         )
                     }
-                    }
                 }
+            }
 
             else -> {
                 questionsSize?.let {
@@ -138,15 +177,15 @@ class GameOverViewModel @Inject constructor(
         _state.value = CustomState.Success(result)
     }
 
-    fun updateUserData(user: User, score: Int) {
+    private fun archiveGame(game: Game) {
         viewModelScope.launch {
-            updateUserDataUseCase.updateUserData(user, score, _gameResult.value is GameResult.Win)
+            archiveGameUseCase.archiveGame(game)
         }
     }
 
-    fun handleGameCleanup(gameId: String) {
+    private fun deleteGame(game: Game) {
         viewModelScope.launch {
-            manageGameState.manageGameState(gameId, false)
+            deleteGameUseCase.deleteGame(game)
         }
     }
 }

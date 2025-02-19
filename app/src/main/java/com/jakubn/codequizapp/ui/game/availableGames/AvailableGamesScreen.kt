@@ -98,7 +98,7 @@ fun SetGamesList(
                 GamesListItem(
                     data = game,
                     onClick = {
-                        game.gameId?.let { onClick?.invoke(it) }
+                         onClick?.invoke(game.gameId)
                     }
                 )
             }

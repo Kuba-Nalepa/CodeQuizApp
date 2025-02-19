@@ -66,6 +66,7 @@ fun GameOverScreen(
     val context = LocalContext.current
     val state by viewModel.state.collectAsState()
     val gameResult by viewModel.gameResult.collectAsState()
+    val game by viewModel.game.collectAsState()
     var dialogState by remember { mutableStateOf(false) }
 
     LaunchedEffect(gameId) {
@@ -96,6 +97,8 @@ fun GameOverScreen(
     if (dialogState) ShowExitDialog(
         onConfirm = {
             dialogState = false
+            if(game == null) return@ShowExitDialog
+            viewModel.setUserLeftGame(game, user)
             leaveGameOverScreen()
         },
         onDismiss = {
