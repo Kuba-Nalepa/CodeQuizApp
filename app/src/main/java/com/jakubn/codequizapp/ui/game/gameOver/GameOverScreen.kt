@@ -116,7 +116,7 @@ fun GameOverScreen(
                 painterResource(R.drawable.background_auth),
                 contentScale = ContentScale.FillBounds
             )
-            .padding(24.dp),
+            .padding(start = 24.dp, end = 24.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -149,7 +149,7 @@ fun GameOverScreen(
 private fun GameResultContent(result: GameResult, currentUser: User, navController: NavController, gameId: String) {
     Column(
         modifier = Modifier
-            .padding(24.dp)
+            .padding(start = 24.dp, end = 24.dp, bottom = 24.dp)
             .fillMaxWidth(),
         verticalArrangement = Arrangement.SpaceAround
     ) {
@@ -176,7 +176,9 @@ private fun WinnerContainer(result: GameResult.Win, navController: NavController
     )
 
     Text(
-        modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 24.dp),
         text = "You won!",
         style = Typography.titleLarge,
         textAlign = TextAlign.Center
@@ -227,7 +229,9 @@ private fun LoserContainer(result: GameResult.Lose, navController: NavController
     )
 
     Text(
-        modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 24.dp),
         text = "You lost!",
         style = Typography.titleLarge,
         textAlign = TextAlign.Center
@@ -284,7 +288,9 @@ private fun TieContainer(result: GameResult.Tie, currentUser: User, navControlle
     }
 
     Text(
-        modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 24.dp),
         text = "It's a tie!",
         style = Typography.titleLarge,
         textAlign = TextAlign.Center
@@ -422,7 +428,7 @@ private fun GameStatsSection(
             .fillMaxWidth()
             .padding(vertical = 15.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.SpaceEvenly
+        verticalArrangement = Arrangement.spacedBy(5.dp)
     ) {
         StatItem("Correct Answers", "$correctAnswers / $totalQuestions", color)
         StatItem("Total Games Played", gamesPlayed.toString(), color)
@@ -433,13 +439,11 @@ private fun GameStatsSection(
 private fun StatItem(label: String, value: String, color: Color) {
     Column(
         modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 5.dp),
-        verticalArrangement = Arrangement.SpaceEvenly,
-        horizontalAlignment = Alignment.CenterHorizontally
+            .fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(5.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
-            modifier = Modifier.padding(bottom = 5.dp),
             text = label,
             style = Typography.bodyMedium,
             color = Color.White
@@ -453,7 +457,7 @@ private fun ActionButton(onClick: () -> Unit) {
     CustomButton(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 24.dp),
+            .padding(top = 24.dp),
         text = "show answers",
         backgroundColor = Color(0xff003963),
         textColor = MaterialTheme.colorScheme.primary,
