@@ -74,7 +74,7 @@ data class Tag(
 
 data class Game(
     var gameId: String = "",
-    var gameInProgress: Boolean = false,
+    var gameInProgress: Boolean? = false,
     var category: String? = null,
     var questions: List<Question>? = null,
     var lobby: Lobby? = null,

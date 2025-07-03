@@ -67,7 +67,15 @@ fun LobbyScreen(
         when (val currentState = gameState) {
             is CustomState.Success -> {
                 if (currentState.result == null) navController.popBackStack()
-                else if (currentState.result.gameInProgress) navController.navigate(Screen.Quiz.route + "/$gameId")
+                else if (currentState.result.gameInProgress == false && currentState.result.lobby?.hasFounderLeftGame == true)
+                {
+                    viewModel.deleteLobby(gameId, user)
+                    navController.popBackStack()
+                }
+                else if (currentState.result.gameInProgress == true) {
+                    navController.navigate(Screen.Quiz.route + "/$gameId")
+                }
+
             }
 
             is CustomState.Failure -> Toast.makeText(
@@ -81,13 +89,15 @@ fun LobbyScreen(
         }
     }
 
-    DisposableEffect(Unit) {
+    DisposableEffect(gameState) {
         val callback = object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
-                if (viewModel.isCurrentUserMember(user)) {
+                val currentGameState = (gameState as? CustomState.Success)?.result
+                if (viewModel.isCurrentUserFounder(user)) viewModel.setUserLeftGame(currentGameState, user)
+                else if (viewModel.isCurrentUserMember(user)) {
                     navController.popBackStack()
+                    viewModel.deleteLobby(gameId, user)
                 }
-                viewModel.removeFromLobby(gameId, user)
             }
         }
 
@@ -167,7 +177,7 @@ fun LobbyScreen(
                             }
                         )
                     }
-                }
+                } ?: viewModel.deleteLobby(gameId, user)
             }
 
             is CustomState.Failure -> {

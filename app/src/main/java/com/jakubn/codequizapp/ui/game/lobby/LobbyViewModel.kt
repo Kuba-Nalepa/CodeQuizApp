@@ -11,6 +11,7 @@ import com.jakubn.codequizapp.domain.usecases.game.DeleteLobbyUseCase
 import com.jakubn.codequizapp.domain.usecases.game.ListenGameDataChangesUseCase
 import com.jakubn.codequizapp.domain.usecases.game.ManageGameStateUseCase
 import com.jakubn.codequizapp.domain.usecases.game.RemoveMemberFromLobbyUseCase
+import com.jakubn.codequizapp.domain.usecases.game.SetUserLeftGameUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -25,7 +26,8 @@ class LobbyViewModel @Inject constructor(
     private val removeUserFromLobbyUseCase: RemoveMemberFromLobbyUseCase,
     private val deleteLobbyUseCase: DeleteLobbyUseCase,
     private val changeUserReadinessStatusUseCase: ChangeUserReadinessStatusUseCase,
-    private val manageGameStateUseCase: ManageGameStateUseCase
+    private val manageGameStateUseCase: ManageGameStateUseCase,
+    private val setUserLeftGameUseCase: SetUserLeftGameUseCase
 ) : ViewModel() {
 
     private val _state = MutableStateFlow<CustomState<Game?>>(CustomState.Idle)
@@ -46,12 +48,20 @@ class LobbyViewModel @Inject constructor(
         }
     }
 
-    fun removeFromLobby(gameId: String, user: User) {
+    fun deleteLobby(gameId: String, user: User) {
         viewModelScope.launch {
             if (isCurrentUserFounder(user)) {
                 deleteLobbyUseCase.deleteLobby(gameId)
             } else {
                 removeUserFromLobbyUseCase.removeMemberFromLobby(gameId)
+            }
+        }
+    }
+
+    fun setUserLeftGame(game: Game?, user: User) {
+        viewModelScope.launch {
+            if (game != null) {
+                setUserLeftGameUseCase.setUserLeftGame(game, user, true)
             }
         }
     }
