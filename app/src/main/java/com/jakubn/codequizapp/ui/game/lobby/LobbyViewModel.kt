@@ -48,7 +48,7 @@ class LobbyViewModel @Inject constructor(
         }
     }
 
-    fun deleteLobby(gameId: String, user: User) {
+    fun leaveFromLobby(gameId: String, user: User) {
         viewModelScope.launch {
             if (isCurrentUserFounder(user)) {
                 deleteLobbyUseCase.deleteLobby(gameId)
@@ -103,6 +103,11 @@ class LobbyViewModel @Inject constructor(
 
     fun isCurrentUserFounder(user: User): Boolean = checkUserRole(user) { it.founder?.uid }
     fun isCurrentUserMember(user: User): Boolean = checkUserRole(user) { it.member?.uid }
+
+    fun isMemberReady(): Boolean? {
+        val lobby = (lobby.value as? CustomState.Success)?.result
+        return if (lobby?.member != null) lobby.isMemberReady else null
+    }
 
     private inline fun checkUserRole(user: User, crossinline roleSelector: (Lobby) -> String?) =
         (_lobby.value as? CustomState.Success)?.result?.let { lobby ->

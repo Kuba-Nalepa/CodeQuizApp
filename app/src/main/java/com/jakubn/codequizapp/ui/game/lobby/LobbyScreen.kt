@@ -69,7 +69,8 @@ fun LobbyScreen(
                 if (currentState.result == null) navController.popBackStack()
                 else if (currentState.result.gameInProgress == false && currentState.result.lobby?.hasFounderLeftGame == true)
                 {
-                    viewModel.deleteLobby(gameId, user)
+                    viewModel.leaveFromLobby(gameId, user)
+                    if (viewModel.isCurrentUserMember(user)) Toast.makeText(context, "Founder has left.\nRemoved from the lobby.", Toast.LENGTH_SHORT).show()
                     navController.popBackStack()
                 }
                 else if (currentState.result.gameInProgress == true) {
@@ -95,8 +96,9 @@ fun LobbyScreen(
                 val currentGameState = (gameState as? CustomState.Success)?.result
                 if (viewModel.isCurrentUserFounder(user)) viewModel.setUserLeftGame(currentGameState, user)
                 else if (viewModel.isCurrentUserMember(user)) {
+                    if(viewModel.isMemberReady() == true) viewModel.changeUserReadinessStatus(gameId, user)
+                    viewModel.leaveFromLobby(gameId, user)
                     navController.popBackStack()
-                    viewModel.deleteLobby(gameId, user)
                 }
             }
         }
@@ -177,7 +179,7 @@ fun LobbyScreen(
                             }
                         )
                     }
-                } ?: viewModel.deleteLobby(gameId, user)
+                } ?: viewModel.leaveFromLobby(gameId, user)
             }
 
             is CustomState.Failure -> {
