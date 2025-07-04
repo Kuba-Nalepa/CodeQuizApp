@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -108,69 +107,95 @@ fun CreateGameScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(10.dp),
-        verticalArrangement = Arrangement.SpaceBetween
+            .paint(
+                painterResource(R.drawable.background_auth),
+                contentScale = ContentScale.FillBounds
+            )
+            .padding(20.dp)
     ) {
-        Column {
-            Text(modifier = Modifier.padding(vertical = 10.dp), text = "Choose category")
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth(),
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column {
+                Text(
+                    modifier = Modifier.padding(vertical = 10.dp),
+                    text = "Choose category",
+                    color = Color.White,
+                    style = Typography.titleSmall
+                )
 
-            LazyVerticalGrid(
-                modifier = Modifier.fillMaxWidth(),
-                columns = GridCells.Adaptive(128.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                items(items = contentList.toList()) { item ->
-                    CategorySelection(item.first, item.second, quizCategorySelected == item.first) {
-                        quizCategorySelected = it
+                LazyVerticalGrid(
+                    modifier = Modifier.fillMaxWidth(),
+                    columns = GridCells.Adaptive(128.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(items = contentList.toList()) { item ->
+                        CategorySelection(item.first, item.second, quizCategorySelected == item.first) {
+                            quizCategorySelected = it
+                        }
                     }
                 }
             }
 
-            Text(
-                modifier = Modifier.padding(vertical = 10.dp),
-                text = "Select the number of questions in Quiz"
-            )
-
-            QuizNumberSelection(indexSelection) {
-                indexSelection = it
-
-            }
-
-            Text(
-                modifier = Modifier.padding(vertical = 10.dp),
-                text = "Set the amount of time for every question"
-            )
-
-            Text("$quizTimeSecondsIndicator seconds")
-
-            QuestionTimeSlider(quizTimeSecondsIndicator) { quizTimeSecondsIndicator = it.toInt() }
-
-        }
-
-        when (createGameState) {
-            CustomState.Loading -> {
-                Row(
-                    modifier = Modifier.align(Alignment.CenterHorizontally)
-                ) {
-                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Bottom))
-
+            Column {
+                Text(
+                    modifier = Modifier.padding(vertical = 10.dp),
+                    text = "Select the number of questions",
+                    color = Color.White,
+                    style = Typography.titleSmall
+                )
+                QuizNumberSelection(indexSelection) {
+                    indexSelection = it
                 }
             }
 
-            else -> {
-                Button(
-                    modifier = Modifier.fillMaxWidth(), onClick = {
-                        viewModel.createGame(
-                            quizCategorySelected,
-                            quizNumberSelected,
-                            quizTimeSecondsIndicator,
-                            user
-                        )
-                    },
-                    enabled = quizCategorySelected.isNotEmpty()
-                ) {
-                    Text(modifier = Modifier.align(Alignment.Bottom), text = "Create Game")
+            Column {
+                Text(
+                    modifier = Modifier.padding(vertical = 10.dp),
+                    text = "Set time for one question",
+                    color = Color.White,
+                    style = Typography.titleSmall
+                )
+
+                QuestionTimeSlider(quizTimeSecondsIndicator) { quizTimeSecondsIndicator = it.toInt() }
+
+                Text(
+                    text = "$quizTimeSecondsIndicator seconds",
+                    color = Color.White,
+                    style = Typography.bodyMedium
+                )
+            }
+        }
+
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            when (createGameState) {
+                CustomState.Loading -> {
+                    CircularProgressIndicator()
+                }
+                else -> {
+                    Button(
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = {
+                            viewModel.createGame(
+                                quizCategorySelected,
+                                quizNumberSelected,
+                                quizTimeSecondsIndicator,
+                                user
+                            )
+                        },
+                        enabled = quizCategorySelected.isNotEmpty()
+                    ) {
+                        Text(text = "Create Game")
+                    }
                 }
             }
         }
@@ -184,7 +209,6 @@ fun CategorySelection(
     isActive: Boolean = false,
     onCLick: (id: String) -> Unit
 ) {
-
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -207,7 +231,7 @@ fun CategorySelection(
                     onCLick(text)
                 })
             .background(
-                if (isActive) Color(0x80003D0D) else Color(0x80000000),
+                if (isActive) Color(0x80003D0D) else Color(0x40000000),
                 shape = RectangleShape
 
             )
