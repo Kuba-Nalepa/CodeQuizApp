@@ -2,7 +2,6 @@ package com.jakubn.codequizapp.ui.game.createGame
 
 import android.widget.Toast
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -229,13 +228,12 @@ fun CategorySelection(
                 indication = ripple(),
                 onClick = {
                     onCLick(text)
-                })
+                }
+            )
             .background(
                 if (isActive) Color(0x80003D0D) else Color(0x40000000),
                 shape = RectangleShape
-
             )
-
     ) {
         Text(
             modifier = Modifier
@@ -254,31 +252,26 @@ fun CategorySelection(
 fun QuizNumberSelection(index: Int, onUpdateIndex: (index: Int) -> Unit) {
     val quantityNumberList = listOf("5 questions", "10 questions", "15 questions")
 
-    SingleChoiceSegmentedButtonRow(
-        modifier = Modifier
-            .fillMaxWidth()
-            .border(width = 1.dp, shape = RoundedCornerShape(25.dp), color = Color.Black)
-            .padding(horizontal = 5.dp)
-    ) {
+    SingleChoiceSegmentedButtonRow{
         quantityNumberList.forEachIndexed { idx, string ->
-            SegmentedButton(colors = SegmentedButtonColors(
-                activeContainerColor = Color(0xFFA3FF0D),
-                activeContentColor = Color(0xFF74B583),
-                activeBorderColor = Color(0xFF003963),
-                inactiveContentColor = Color(0xFF58959A),
-                inactiveBorderColor = Color(0xFF003963),
-                inactiveContainerColor = Color.White,
-                disabledInactiveContainerColor = Color(0x00000000),
-                disabledActiveBorderColor = Color(0x00000000),
-                disabledActiveContentColor = Color(0x00000000),
-                disabledInactiveBorderColor = Color(0x00000000),
-                disabledActiveContainerColor = Color(0x00000000),
-                disabledInactiveContentColor = Color(0x00000000)
-            ),
-                border = SegmentedButtonDefaults.borderStroke(Color.White, 0.dp),
+            SegmentedButton(
+                colors = SegmentedButtonColors(
+                    activeContainerColor = Color(0xFFA3FF0D),
+                    activeContentColor = Color(0xFF74B583),
+                    activeBorderColor = Color(0xFF003963),
+                    inactiveContentColor = Color(0xFF58959A),
+                    inactiveBorderColor = Color(0xFF003963),
+                    inactiveContainerColor = Color.White,
+                    disabledInactiveContainerColor = Color(0x00000000),
+                    disabledActiveBorderColor = Color(0x00000000),
+                    disabledActiveContentColor = Color(0x00000000),
+                    disabledInactiveBorderColor = Color(0x00000000),
+                    disabledActiveContainerColor = Color(0x00000000),
+                    disabledInactiveContentColor = Color(0x00000000)
+                ),
                 icon = { SegmentedButtonDefaults.Icon(false) },
-                shape = RoundedCornerShape(20.dp),
                 selected = idx == index,
+                shape = SegmentedButtonDefaults.itemShape(index = idx, count = quantityNumberList.size),
                 onClick = {
                     onUpdateIndex(idx)
                 }
