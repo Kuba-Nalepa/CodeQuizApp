@@ -15,6 +15,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -28,6 +29,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.toLowerCase
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -36,6 +38,7 @@ import coil.request.ImageRequest
 import com.jakubn.codequizapp.R
 import com.jakubn.codequizapp.domain.model.User
 import com.jakubn.codequizapp.theme.Typography
+import java.util.Locale
 
 @Composable
 fun HomeScreen(user: User, homeViewModel: HomeViewModel = hiltViewModel(), createGame: () -> Unit, playGame: () -> Unit) {
@@ -56,37 +59,42 @@ fun HomeScreen(user: User, homeViewModel: HomeViewModel = hiltViewModel(), creat
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Column(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 10.dp),
                     verticalArrangement = Arrangement.Top,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        modifier = Modifier
-                            .padding(top = 10.dp, bottom = 20.dp),
                         text = "<CODE/QUIZ>",
                         style = Typography.bodyMedium,
                         color = Color(0xff7BAFC4)
                     )
 
-                    AsyncImage(
+                    Column(
                         modifier = Modifier
-                            .size(125.dp)
-                            .shadow(5.dp, shape = CircleShape)
-                            .border(1.dp, Color.Black, CircleShape),
-                        model = ImageRequest.Builder(LocalContext.current)
-                            .data(user.imageUri ?: R.drawable.sample_avatar)
-                            .crossfade(true)
-                            .build(),
-                        placeholder = painterResource(R.drawable.sample_avatar),
-                        contentDescription = stringResource(R.string.app_name),
-                        contentScale = ContentScale.Crop
-                    )
+                            .fillMaxWidth()
+                            .padding(vertical = 20.dp)
+                    ) {
+                        Text(
+                            modifier = Modifier.fillMaxWidth(),
+                            text = "hi ${user.name}".lowercase(Locale.ROOT),
+                            style = Typography.titleLarge,
+                            color = MaterialTheme.colorScheme.secondary
+                        )
+                        Text(
+                            modifier = Modifier.fillMaxWidth(),
+                            text = "you have already".lowercase(Locale.ROOT),
+                            style = Typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.secondary
+                        )
+                    }
                 }
 
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 20.dp, bottom = 20.dp)
+                        .padding(top = 10.dp, bottom = 20.dp)
                         .clip(shape = RoundedCornerShape(20.dp))
                         .background(Color(0x52D9D9D9)),
                     horizontalArrangement = Arrangement.SpaceAround,
