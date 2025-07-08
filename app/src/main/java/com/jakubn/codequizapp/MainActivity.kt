@@ -34,9 +34,9 @@ class MainActivity : ComponentActivity() {
             val viewModel: MainViewModel = hiltViewModel()
             val currentUser by viewModel.currentUser.collectAsState()
             val navHostController = rememberNavController()
-            when (val user = currentUser) {
+            when (val customStateUser = currentUser) {
                 is CustomState.Success -> {
-                    val user = user.result
+                    val user = customStateUser.result
                     CodeQuizAppTheme {
                         NavHost(
                             navController = navHostController,
@@ -94,7 +94,7 @@ class MainActivity : ComponentActivity() {
                 is CustomState.Failure -> {
 
                     CodeQuizAppTheme {
-                        Text(text = "Error: ${user.message}")
+                        Text(text = "Error: ${customStateUser.message}")
                     }
                 }
 
