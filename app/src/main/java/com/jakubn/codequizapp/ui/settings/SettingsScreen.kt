@@ -18,6 +18,9 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.jakubn.codequizapp.R
 import com.jakubn.codequizapp.theme.Typography
 import com.jakubn.codequizapp.ui.uiComponents.ClickableCustomText
+import com.jakubn.codequizapp.ui.uiComponents.helperDialogs.ConfirmationDialog
+import com.jakubn.codequizapp.ui.uiComponents.helperDialogs.InfoDialog
+import com.jakubn.codequizapp.ui.uiComponents.helperDialogs.SelectionDialog
 
 
 @Composable
@@ -118,33 +121,98 @@ fun SettingsScreen(
             verticalArrangement = Arrangement.spacedBy(34.dp)
         ) {
 
+            var showLanguageDialog by remember { mutableStateOf(false) }
+            var showColorSchemeDialog by remember { mutableStateOf(false) }
+            var showAboutDialog by remember { mutableStateOf(false) }
+            var showHelpDialog by remember { mutableStateOf(false) }
+            var showDeleteDialog by remember { mutableStateOf(false) }
+            var showSignOutDialog by remember { mutableStateOf(false) }
+            var selectedLanguage by remember { mutableStateOf("English") }
+            var selectedColorScheme by remember { mutableStateOf("Light Mode") }
+
             val context = LocalContext.current
 
             val textLabelsWithActions = mapOf(
-                "Language" to {
-                    Toast.makeText(context, "Language clicked", Toast.LENGTH_SHORT).show()
-                },
-                "Dark Mode" to {
-                    Toast.makeText(context, "Dark mode clicked", Toast.LENGTH_SHORT).show()
-                },
-                "About" to {
-                    Toast.makeText(context, "About clicked", Toast.LENGTH_SHORT).show()
-                },
-                "Help" to {
-                    Toast.makeText(context, "Help clicked", Toast.LENGTH_SHORT).show()
-                },
-                "Delete account" to {
-                    Toast.makeText(context, "Account deletion not available", Toast.LENGTH_SHORT).show()
-                },
-                "Sign out" to {
-                    Toast.makeText(context, "Signed out", Toast.LENGTH_SHORT).show()
-                }
+                "Language" to { showLanguageDialog = true },
+                "Light/Dark Mode" to { showColorSchemeDialog = true },
+                "About" to { showAboutDialog = true },
+                "Help" to { showHelpDialog = true },
+                "Delete account" to { showDeleteDialog = true },
+                "Sign out" to { showSignOutDialog = true }
             )
 
             textLabelsWithActions.forEach { (label, action) ->
                 ClickableCustomText(label) {
                     action()
                 }
+            }
+
+            if (showLanguageDialog) {
+                SelectionDialog(
+                    text = "Choose language",
+                    options = listOf("English","Polish"),
+                    currentOption = selectedLanguage,
+                    onDismiss = { showLanguageDialog = false },
+                    onConfirm = {
+                        selectedLanguage = it
+                        Toast.makeText(context, "Selected: $it", Toast.LENGTH_SHORT).show()
+                    }
+                )
+            }
+
+            if (showColorSchemeDialog) {
+                SelectionDialog(
+                    text = "Choose color mode",
+                    options = listOf("Light Mode","Dark Mode"),
+                    currentOption = selectedColorScheme,
+                    onDismiss = { showColorSchemeDialog = false },
+                    onConfirm = {
+                        selectedColorScheme = it
+                        Toast.makeText(context, "Selected: $it", Toast.LENGTH_SHORT).show()
+                    }
+                )
+            }
+
+            if (showAboutDialog) {
+                InfoDialog(
+                    title = "About",
+                    message = "CodeQuiz v1.0\nCreated by Jakub N.",
+                    onDismiss = { showAboutDialog = false }
+                )
+            }
+
+            if (showHelpDialog) {
+                InfoDialog(
+                    title = "Help",
+                    message = "Need help?\nContact support@codequiz.app",
+                    onDismiss = { showHelpDialog = false }
+                )
+            }
+
+            if (showDeleteDialog) {
+                ConfirmationDialog(
+                    title = "Delete Account",
+                    message = "Are you sure you want to permanently delete your account?",
+                    confirmText = "Delete",
+                    onConfirm = {
+                        Toast.makeText(context, "Account deleted", Toast.LENGTH_SHORT).show()
+                        showDeleteDialog = false
+                    },
+                    onDismiss = { showDeleteDialog = false }
+                )
+            }
+
+            if (showSignOutDialog) {
+                ConfirmationDialog(
+                    title = "Sign Out",
+                    message = "Do you really want to sign out?",
+                    confirmText = "Sign Out",
+                    onConfirm = {
+                        Toast.makeText(context, "Signed out", Toast.LENGTH_SHORT).show()
+                        showSignOutDialog = false
+                    },
+                    onDismiss = { showSignOutDialog = false }
+                )
             }
         }
     }
