@@ -19,15 +19,15 @@ val LightColorScheme = lightColorScheme(
     onPrimary = OnPrimaryLight,
     onSecondary = Color.Black,
     onBackground = Color.White,
-    onSurface = Color.White
+    onSurface = Color.Black
 )
 val DarkColorScheme = darkColorScheme(
     primary = PrimaryDark,
     secondary = SecondaryDark,
     onPrimary = OnPrimaryDark,
     onSecondary = Color.White,
-    onBackground = Color.White,
-    onSurface = Color.White
+    onBackground = Color.Black,
+    onSurface = Color.Black
 )
 
 @Composable
