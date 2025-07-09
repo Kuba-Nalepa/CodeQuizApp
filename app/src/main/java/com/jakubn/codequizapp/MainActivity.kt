@@ -22,6 +22,7 @@ import com.jakubn.codequizapp.navigation.Screen
 import com.jakubn.codequizapp.theme.CodeQuizAppTheme
 import com.jakubn.codequizapp.ui.MainScreen
 import com.jakubn.codequizapp.ui.home.HomeScreen
+import com.jakubn.codequizapp.ui.profile.UserProfileEditScreen
 import com.jakubn.codequizapp.ui.settings.SettingsScreen
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -33,21 +34,22 @@ class MainActivity : ComponentActivity() {
         setContent {
             val viewModel: MainViewModel = hiltViewModel()
             val currentUser by viewModel.currentUser.collectAsState()
-            val navHostController = rememberNavController()
+            val navController = rememberNavController()
+
             when (val customStateUser = currentUser) {
                 is CustomState.Success -> {
                     val user = customStateUser.result
                     CodeQuizAppTheme {
                         NavHost(
-                            navController = navHostController,
-                            startDestination = Screen.Main.route
+                            navController = navController,
+                            startDestination = Screen.MainGraph.route
                         ) {
                             navigation(
-                                route = Screen.Main.route,
+                                route = Screen.MainGraph.route,
                                 startDestination = Screen.Home.route
                             ) {
                                 composable(route = Screen.Home.route) {
-                                    MainScreen(navHostController) {
+                                    MainScreen(navController) {
                                         HomeScreen(user, createGame = {
                                             startActivity(
                                                 Intent(
@@ -67,23 +69,39 @@ class MainActivity : ComponentActivity() {
                                         })
                                     }
                                 }
-                                composable(route = Screen.Leaderboard.route) {
-                                    MainScreen(navHostController) {
 
+                                composable(route = Screen.Leaderboard.route) {
+                                    MainScreen(navController) {
+                                        Text(text = "Leaderboard Screen")
                                     }
                                 }
-                                composable(route = Screen.Settings.route) {
-                                    MainScreen(navHostController) {
-                                        SettingsScreen(logOut = {
-                                            startActivity(
-                                                Intent(
-                                                    applicationContext,
-                                                    AuthorizationActivity::class.java
-                                                ).apply {
-                                                    flags =
-                                                        (Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
-                                                })
-                                        })
+
+                                navigation(
+                                    route = Screen.SettingsGraph.route,
+                                    startDestination = Screen.Settings.route
+                                ) {
+                                    composable(route = Screen.Settings.route) {
+                                        MainScreen(navController) {
+                                            SettingsScreen(
+                                                navController = navController,
+                                                logOut = {
+                                                    startActivity(
+                                                        Intent(
+                                                            applicationContext,
+                                                            AuthorizationActivity::class.java
+                                                        ).apply {
+                                                            flags =
+                                                                (Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                                                        })
+                                                }
+                                            )
+                                        }
+                                    }
+                                    composable(route = Screen.UserProfileEdit.route) {
+                                        UserProfileEditScreen(
+                                            user = user,
+                                            navController = navController
+                                        )
                                     }
                                 }
                             }
@@ -92,29 +110,37 @@ class MainActivity : ComponentActivity() {
                 }
 
                 is CustomState.Failure -> {
-
                     CodeQuizAppTheme {
-                        Text(text = "Error: ${customStateUser.message}")
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(text = "Error: ${customStateUser.message}")
+                        }
                     }
                 }
 
                 CustomState.Loading -> {
                     CodeQuizAppTheme {
                         Box(
-                            modifier = Modifier.fillMaxSize()
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
                         ) {
-                            CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-
+                            CircularProgressIndicator()
                         }
                     }
                 }
 
                 CustomState.Idle -> {
                     CodeQuizAppTheme {
-                        Text(text = "Idle State")
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(text = "Idle State")
+                        }
                     }
                 }
-
             }
         }
     }

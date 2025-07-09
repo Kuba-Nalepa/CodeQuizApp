@@ -15,7 +15,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
 import com.jakubn.codequizapp.R
+import com.jakubn.codequizapp.navigation.Screen
 import com.jakubn.codequizapp.theme.Typography
 import com.jakubn.codequizapp.ui.uiComponents.ClickableCustomText
 import com.jakubn.codequizapp.ui.uiComponents.helperDialogs.ConfirmationDialog
@@ -25,6 +27,7 @@ import com.jakubn.codequizapp.ui.uiComponents.helperDialogs.SelectionDialog
 
 @Composable
 fun SettingsScreen(
+    navController: NavController,
     viewModel: SettingsViewModel = hiltViewModel(),
     logOut: () -> Unit
 ) {
@@ -87,7 +90,7 @@ fun SettingsScreen(
             Button(
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0x66F1F1F1)),
-                onClick = { },
+                onClick = { navController.navigate(Screen.UserProfileEdit.route) },
                 contentPadding = PaddingValues(horizontal = 12.dp)
             ) {
                 Row(
@@ -208,6 +211,8 @@ fun SettingsScreen(
                     message = "Do you really want to sign out?",
                     confirmText = "Sign Out",
                     onConfirm = {
+                        viewModel.signOut()
+                        logOut()
                         Toast.makeText(context, "Signed out", Toast.LENGTH_SHORT).show()
                         showSignOutDialog = false
                     },

@@ -3,43 +3,51 @@ package com.jakubn.codequizapp.navigation
 import kotlinx.serialization.Serializable
 
 @Serializable
-sealed class Screen(
-    val route: String
-) {
+sealed class Screen(val route: String) {
 
+    // --- Main Navigation Graphs ---
     @Serializable
-    object Auth : Screen("auth_route")
+    data object AuthGraph : Screen("auth_graph")
     @Serializable
-    object Welcome : Screen("welcome_route")
+    data object MainGraph : Screen("main_graph")
     @Serializable
-    object Registration : Screen("registration_screen")
+    data object SettingsGraph : Screen("settings_graph")
+
+    // --- Authentication Screens ---
     @Serializable
-    object Login : Screen("login_screen")
+    data object Welcome : Screen("welcome_screen")
     @Serializable
-    object Main : Screen("main_route")
+    data object Registration : Screen("registration_screen")
     @Serializable
-    object Home : Screen("home_screen")
+    data object Login : Screen("login_screen")
+
+
+    // --- Main App Screens (Bottom Navigation Destinations) ---
     @Serializable
-    object Leaderboard : Screen("leaderboard_screen")
+    data object Home : Screen("home_screen")
     @Serializable
-    object Profile : Screen("profile_screen")
+    data object Leaderboard : Screen("leaderboard_screen")
     @Serializable
-    object CreateGame : Screen("create_game_screen")
+    data object Settings : Screen("settings_screen")
+
+    // --- Game Related Screens ---
     @Serializable
-    object AvailableGameList : Screen("available_game_list_screen")
+    data object CreateGame : Screen("create_game_screen")
     @Serializable
-    object Lobby : Screen("lobby_screen")
+    data object AvailableGameList : Screen("available_game_list_screen")
     @Serializable
-    object Quiz : Screen("quiz_screen")
+    data object Lobby : Screen("lobby_screen")
     @Serializable
-    object GameOver : Screen("game_over_screen")
+    data object Quiz : Screen("quiz_screen")
     @Serializable
-    object QuizReviewScreen : Screen("quiz_review_screen")
+    data object GameOver : Screen("game_over_screen")
     @Serializable
-    object Settings : Screen("settings_screen")
+    data object QuizReviewScreen : Screen("quiz_review_screen")
+
+    // --- Profile/Settings Details Screens ---
     @Serializable
-    object UserProfile : Screen("user_profile_screen")
+    data object UserProfileEdit : Screen("user_profile_edit_screen")
     @Serializable
-    object Chat : Screen("chat_screen")
+    data object Chat : Screen("chat_screen")
 
 }

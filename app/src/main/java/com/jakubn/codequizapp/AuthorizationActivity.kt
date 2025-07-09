@@ -26,10 +26,10 @@ class AuthorizationActivity : ComponentActivity() {
             CodeQuizAppTheme {
                 NavHost(
                     navController = navHostController,
-                    startDestination = Screen.Auth.route
+                    startDestination = Screen.AuthGraph.route
                 ) {
                     navigation(
-                        route = Screen.Auth.route,
+                        route = Screen.AuthGraph.route,
                         startDestination = Screen.Welcome.route
                     ) {
                         composable(route = Screen.Welcome.route) {
