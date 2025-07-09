@@ -32,20 +32,16 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
 import com.jakubn.codequizapp.R
 import com.jakubn.codequizapp.domain.model.CustomState
-import com.jakubn.codequizapp.navigation.Screen
-import com.jakubn.codequizapp.theme.CodeQuizAppTheme
+import com.jakubn.codequizapp.domain.model.User
 import com.jakubn.codequizapp.theme.Typography
 import com.jakubn.codequizapp.ui.uiComponents.CustomTextField
 
 @Composable
-fun LoginScreen(viewModel: LoginViewModel = hiltViewModel(), logIn: () -> Unit) {
+fun LoginScreen(viewModel: LoginViewModel = hiltViewModel(), logIn: (User) -> Unit) {
     val context = LocalContext.current
     val userState by viewModel.authState.collectAsState()
     var email by remember { mutableStateOf("") }
@@ -147,8 +143,7 @@ fun LoginScreen(viewModel: LoginViewModel = hiltViewModel(), logIn: () -> Unit) 
 
                 Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
                 viewModel.resetState()
-//                navController.navigate(route = Screen.Home.route)
-                logIn()
+                logIn(currentState.result)
 
             }
             is CustomState.Failure -> {
@@ -156,7 +151,6 @@ fun LoginScreen(viewModel: LoginViewModel = hiltViewModel(), logIn: () -> Unit) 
 
                 Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
             }
-
             else -> {}
         }
     }

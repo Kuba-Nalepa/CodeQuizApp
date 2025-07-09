@@ -29,7 +29,7 @@ import com.jakubn.codequizapp.ui.uiComponents.helperDialogs.SelectionDialog
 fun SettingsScreen(
     navController: NavController,
     viewModel: SettingsViewModel = hiltViewModel(),
-    logOut: () -> Unit
+    onLogoutConfirmed: () -> Unit
 ) {
 
     val colors = arrayOf(
@@ -212,7 +212,7 @@ fun SettingsScreen(
                     confirmText = "Sign Out",
                     onConfirm = {
                         viewModel.signOut()
-                        logOut()
+                        onLogoutConfirmed()
                         Toast.makeText(context, "Signed out", Toast.LENGTH_SHORT).show()
                         showSignOutDialog = false
                     },
