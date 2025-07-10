@@ -8,10 +8,10 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navigation
-import com.jakubn.codequizapp.domain.model.User
+import com.jakubn.codequizapp.model.User
 import com.jakubn.codequizapp.ui.MainScreen
 import com.jakubn.codequizapp.ui.home.HomeScreen
-import com.jakubn.codequizapp.ui.profile.UserProfileEditScreen
+import com.jakubn.codequizapp.ui.settings.editProfile.UserProfileEditScreen
 import com.jakubn.codequizapp.ui.settings.SettingsScreen
 import com.jakubn.codequizapp.GameActivity
 

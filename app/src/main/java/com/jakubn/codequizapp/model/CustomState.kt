@@ -1,4 +1,4 @@
-package com.jakubn.codequizapp.domain.model
+package com.jakubn.codequizapp.model
 
 sealed class CustomState<out T> {
     data class Success<out R>(val result: R): CustomState<R>()

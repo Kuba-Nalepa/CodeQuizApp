@@ -1,4 +1,4 @@
-package com.jakubn.codequizapp.domain.model
+package com.jakubn.codequizapp.model
 
 sealed class GameResult {
     abstract val correctAnswers: Int

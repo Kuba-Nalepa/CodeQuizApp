@@ -1,7 +1,7 @@
 package com.jakubn.codequizapp.data.repository
 
 import com.google.firebase.auth.FirebaseUser
-import com.jakubn.codequizapp.domain.model.User
+import com.jakubn.codequizapp.model.User
 import kotlinx.coroutines.flow.Flow
 
 interface AuthRepository {

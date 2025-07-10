@@ -39,10 +39,10 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.jakubn.codequizapp.R
-import com.jakubn.codequizapp.domain.model.Answers
-import com.jakubn.codequizapp.domain.model.CustomState
-import com.jakubn.codequizapp.domain.model.Question
-import com.jakubn.codequizapp.domain.model.User
+import com.jakubn.codequizapp.model.Answers
+import com.jakubn.codequizapp.model.CustomState
+import com.jakubn.codequizapp.model.Question
+import com.jakubn.codequizapp.model.User
 import com.jakubn.codequizapp.navigation.Screen
 import com.jakubn.codequizapp.theme.Typography
 import kotlinx.coroutines.delay

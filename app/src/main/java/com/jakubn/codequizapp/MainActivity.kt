@@ -14,7 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.rememberNavController
-import com.jakubn.codequizapp.domain.model.CustomState
+import com.jakubn.codequizapp.model.CustomState
 import com.jakubn.codequizapp.navigation.AuthNavGraph
 import com.jakubn.codequizapp.navigation.MainNavGraph
 import com.jakubn.codequizapp.theme.CodeQuizAppTheme

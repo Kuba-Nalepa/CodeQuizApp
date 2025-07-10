@@ -2,8 +2,8 @@ package com.jakubn.codequizapp.data
 
 import com.jakubn.codequizapp.data.repositoryImpl.AuthRepository
 import com.jakubn.codequizapp.data.repositoryImpl.UserDataRepository
-import com.jakubn.codequizapp.domain.model.CustomState
-import com.jakubn.codequizapp.domain.model.User
+import com.jakubn.codequizapp.model.CustomState
+import com.jakubn.codequizapp.model.User
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

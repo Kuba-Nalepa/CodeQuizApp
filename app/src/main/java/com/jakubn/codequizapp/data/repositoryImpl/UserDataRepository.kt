@@ -5,7 +5,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
-import com.jakubn.codequizapp.domain.model.User
+import com.jakubn.codequizapp.model.User
 import com.jakubn.codequizapp.data.repository.UserDataRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -85,7 +85,7 @@ class UserDataRepository @Inject constructor(
         return try {
             val storageRef = firebaseStorage.reference
             val fileName = "avatars/${UUID.randomUUID()}.jpg"
-            val imageRef = storageRef.child("users/$userId/$fileName") // Path in Firebase Storage
+            val imageRef = storageRef.child("users/$userId/$fileName")
 
             val uploadTask = imageRef.putFile(imageUri)
             uploadTask.await()
@@ -97,21 +97,20 @@ class UserDataRepository @Inject constructor(
         }
     }
 
-    override suspend fun updateUserProfile(updatedUser: User) {
-        withContext(Dispatchers.IO) {
-            val userId = updatedUser.uid ?: throw Exception("User not authenticated")
-            val userDocRef = firebaseFirestore.collection("users").document(userId)
-            try {
-                val updates = mutableMapOf<String, Any?>()
-                updates["name"] = updatedUser.name
-                updates["email"] = updatedUser.email
-                updates["description"] = updatedUser.description
-                updates["avatarUrl"] = updatedUser.imageUri
+    override suspend fun updateUserProfile(updatedUser: User): Flow<Unit> = flow {
+        val userId = updatedUser.uid ?: throw Exception("User not authenticated")
+        val userDocRef = firebaseFirestore.collection("users").document(userId)
+        try {
+            val updates = mutableMapOf<String, Any?>()
+            updates["name"] = updatedUser.name
+            updates["description"] = updatedUser.description
+            updates["avatarUrl"] = updatedUser.imageUri
 
-                userDocRef.update(updates).await()
-            } catch (e: Exception) {
-                throw Exception("Failed to update user profile: ${e.message}")
-            }
+            userDocRef.update(updates).await()
+            emit(Unit)
+        } catch (e: Exception) {
+            throw Exception("Failed to update user profile: ${e.message}")
         }
-    }
+
+    }.flowOn(Dispatchers.IO)
 }

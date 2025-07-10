@@ -5,10 +5,10 @@ import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
-import com.jakubn.codequizapp.domain.model.Game
-import com.jakubn.codequizapp.domain.model.Lobby
-import com.jakubn.codequizapp.domain.model.Question
-import com.jakubn.codequizapp.domain.model.User
+import com.jakubn.codequizapp.model.Game
+import com.jakubn.codequizapp.model.Lobby
+import com.jakubn.codequizapp.model.Question
+import com.jakubn.codequizapp.model.User
 import com.jakubn.codequizapp.data.repository.GameRepository
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow

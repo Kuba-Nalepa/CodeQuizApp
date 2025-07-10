@@ -1,4 +1,4 @@
-package com.jakubn.codequizapp.domain.model
+package com.jakubn.codequizapp.model
 
 import android.os.Parcelable
 import kotlinx.parcelize.Parcelize

@@ -38,9 +38,9 @@ import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.jakubn.codequizapp.R
-import com.jakubn.codequizapp.domain.model.CustomState
-import com.jakubn.codequizapp.domain.model.Game
-import com.jakubn.codequizapp.domain.model.User
+import com.jakubn.codequizapp.model.CustomState
+import com.jakubn.codequizapp.model.Game
+import com.jakubn.codequizapp.model.User
 import com.jakubn.codequizapp.navigation.Screen
 import com.jakubn.codequizapp.theme.Typography
 

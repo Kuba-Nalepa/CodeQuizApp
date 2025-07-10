@@ -48,9 +48,9 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.jakubn.codequizapp.R
-import com.jakubn.codequizapp.domain.model.CustomState
-import com.jakubn.codequizapp.domain.model.GameResult
-import com.jakubn.codequizapp.domain.model.User
+import com.jakubn.codequizapp.model.CustomState
+import com.jakubn.codequizapp.model.GameResult
+import com.jakubn.codequizapp.model.User
 import com.jakubn.codequizapp.navigation.Screen
 import com.jakubn.codequizapp.theme.Typography
 import com.jakubn.codequizapp.ui.uiComponents.CustomButton

@@ -1,6 +1,5 @@
 package com.jakubn.codequizapp.ui.authorization
 
-
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -17,9 +16,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -37,7 +33,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.jakubn.codequizapp.R
-import com.jakubn.codequizapp.domain.model.CustomState
+import com.jakubn.codequizapp.model.CustomState
 import com.jakubn.codequizapp.navigation.Screen
 import com.jakubn.codequizapp.theme.CodeQuizAppTheme
 import com.jakubn.codequizapp.theme.Typography
@@ -47,12 +43,18 @@ import com.jakubn.codequizapp.ui.uiComponents.CustomTextField
 @Composable
 fun RegistrationScreen(navHostController: NavHostController, viewModel: RegistrationViewModel = hiltViewModel()) {
     val context = LocalContext.current
-    var name by remember { mutableStateOf("") }
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    val buttonState by remember { mutableStateOf(false) }
 
+    val name by viewModel.name.collectAsState()
+    val email by viewModel.email.collectAsState()
+    val password by viewModel.password.collectAsState()
     val authState by viewModel.authState.collectAsState()
+    val isSignUpButtonEnabled by viewModel.isSignUpButtonEnabled.collectAsState()
+
+    LaunchedEffect(Unit) {
+        viewModel.toastEvent.collect { message ->
+            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -116,15 +118,17 @@ fun RegistrationScreen(navHostController: NavHostController, viewModel: Registra
                     CustomTextField(
                         label = "Name",
                         value = name,
-                        onValueChange = { name = it })
+                        onValueChange = { viewModel.onNameChange(it) }
+                    )
                     CustomTextField(
                         label = "Email",
                         value = email,
-                        onValueChange = { email = it })
+                        onValueChange = { viewModel.updateEmail(it) }
+                    )
                     CustomTextField(
                         label = "Password",
                         value = password,
-                        onValueChange = { password = it },
+                        onValueChange = { viewModel.updatePassword(it) },
                         isPassword = true
                     )
                 }
@@ -146,15 +150,15 @@ fun RegistrationScreen(navHostController: NavHostController, viewModel: Registra
                 backgroundColor = Color(0xFF002137),
                 text = "Sign Up",
                 textColor = Color(0xFFFFFFFF),
-                enabled = authState !is CustomState.Loading,
+                enabled = isSignUpButtonEnabled,
                 onClick = {
-                    viewModel.signUpUser(name, email, password)
+                    viewModel.signUpUser()
                 }
             )
         }
     }
 
-    LaunchedEffect(authState, context, buttonState) {
+    LaunchedEffect(authState, context) {
         when(val currentState = authState) {
             is CustomState.Success -> {
                 navHostController.navigate(route = Screen.Login.route)
@@ -163,24 +167,20 @@ fun RegistrationScreen(navHostController: NavHostController, viewModel: Registra
 
             is CustomState.Failure -> {
                 val message = currentState.message
-
                 Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                viewModel.resetState()
             }
 
             else -> {}
         }
     }
 
-    when(authState) {
-        CustomState.Loading -> {
-            Box(
-                modifier = Modifier.fillMaxSize()
-            ) {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-
-            }
+    if (authState is CustomState.Loading) {
+        Box(
+            modifier = Modifier.fillMaxSize()
+        ) {
+            CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
         }
-        else -> {}
     }
 }
 
@@ -190,6 +190,5 @@ private fun RegistrationScreenPreview() {
     CodeQuizAppTheme {
         val navController = rememberNavController()
         RegistrationScreen(navController)
-
     }
 }

@@ -1,4 +1,4 @@
-package com.jakubn.codequizapp.domain.model
+package com.jakubn.codequizapp.model
 
 data class Friend(
     val name: String? = null,

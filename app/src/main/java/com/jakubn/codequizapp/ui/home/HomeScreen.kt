@@ -26,7 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.jakubn.codequizapp.R
-import com.jakubn.codequizapp.domain.model.User
+import com.jakubn.codequizapp.model.User
 import com.jakubn.codequizapp.theme.Typography
 import java.util.Locale
 
@@ -75,7 +75,8 @@ fun HomeScreen(
                     modifier = Modifier.fillMaxWidth(),
                     text = "hi ${user.name}".lowercase(Locale.ROOT),
                     style = Typography.titleLarge,
-                    color = MaterialTheme.colorScheme.secondary
+                    color = MaterialTheme.colorScheme.secondary,
+                    maxLines = 2
                 )
                 Text(
                     modifier = Modifier.fillMaxWidth(),

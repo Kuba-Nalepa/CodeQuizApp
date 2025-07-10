@@ -49,8 +49,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.jakubn.codequizapp.R
-import com.jakubn.codequizapp.domain.model.CustomState
-import com.jakubn.codequizapp.domain.model.User
+import com.jakubn.codequizapp.model.CustomState
+import com.jakubn.codequizapp.model.User
 import com.jakubn.codequizapp.navigation.Screen
 import com.jakubn.codequizapp.theme.Typography
 

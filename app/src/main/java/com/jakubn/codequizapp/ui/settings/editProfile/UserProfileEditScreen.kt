@@ -1,4 +1,4 @@
-package com.jakubn.codequizapp.ui.profile
+package com.jakubn.codequizapp.ui.settings.editProfile
 
 import android.net.Uri
 import android.widget.Toast
@@ -37,7 +37,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import com.jakubn.codequizapp.R
-import com.jakubn.codequizapp.domain.model.CustomState
+import com.jakubn.codequizapp.model.CustomState
 import com.jakubn.codequizapp.theme.Typography
 import java.util.Locale
 
@@ -53,12 +53,19 @@ fun UserProfileEditScreen(
     val newDescription by viewModel.newDescription.collectAsState()
     val newAvatarUri by viewModel.newAvatarUri.collectAsState()
     val updateOperationState by viewModel.updateOperationState.collectAsState()
+    val isUpdateProfileButtonEnabled by viewModel.isUpdateProfileButtonEnabled.collectAsState()
 
     val isLoading = userState is CustomState.Loading || updateOperationState is CustomState.Loading
 
+    // NEW: LaunchedEffect to collect toast events from the ViewModel
+    LaunchedEffect(Unit) {
+        viewModel.toastEvent.collect { message ->
+            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+        }
+    }
+
     LaunchedEffect(updateOperationState) {
-        val currentUpdateState = updateOperationState
-        when (currentUpdateState) {
+        when (val currentUpdateState = updateOperationState) {
             is CustomState.Success -> {
                 Toast.makeText(context, "Profile updated successfully!", Toast.LENGTH_SHORT).show()
             }
@@ -66,7 +73,7 @@ fun UserProfileEditScreen(
                 val message = currentUpdateState.message ?: "Unknown error"
                 Toast.makeText(context, "Failed to update profile: $message", Toast.LENGTH_LONG).show()
             }
-            else -> { /* CustomState.Idle or CustomState.Loading - no specific toast needed here */ }
+            else -> { }
         }
     }
 
@@ -142,8 +149,7 @@ fun UserProfileEditScreen(
             )
         }
 
-        val currentUserStateForName = userState
-        when (currentUserStateForName) {
+        when (val currentUserStateForName = userState) {
             is CustomState.Success -> {
                 currentUserStateForName.result.name?.let {
                     Text(
@@ -175,7 +181,7 @@ fun UserProfileEditScreen(
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
             }
-            CustomState.Idle -> { /* Maybe show a blank or default name */ }
+            CustomState.Idle -> { }
         }
 
 
@@ -188,8 +194,7 @@ fun UserProfileEditScreen(
             horizontalArrangement = Arrangement.SpaceAround,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            val currentUserStateForStats = userState
-            when (currentUserStateForStats) {
+            when (val currentUserStateForStats = userState) {
                 is CustomState.Success -> {
                     val currentUser = currentUserStateForStats.result
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -223,7 +228,7 @@ fun UserProfileEditScreen(
                         }
                     }
                 }
-                CustomState.Idle -> { /* Initial state, perhaps show empty or default values */ }
+                CustomState.Idle -> { }
             }
         }
 
@@ -247,7 +252,7 @@ fun UserProfileEditScreen(
 
         Button(
             onClick = viewModel::updateProfile,
-            enabled = !isLoading && userState is CustomState.Success,
+            enabled = isUpdateProfileButtonEnabled,
             shape = RoundedCornerShape(20.dp),
             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
             modifier = Modifier
@@ -256,9 +261,8 @@ fun UserProfileEditScreen(
         ) {
             Text(
                 when (updateOperationState) {
-                    CustomState.Loading -> "UPDATING..." // Shows "UPDATING..." when loading
-                    // Removed the CustomState.Success case here
-                    else -> "UPDATE PROFILE".uppercase(Locale.ROOT) // Reverts to "UPDATE PROFILE" for Idle, Success, Failure
+                    CustomState.Loading -> "UPDATING..."
+                    else -> "UPDATE PROFILE".uppercase(Locale.ROOT)
                 },
                 color = Color.White,
                 style = Typography.bodyLarge

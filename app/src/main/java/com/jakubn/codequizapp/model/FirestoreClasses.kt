@@ -1,4 +1,4 @@
-package com.jakubn.codequizapp.domain.model
+package com.jakubn.codequizapp.model
 
 import com.google.firebase.database.PropertyName
 

@@ -1,8 +1,8 @@
 package com.jakubn.codequizapp.data.repository
 
-import com.jakubn.codequizapp.domain.model.Game
-import com.jakubn.codequizapp.domain.model.Lobby
-import com.jakubn.codequizapp.domain.model.User
+import com.jakubn.codequizapp.model.Game
+import com.jakubn.codequizapp.model.Lobby
+import com.jakubn.codequizapp.model.User
 import kotlinx.coroutines.flow.Flow
 
 

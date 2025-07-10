@@ -13,7 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.jakubn.codequizapp.domain.model.User
+import com.jakubn.codequizapp.model.User
 import com.jakubn.codequizapp.navigation.Screen
 import com.jakubn.codequizapp.theme.CodeQuizAppTheme
 import com.jakubn.codequizapp.ui.game.QuizScreen
