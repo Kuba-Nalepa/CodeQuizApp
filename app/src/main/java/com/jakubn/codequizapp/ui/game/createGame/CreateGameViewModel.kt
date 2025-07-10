@@ -2,9 +2,9 @@ package com.jakubn.codequizapp.ui.game.createGame
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.jakubn.codequizapp.data.repositoryImpl.GameRepository
 import com.jakubn.codequizapp.domain.model.CustomState
 import com.jakubn.codequizapp.domain.model.User
-import com.jakubn.codequizapp.domain.usecases.game.CreateGameUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -16,7 +16,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class CreateGameViewModel @Inject constructor(
-    private val createGameUseCase: CreateGameUseCase,
+    private val gameRepository: GameRepository
 ) : ViewModel() {
     private val _createGameState = MutableStateFlow<CustomState<String>>(CustomState.Idle)
     val createGameState: StateFlow<CustomState<String>> = _createGameState
@@ -29,7 +29,7 @@ class CreateGameViewModel @Inject constructor(
     ) {
 
         viewModelScope.launch {
-            createGameUseCase.createGame(questionCategory, questionQuantity, questionDuration, founder)
+            gameRepository.createGame(questionCategory, questionQuantity, questionDuration, founder)
                 .onStart {
                     _createGameState.value = CustomState.Loading
                 }

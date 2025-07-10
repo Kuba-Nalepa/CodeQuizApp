@@ -2,9 +2,9 @@ package com.jakubn.codequizapp.ui.authorization
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.jakubn.codequizapp.data.repositoryImpl.AuthRepository
 import com.jakubn.codequizapp.domain.model.CustomState
 import com.jakubn.codequizapp.domain.model.User
-import com.jakubn.codequizapp.domain.usecases.user.RegistrationUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -15,7 +15,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class RegistrationViewModel @Inject constructor(
-    private val registrationUseCase: RegistrationUseCase
+    private val authRepository: AuthRepository
 ) : ViewModel() {
 
     private val _authState = MutableStateFlow<CustomState<User>>(CustomState.Idle)
@@ -23,7 +23,7 @@ class RegistrationViewModel @Inject constructor(
 
     fun signUpUser(name: String, email: String, password: String) {
         viewModelScope.launch {
-            registrationUseCase.signUpUser(name, email, password)
+            authRepository.signUpUser(name, email, password)
                 .onStart {
                     _authState.value = CustomState.Loading
                 }

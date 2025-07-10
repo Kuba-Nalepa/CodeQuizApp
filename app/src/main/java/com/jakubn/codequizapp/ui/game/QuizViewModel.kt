@@ -2,15 +2,13 @@ package com.jakubn.codequizapp.ui.game
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.jakubn.codequizapp.data.repositoryImpl.GameRepository
 import com.jakubn.codequizapp.domain.model.CorrectAnswers
 import com.jakubn.codequizapp.domain.model.CustomState
 import com.jakubn.codequizapp.domain.model.Game
 import com.jakubn.codequizapp.domain.model.Lobby
 import com.jakubn.codequizapp.domain.model.Question
 import com.jakubn.codequizapp.domain.model.User
-import com.jakubn.codequizapp.domain.usecases.game.ListenGameDataChangesUseCase
-import com.jakubn.codequizapp.domain.usecases.game.SaveUserGameStatsUseCase
-import com.jakubn.codequizapp.domain.usecases.game.SetUserFinishedGameUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,9 +21,7 @@ import kotlin.reflect.full.memberProperties
 
 @HiltViewModel
 class QuizViewModel @Inject constructor(
-    private val listenGameDataChangesUseCase: ListenGameDataChangesUseCase,
-    private val saveUserGameStatsUseCase: SaveUserGameStatsUseCase,
-    private val setUserFinishedGameUseCase: SetUserFinishedGameUseCase
+    private val gameRepository: GameRepository
 ) : ViewModel() {
     private val _state = MutableStateFlow<CustomState<Game?>>(CustomState.Idle)
     val state: StateFlow<CustomState<Game?>> = _state
@@ -35,7 +31,7 @@ class QuizViewModel @Inject constructor(
 
     fun listenGameData(gameId: String) {
         viewModelScope.launch(Dispatchers.IO) {
-            listenGameDataChangesUseCase.listenGameDataChanges(gameId)
+            gameRepository.listenGameDataChanges(gameId)
                 .onStart {
                     _state.value = CustomState.Loading
                 }
@@ -66,7 +62,7 @@ class QuizViewModel @Inject constructor(
     fun saveUserGameStats(gameId: String, lobby: Lobby, user: User, answersList: List<Int>, correctAnswersQuantity: Int) {
         viewModelScope.launch(Dispatchers.IO) {
             val points = correctAnswersQuantity * 10
-            saveUserGameStatsUseCase.saveUserGameStats(gameId, lobby, user, answersList, correctAnswersQuantity, points)
+            gameRepository.saveUserGameStats(gameId, lobby, user, answersList, correctAnswersQuantity, points)
         }
     }
 
@@ -74,7 +70,7 @@ class QuizViewModel @Inject constructor(
 
     fun setUserFinishedGame(gameId: String, lobby: Lobby, user: User, hasFinished: Boolean) {
         viewModelScope.launch {
-            setUserFinishedGameUseCase.setUserFinishedGame.invoke(gameId, lobby, user, hasFinished)
+            gameRepository.setUserFinishedGame(gameId, lobby, user, hasFinished)
         }
     }
 }

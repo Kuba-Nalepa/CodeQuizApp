@@ -76,7 +76,6 @@ fun MainNavGraph(
                 }
                 composable(route = Screen.UserProfileEdit.route) {
                     UserProfileEditScreen(
-                        user = user,
                         navController = navController
                     )
                 }

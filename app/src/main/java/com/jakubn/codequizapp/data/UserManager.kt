@@ -1,9 +1,9 @@
 package com.jakubn.codequizapp.data
 
+import com.jakubn.codequizapp.data.repositoryImpl.AuthRepository
+import com.jakubn.codequizapp.data.repositoryImpl.UserDataRepository
 import com.jakubn.codequizapp.domain.model.CustomState
 import com.jakubn.codequizapp.domain.model.User
-import com.jakubn.codequizapp.domain.usecases.user.GetUserDataUseCase
-import com.jakubn.codequizapp.domain.usecases.user.SignOutUseCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -16,8 +16,9 @@ import javax.inject.Singleton
 
 @Singleton
 class UserManager @Inject constructor(
-    private val getUserDataUseCase: GetUserDataUseCase,
-    private val signOutUseCase: SignOutUseCase,
+
+    private val userDataRepository: UserDataRepository,
+    private val authRepository: AuthRepository,
     private val applicationScope: CoroutineScope
 ) {
     private val _userState = MutableStateFlow<CustomState<User>>(CustomState.Idle)
@@ -30,7 +31,7 @@ class UserManager @Inject constructor(
     }
 
     private suspend fun loadUserData() {
-        getUserDataUseCase.getUserData()
+        userDataRepository.getUserData()
             .onStart {
                 _userState.value = CustomState.Loading
             }
@@ -50,7 +51,7 @@ class UserManager @Inject constructor(
         applicationScope.launch {
             _userState.value = CustomState.Loading
             try {
-                signOutUseCase.signOutUser.invoke()
+                authRepository.signOutUser()
                 _userState.value = CustomState.Failure("User logged out successfully")
             } catch (e: Exception) {
                 _userState.value = CustomState.Failure("Logout failed: ${e.message}")

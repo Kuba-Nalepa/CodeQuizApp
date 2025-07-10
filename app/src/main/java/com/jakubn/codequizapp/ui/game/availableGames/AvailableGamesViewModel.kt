@@ -2,11 +2,10 @@ package com.jakubn.codequizapp.ui.game.availableGames
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.jakubn.codequizapp.data.repositoryImpl.GameRepository
 import com.jakubn.codequizapp.domain.model.CustomState
 import com.jakubn.codequizapp.domain.model.Game
 import com.jakubn.codequizapp.domain.model.User
-import com.jakubn.codequizapp.domain.usecases.game.AddUserToLobbyUseCase
-import com.jakubn.codequizapp.domain.usecases.game.GetGamesListUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -17,15 +16,14 @@ import javax.inject.Inject
 
 @HiltViewModel
 class AvailableGamesViewModel @Inject constructor(
-    private val getGamesListUseCase: GetGamesListUseCase,
-    private val addUserToLobbyUseCase: AddUserToLobbyUseCase
+    private val gameRepository: GameRepository
 ) : ViewModel() {
     private val _state = MutableStateFlow<CustomState<List<Game>>>(CustomState.Idle)
     val state: StateFlow<CustomState<List<Game>>> = _state
 
     fun getGamesList() {
         viewModelScope.launch {
-            getGamesListUseCase.getGamesList.invoke()
+            gameRepository.getGamesList()
                 .onStart {
                     _state.value = CustomState.Loading
                 }
@@ -40,7 +38,8 @@ class AvailableGamesViewModel @Inject constructor(
 
     fun addUserToLobby(gameId: String, user: User) {
         viewModelScope.launch {
-            addUserToLobbyUseCase.addUserToLobby.invoke(gameId, user)
+//            addUserToLobbyUseCase.addUserToLobby.invoke(gameId, user)
+            gameRepository.addMemberToLobby(gameId, user)
 
         }
     }

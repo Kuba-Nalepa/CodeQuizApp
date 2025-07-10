@@ -2,16 +2,12 @@ package com.jakubn.codequizapp.ui.game.gameOver
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.jakubn.codequizapp.data.repositoryImpl.GameRepository
+import com.jakubn.codequizapp.data.repositoryImpl.UserDataRepository
 import com.jakubn.codequizapp.domain.model.CustomState
 import com.jakubn.codequizapp.domain.model.Game
 import com.jakubn.codequizapp.domain.model.GameResult
 import com.jakubn.codequizapp.domain.model.User
-import com.jakubn.codequizapp.domain.usecases.game.ArchiveGameUseCase
-import com.jakubn.codequizapp.domain.usecases.game.DeleteGameUseCase
-import com.jakubn.codequizapp.domain.usecases.game.ListenGameDataChangesUseCase
-import com.jakubn.codequizapp.domain.usecases.game.ManageGameStateUseCase
-import com.jakubn.codequizapp.domain.usecases.game.SetUserLeftGameUseCase
-import com.jakubn.codequizapp.domain.usecases.user.UpdateUserDataUsecase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -22,12 +18,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class GameOverViewModel @Inject constructor(
-    private val listenGameDataChangesUseCase: ListenGameDataChangesUseCase,
-    private val updateUserDataUseCase: UpdateUserDataUsecase,
-    private val manageGameStateUseCase: ManageGameStateUseCase,
-    private val archiveGameUseCase: ArchiveGameUseCase,
-    private val setUserLeftGameUseCase: SetUserLeftGameUseCase,
-    private val deleteGameUseCase: DeleteGameUseCase
+    private val gameRepository: GameRepository,
+    private val userDataRepository: UserDataRepository
 ) : ViewModel() {
 
     private val _gameResult = MutableStateFlow<GameResult?>(null)
@@ -42,7 +34,7 @@ class GameOverViewModel @Inject constructor(
 
     fun getGameData(gameId: String, user: User) {
         viewModelScope.launch {
-            listenGameDataChangesUseCase.listenGameDataChanges(gameId)
+            gameRepository.listenGameDataChanges(gameId)
                 .onStart { _state.value = CustomState.Loading }
                 .catch { e ->
                     _state.value = CustomState.Failure(e.message)
@@ -56,20 +48,20 @@ class GameOverViewModel @Inject constructor(
 
     fun updateUserData(user: User, score: Int) {
         viewModelScope.launch {
-            updateUserDataUseCase.updateUserData(user, score, _gameResult.value is GameResult.Win)
+            userDataRepository.updateUserData(user, score, _gameResult.value is GameResult.Win)
         }
     }
 
     fun handleGameCleanup(gameId: String) {
         viewModelScope.launch {
-            manageGameStateUseCase.manageGameState(gameId, false)
+            gameRepository.manageGameState(gameId, false)
         }
     }
 
     fun setUserLeftGame(game: Game?, user: User) {
         viewModelScope.launch {
             if (game != null) {
-                setUserLeftGameUseCase.setUserLeftGame(game, user, true)
+                gameRepository.setUserLeftGame(game, user, true)
             }
         }
     }
@@ -179,13 +171,13 @@ class GameOverViewModel @Inject constructor(
 
     private fun archiveGame(game: Game) {
         viewModelScope.launch {
-            archiveGameUseCase.archiveGame(game)
+            gameRepository.archiveGame(game)
         }
     }
 
     private fun deleteGame(game: Game) {
         viewModelScope.launch {
-            deleteGameUseCase.deleteGame(game)
+            gameRepository.deleteGame(game)
         }
     }
 }

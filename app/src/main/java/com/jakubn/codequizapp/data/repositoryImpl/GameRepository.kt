@@ -19,7 +19,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class GameRepositoryImpl @Inject constructor(
+class GameRepository @Inject constructor(
     private val firebaseDatabase: FirebaseDatabase
 ) : GameRepository {
 

@@ -2,16 +2,12 @@ package com.jakubn.codequizapp.ui.game.lobby
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.jakubn.codequizapp.data.repositoryImpl.GameRepository
 import com.jakubn.codequizapp.domain.model.CustomState
 import com.jakubn.codequizapp.domain.model.Game
 import com.jakubn.codequizapp.domain.model.Lobby
 import com.jakubn.codequizapp.domain.model.User
-import com.jakubn.codequizapp.domain.usecases.game.ChangeUserReadinessStatusUseCase
-import com.jakubn.codequizapp.domain.usecases.game.DeleteLobbyUseCase
-import com.jakubn.codequizapp.domain.usecases.game.ListenGameDataChangesUseCase
-import com.jakubn.codequizapp.domain.usecases.game.ManageGameStateUseCase
-import com.jakubn.codequizapp.domain.usecases.game.RemoveMemberFromLobbyUseCase
-import com.jakubn.codequizapp.domain.usecases.game.SetUserLeftGameUseCase
+
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -22,12 +18,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class LobbyViewModel @Inject constructor(
-    private val listenGameDataChangesUseCase: ListenGameDataChangesUseCase,
-    private val removeUserFromLobbyUseCase: RemoveMemberFromLobbyUseCase,
-    private val deleteLobbyUseCase: DeleteLobbyUseCase,
-    private val changeUserReadinessStatusUseCase: ChangeUserReadinessStatusUseCase,
-    private val manageGameStateUseCase: ManageGameStateUseCase,
-    private val setUserLeftGameUseCase: SetUserLeftGameUseCase
+    private val gameRepository: GameRepository,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow<CustomState<Game?>>(CustomState.Idle)
@@ -38,7 +29,7 @@ class LobbyViewModel @Inject constructor(
 
     fun getGameData(gameId: String) {
         viewModelScope.launch {
-            listenGameDataChangesUseCase.listenGameDataChanges(gameId)
+            gameRepository.listenGameDataChanges(gameId)
                 .onStart { _state.value = CustomState.Loading }
                 .catch { e -> _state.value = CustomState.Failure(e.message) }
                 .collect { game ->
@@ -51,9 +42,9 @@ class LobbyViewModel @Inject constructor(
     fun leaveFromLobby(gameId: String, user: User) {
         viewModelScope.launch {
             if (isCurrentUserFounder(user)) {
-                deleteLobbyUseCase.deleteLobby(gameId)
+                gameRepository.deleteLobby(gameId)
             } else {
-                removeUserFromLobbyUseCase.removeMemberFromLobby(gameId)
+                gameRepository.removeMemberFromLobby(gameId)
             }
         }
     }
@@ -61,7 +52,7 @@ class LobbyViewModel @Inject constructor(
     fun setUserLeftGame(game: Game?, user: User) {
         viewModelScope.launch {
             if (game != null) {
-                setUserLeftGameUseCase.setUserLeftGame(game, user, true)
+                gameRepository.setUserLeftGame(game, user, true)
             }
         }
     }
@@ -76,7 +67,7 @@ class LobbyViewModel @Inject constructor(
                         else -> return@launch
                     }
 
-                    changeUserReadinessStatusUseCase.changeUserReadinessStatus(
+                    gameRepository.changeUserReadinessStatus(
                         gameId, lobby, user, newStatus
                     )
 
@@ -94,7 +85,7 @@ class LobbyViewModel @Inject constructor(
 
     fun startGame(gameId: String) {
         viewModelScope.launch {
-            manageGameStateUseCase.manageGameState(gameId, true)
+            gameRepository.manageGameState(gameId, true)
             _state.value = (_state.value as? CustomState.Success)?.let {
                 it.copy(result = it.result?.copy(gameInProgress = true))
             } ?: return@launch

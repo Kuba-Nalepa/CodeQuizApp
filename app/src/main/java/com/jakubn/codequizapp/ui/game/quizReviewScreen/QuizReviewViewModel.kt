@@ -2,12 +2,12 @@ package com.jakubn.codequizapp.ui.game.quizReviewScreen
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.jakubn.codequizapp.data.repositoryImpl.GameRepository
 import com.jakubn.codequizapp.domain.model.CorrectAnswers
 import com.jakubn.codequizapp.domain.model.CustomState
 import com.jakubn.codequizapp.domain.model.Game
 import com.jakubn.codequizapp.domain.model.Question
 import com.jakubn.codequizapp.domain.model.User
-import com.jakubn.codequizapp.domain.usecases.game.GetGameDataUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -19,7 +19,7 @@ import kotlin.reflect.full.memberProperties
 
 @HiltViewModel
 class QuizReviewViewModel @Inject constructor(
-    private val getGameDataUseCase: GetGameDataUseCase
+    private val gameRepository: GameRepository
 ) : ViewModel() {
 
     private val _state = MutableStateFlow<CustomState<Game?>>(CustomState.Idle)
@@ -28,7 +28,7 @@ class QuizReviewViewModel @Inject constructor(
 
     fun getGameData(gameId: String) {
         viewModelScope.launch {
-            getGameDataUseCase.getGameData(gameId)
+            gameRepository.getGameData(gameId)
                 .onStart {
                     _state.value = CustomState.Loading
                 }
