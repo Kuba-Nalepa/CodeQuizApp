@@ -42,7 +42,7 @@ class RegistrationViewModel @Inject constructor(
 
     private val maxLengthName = 13
 
-    fun onNameChange(newName: String) { // Renamed from updateName and added toast logic
+    fun onNameChange(newName: String) {
         val currentNameLength = _name.value.length
         if (newName.length <= maxLengthName) {
             _name.value = newName
@@ -62,7 +62,7 @@ class RegistrationViewModel @Inject constructor(
         _password,
         _authState
     ) { name, email, password, authState ->
-        val isNameValid = name.length in 1..maxLengthName // Updated to use maxLengthName
+        val isNameValid = name.length in 1..maxLengthName
         val isEmailValid = email.isNotBlank() && android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
         val isPasswordValid = password.length >= 6
 
@@ -73,8 +73,6 @@ class RegistrationViewModel @Inject constructor(
         initialValue = false
     )
 
-    // The 'updateEmail' and 'updatePassword' functions are fine as is,
-    // as no specific length limits or toast functionality were requested for them.
     fun updateEmail(newEmail: String) {
         _email.value = newEmail
     }
@@ -100,6 +98,10 @@ class RegistrationViewModel @Inject constructor(
                     _authState.value = CustomState.Success(user)
                 }
         }
+    }
+
+    fun signOut() {
+        authRepository.signOutUser()
     }
 
     fun resetState() {
