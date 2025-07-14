@@ -61,7 +61,7 @@ class QuizViewModel @Inject constructor(
 
     fun saveUserGameStats(gameId: String, lobby: Lobby, user: User, answersList: List<Int>, correctAnswersQuantity: Int) {
         viewModelScope.launch(Dispatchers.IO) {
-            val points = correctAnswersQuantity * 10
+            val points = correctAnswersQuantity * 1
             gameRepository.saveUserGameStats(gameId, lobby, user, answersList, correctAnswersQuantity, points)
         }
     }

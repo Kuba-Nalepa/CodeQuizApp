@@ -14,4 +14,6 @@ interface UserDataRepository {
 
     suspend fun uploadProfileImage(imageUri: Uri): String
 
+    suspend fun getUsers(): Flow<List<User>>
+
 }

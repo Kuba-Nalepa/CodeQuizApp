@@ -3,6 +3,7 @@ package com.jakubn.codequizapp.ui.settings.editProfile
 import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -16,6 +17,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -38,6 +40,7 @@ import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import com.jakubn.codequizapp.R
 import com.jakubn.codequizapp.model.CustomState
+import com.jakubn.codequizapp.model.User
 import com.jakubn.codequizapp.theme.Typography
 import java.util.Locale
 
@@ -47,15 +50,17 @@ fun UserProfileEditScreen(
     viewModel: UserProfileEditViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
-
     val userState by viewModel.userState.collectAsState()
     val newName by viewModel.newName.collectAsState()
     val newDescription by viewModel.newDescription.collectAsState()
-    val newAvatarUri by viewModel.newAvatarUri.collectAsState()
+    val selectedLocalAvatarUri by viewModel.selectedLocalAvatarUri.collectAsState()
+    val imageUploadState by viewModel.imageUploadState.collectAsState()
     val updateOperationState by viewModel.updateOperationState.collectAsState()
     val isUpdateProfileButtonEnabled by viewModel.isUpdateProfileButtonEnabled.collectAsState()
-
-    val isLoading = userState is CustomState.Loading || updateOperationState is CustomState.Loading
+    val isLoadingUser = userState is CustomState.Loading
+    val isUploadingImage = imageUploadState is CustomState.Loading
+    val isUpdatingProfile = updateOperationState is CustomState.Loading
+    val isAnyOperationInProgress = isLoadingUser || isUploadingImage || isUpdatingProfile
 
     LaunchedEffect(Unit) {
         viewModel.toastEvent.collect { message ->
@@ -64,28 +69,13 @@ fun UserProfileEditScreen(
     }
 
     LaunchedEffect(updateOperationState) {
-        when (val currentUpdateState = updateOperationState) {
-            is CustomState.Success -> {
-                Toast.makeText(context, "Profile updated successfully!", Toast.LENGTH_SHORT).show()
-            }
-            is CustomState.Failure -> {
-                val message = currentUpdateState.message ?: "Unknown error"
-                Toast.makeText(context, "Failed to update profile: $message", Toast.LENGTH_LONG).show()
-            }
-            else -> { }
-        }
-    }
-
-    LaunchedEffect(userState) {
-        val currentUserState = userState
-        if (currentUserState is CustomState.Failure) {
-            val message = currentUserState.message ?: "Unknown error loading profile"
-            Toast.makeText(context, "Error loading profile: $message", Toast.LENGTH_LONG).show()
+        if (updateOperationState is CustomState.Success) {
+            navController.popBackStack()
         }
     }
 
     val gradientColors = arrayOf(
-        0.06f to MaterialTheme.colorScheme.primary,
+        0.06f to Color(0xffA3FF0D),
         0.22f to Color(0xff74B583),
         0.39f to Color(0xff58959A),
         0.62f to Color(0xff003963),
@@ -93,9 +83,9 @@ fun UserProfileEditScreen(
     )
 
     val imagePickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
+        contract = ActivityResultContracts.PickVisualMedia()
     ) { uri: Uri? ->
-        viewModel.onAvatarUriChange(uri)
+        viewModel.onNewAvatarSelected(uri)
     }
 
     val scrollState = rememberScrollState()
@@ -116,127 +106,30 @@ fun UserProfileEditScreen(
             modifier = Modifier.padding(bottom = 32.dp)
         )
 
-        Box(
-            modifier = Modifier,
-            contentAlignment = Alignment.BottomEnd
-        ) {
-            Image(
-                painter = if (newAvatarUri != null) {
-                    rememberAsyncImagePainter(newAvatarUri)
-                } else {
-                    painterResource(R.drawable.generic_avatar)
-                },
-                contentDescription = "Profile Picture",
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .size(120.dp)
-                    .clip(CircleShape)
-            )
-            Icon(
-                imageVector = Icons.Default.Edit,
-                contentDescription = "Edit",
-                tint = Color.Black,
-                modifier = Modifier
-                    .offset(x = (-8).dp, y = (-8).dp)
-                    .background(Color(0xffA3FF0D), CircleShape)
-                    .clip(CircleShape)
-                    .clickable(enabled = !isLoading && userState is CustomState.Success) {
-                        imagePickerLauncher.launch("image/*")
-                    }
-                    .padding(8.dp)
-                    .size(24.dp)
-            )
-        }
-
-        when (val currentUserStateForName = userState) {
-            is CustomState.Success -> {
-                currentUserStateForName.result.name?.let {
-                    Text(
-                        text = it.lowercase(Locale.ROOT),
-                        style = Typography.titleMedium,
-                        color = MaterialTheme.colorScheme.secondary,
-                        modifier = Modifier.padding(bottom = 16.dp)
-                    )
-                } ?: Text(
-                    text = "Unnamed User",
-                    style = Typography.titleMedium,
-                    color = MaterialTheme.colorScheme.secondary,
-                    modifier = Modifier.padding(bottom = 16.dp)
-                )
+        ProfilePictureSection(
+            userState = userState,
+            selectedLocalAvatarUri = selectedLocalAvatarUri,
+            isUploadingImage = isUploadingImage,
+            isAnyOperationInProgress = isAnyOperationInProgress,
+            onEditClick = {
+                imagePickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
             }
-            CustomState.Loading -> {
-                Text(
-                    text = "Loading...",
-                    style = Typography.titleMedium,
-                    color = MaterialTheme.colorScheme.secondary,
-                    modifier = Modifier.padding(bottom = 16.dp)
-                )
-            }
-            is CustomState.Failure -> {
-                Text(
-                    text = "Error loading user data",
-                    style = Typography.titleMedium,
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.padding(bottom = 16.dp)
-                )
-            }
-            CustomState.Idle -> { }
-        }
+        )
 
+        Spacer(modifier = Modifier.height(24.dp))
 
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(shape = RoundedCornerShape(20.dp))
-                .background(Color(0x52D9D9D9))
-                .padding(vertical = 10.dp, horizontal = 10.dp),
-            horizontalArrangement = Arrangement.SpaceAround,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            when (val currentUserStateForStats = userState) {
-                is CustomState.Success -> {
-                    val currentUser = currentUserStateForStats.result
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(text = "${currentUser.wins}", style = Typography.titleMedium, color = Color.White)
-                        Text(text = "wins", style = Typography.bodySmall, color = Color.White)
-                    }
+        UserNameDisplay(userState = userState)
 
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(text = "${currentUser.score}", style = Typography.titleMedium, color = Color(0xffA3FF0D))
-                        Text(text = "score", style = Typography.bodySmall, color = Color.White)
-                    }
+        StatsSection(userState = userState)
 
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(text = (currentUser.gamesPlayed - currentUser.wins).toString(), style = Typography.titleMedium, color = Color.White)
-                        Text(text = "losses", style = Typography.bodySmall, color = Color.White)
-                    }
-                }
-                CustomState.Loading -> {
-                    repeat(3) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(text = "-", style = Typography.titleMedium, color = Color.Gray)
-                            Text(text = "...", style = Typography.bodySmall, color = Color.Gray)
-                        }
-                    }
-                }
-                is CustomState.Failure -> {
-                    repeat(3) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(text = "N/A", style = Typography.titleMedium, color = Color.Gray)
-                            Text(text = "error", style = Typography.bodySmall, color = Color.Gray)
-                        }
-                    }
-                }
-                CustomState.Idle -> { }
-            }
-        }
+        Spacer(modifier = Modifier.height(24.dp))
 
         EditableField(
             label = "NAME",
             value = newName,
             onValueChange = viewModel::onNameChange,
-            modifier = Modifier.padding(vertical = 16.dp),
-            enabled = userState is CustomState.Success && !isLoading
+            modifier = Modifier.padding(bottom = 16.dp),
+            enabled = userState is CustomState.Success && !isAnyOperationInProgress
         )
 
         EditableField(
@@ -246,12 +139,12 @@ fun UserProfileEditScreen(
             minLines = 3,
             maxLines = 5,
             modifier = Modifier.padding(bottom = 32.dp),
-            enabled = userState is CustomState.Success && !isLoading
+            enabled = userState is CustomState.Success && !isAnyOperationInProgress
         )
 
         Button(
             onClick = viewModel::updateProfile,
-            enabled = isUpdateProfileButtonEnabled,
+            enabled = isUpdateProfileButtonEnabled && !isAnyOperationInProgress,
             shape = RoundedCornerShape(20.dp),
             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
             modifier = Modifier
@@ -259,13 +152,156 @@ fun UserProfileEditScreen(
                 .height(56.dp)
         ) {
             Text(
-                when (updateOperationState) {
-                    CustomState.Loading -> "UPDATING..."
+                when {
+                    isUpdatingProfile -> "UPDATING PROFILE..."
+                    isUploadingImage -> "UPLOADING IMAGE..."
                     else -> "UPDATE PROFILE".uppercase(Locale.ROOT)
                 },
                 color = Color.White,
                 style = Typography.bodyLarge
             )
+        }
+    }
+}
+
+@Composable
+private fun ProfilePictureSection(
+    userState: CustomState<User>,
+    selectedLocalAvatarUri: Uri?,
+    isUploadingImage: Boolean,
+    isAnyOperationInProgress: Boolean,
+    onEditClick: () -> Unit
+) {
+    Box(
+        modifier = Modifier.size(120.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Image(
+            painter = when {
+                selectedLocalAvatarUri != null -> rememberAsyncImagePainter(selectedLocalAvatarUri)
+                userState is CustomState.Success && !(userState.result.imageUri.isNullOrEmpty()) ->
+                    rememberAsyncImagePainter(Uri.parse(userState.result.imageUri))
+                else -> painterResource(R.drawable.generic_avatar)
+            },
+            contentDescription = "Profile Picture",
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .fillMaxSize()
+                .clip(CircleShape)
+        )
+
+        Icon(
+            imageVector = Icons.Default.Edit,
+            contentDescription = "Edit Profile Picture",
+            tint = Color.Black,
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .offset(x = 8.dp, y = 8.dp)
+                .background(Color(0xffA3FF0D), CircleShape)
+                .clip(CircleShape)
+                .clickable(enabled = !isAnyOperationInProgress, onClick = onEditClick)
+                .padding(8.dp)
+                .size(24.dp)
+        )
+
+        if (isUploadingImage) {
+            CircularProgressIndicator(
+                modifier = Modifier.align(Alignment.Center).size(60.dp),
+                color = MaterialTheme.colorScheme.primary
+            )
+        }
+    }
+}
+
+@Composable
+private fun UserNameDisplay(userState: CustomState<User>) {
+    when (val currentUserState = userState) {
+        is CustomState.Success -> {
+            currentUserState.result.name?.let {
+                Text(
+                    text = it.lowercase(Locale.ROOT),
+                    style = Typography.titleLarge,
+                    color = MaterialTheme.colorScheme.secondary,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+            } ?: Text(
+                text = "Unnamed User",
+                style = Typography.titleLarge,
+                color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.7f),
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
+        }
+        CustomState.Loading -> {
+            Text(
+                text = "Loading...",
+                style = Typography.titleLarge,
+                color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f),
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
+        }
+        is CustomState.Failure -> {
+            Text(
+                text = "Error loading user data",
+                style = Typography.titleLarge,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
+        }
+        CustomState.Idle -> { }
+    }
+}
+
+@Composable
+private fun StatsSection(userState: CustomState<User>) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(shape = RoundedCornerShape(20.dp))
+            .background(Color(0x52D9D9D9))
+            .padding(vertical = 12.dp, horizontal = 16.dp),
+        horizontalArrangement = Arrangement.SpaceAround,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        when (val currentUserStateForStats = userState) {
+            is CustomState.Success -> {
+                val currentUser = currentUserStateForStats.result
+                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.weight(1f)) {
+                    Text(text = "${currentUser.wins}", style = Typography.titleMedium, color = Color.White)
+                    Text(text = "wins", style = Typography.bodySmall, color = Color.White.copy(alpha = 0.8f))
+                }
+
+                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.weight(1f)) {
+                    Text(text = "${currentUser.score}", style = Typography.titleMedium, color = Color(0xffA3FF0D))
+                    Text(text = "score", style = Typography.bodySmall, color = Color.White.copy(alpha = 0.8f))
+                }
+
+                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.weight(1f)) {
+                    Text(text = (currentUser.gamesPlayed - currentUser.wins).toString(), style = Typography.titleMedium, color = Color.White)
+                    Text(text = "losses", style = Typography.bodySmall, color = Color.White.copy(alpha = 0.8f))
+                }
+            }
+            CustomState.Loading -> {
+                repeat(3) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.weight(1f)) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            strokeWidth = 2.dp,
+                            color = Color.White.copy(alpha = 0.7f)
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(text = "...", style = Typography.bodySmall, color = Color.Gray)
+                    }
+                }
+            }
+            is CustomState.Failure -> {
+                repeat(3) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.weight(1f)) {
+                        Text(text = "N/A", style = Typography.titleMedium, color = Color.Gray)
+                        Text(text = "error", style = Typography.bodySmall, color = Color.Gray)
+                    }
+                }
+            }
+            CustomState.Idle -> { }
         }
     }
 }
@@ -303,7 +339,10 @@ fun EditableField(
                 unfocusedLabelColor = Color.White.copy(alpha = 0.8f),
                 disabledBorderColor = Color.Gray.copy(alpha = 0.5f),
                 disabledTextColor = Color.Gray,
-                disabledLabelColor = Color.Gray.copy(alpha = 0.8f)
+                disabledLabelColor = Color.Gray.copy(alpha = 0.8f),
+                focusedContainerColor = Color.Transparent,
+                unfocusedContainerColor = Color.Transparent,
+                disabledContainerColor = Color.Transparent
             )
         )
     }

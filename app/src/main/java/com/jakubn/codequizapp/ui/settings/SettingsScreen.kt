@@ -39,7 +39,7 @@ fun SettingsScreen(
 ) {
 
     val colors = arrayOf(
-        0.06f to MaterialTheme.colorScheme.primary,
+        0.06f to Color(0xffA3FF0D),
         0.22f to Color(0xff74B583),
         0.39f to Color(0xff58959A),
         0.62f to Color(0xff003963),

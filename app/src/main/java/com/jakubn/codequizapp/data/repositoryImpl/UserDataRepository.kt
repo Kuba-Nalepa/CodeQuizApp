@@ -4,11 +4,15 @@ import android.net.Uri
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.FirebaseFirestoreException
+import com.google.firebase.firestore.QuerySnapshot
 import com.google.firebase.storage.FirebaseStorage
 import com.jakubn.codequizapp.model.User
 import com.jakubn.codequizapp.data.repository.UserDataRepository
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.tasks.await
@@ -97,6 +101,32 @@ class UserDataRepository @Inject constructor(
         }
     }
 
+    override suspend fun getUsers(): Flow<List<User>> = callbackFlow{
+        val userDocRef = firebaseFirestore.collection("users")
+
+        val subscription =
+            userDocRef.addSnapshotListener { snapshot: QuerySnapshot?, exception: FirebaseFirestoreException? ->
+                if (exception != null) {
+                    close(exception)
+                    return@addSnapshotListener
+                }
+
+                if (snapshot != null) {
+                    val users = snapshot.documents.map { document ->
+                        document.toObject(User::class.java)?.copy(uid = document.id)
+                            ?: User(uid = document.id)
+                    }
+                    trySend(users).isSuccess
+                } else {
+                    trySend(emptyList()).isSuccess
+                }
+            }
+
+        awaitClose {
+            subscription.remove()
+        }
+    }.flowOn(Dispatchers.IO)
+
     override suspend fun updateUserProfile(updatedUser: User): Flow<Unit> = flow {
         val userId = updatedUser.uid ?: throw Exception("User not authenticated")
         val userDocRef = firebaseFirestore.collection("users").document(userId)
@@ -104,7 +134,7 @@ class UserDataRepository @Inject constructor(
             val updates = mutableMapOf<String, Any?>()
             updates["name"] = updatedUser.name
             updates["description"] = updatedUser.description
-            updates["avatarUrl"] = updatedUser.imageUri
+            updates["imageUri"] = updatedUser.imageUri
 
             userDocRef.update(updates).await()
             emit(Unit)

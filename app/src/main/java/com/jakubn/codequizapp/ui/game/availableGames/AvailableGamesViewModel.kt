@@ -38,7 +38,6 @@ class AvailableGamesViewModel @Inject constructor(
 
     fun addUserToLobby(gameId: String, user: User) {
         viewModelScope.launch {
-//            addUserToLobbyUseCase.addUserToLobby.invoke(gameId, user)
             gameRepository.addMemberToLobby(gameId, user)
 
         }

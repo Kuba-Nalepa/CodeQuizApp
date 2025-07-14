@@ -2,7 +2,6 @@ package com.jakubn.codequizapp.navigation
 
 import android.content.Context
 import android.content.Intent
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -14,6 +13,7 @@ import com.jakubn.codequizapp.ui.home.HomeScreen
 import com.jakubn.codequizapp.ui.settings.editProfile.UserProfileEditScreen
 import com.jakubn.codequizapp.ui.settings.SettingsScreen
 import com.jakubn.codequizapp.GameActivity
+import com.jakubn.codequizapp.ui.leaderboard.LeaderboardScreen
 
 @Composable
 fun MainNavGraph(
@@ -58,7 +58,7 @@ fun MainNavGraph(
 
             composable(route = Screen.Leaderboard.route) {
                 MainScreen(navController) {
-                    Text(text = "Leaderboard Screen")
+                    LeaderboardScreen()
                 }
             }
 
