@@ -69,6 +69,7 @@ fun MainNavGraph(
                 composable(route = Screen.Settings.route) {
                     MainScreen(navController) {
                         SettingsScreen(
+                            user = user,
                             navController = navController,
                             onLogoutConfirmed = { onLogout() }
                         )

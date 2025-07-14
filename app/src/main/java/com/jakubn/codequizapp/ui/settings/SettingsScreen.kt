@@ -4,19 +4,24 @@ import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import coil.compose.rememberAsyncImagePainter
 import com.jakubn.codequizapp.R
+import com.jakubn.codequizapp.model.User
 import com.jakubn.codequizapp.navigation.Screen
 import com.jakubn.codequizapp.theme.Typography
 import com.jakubn.codequizapp.ui.uiComponents.ClickableCustomText
@@ -27,13 +32,14 @@ import com.jakubn.codequizapp.ui.uiComponents.helperDialogs.SelectionDialog
 
 @Composable
 fun SettingsScreen(
+    user: User,
     navController: NavController,
     viewModel: SettingsViewModel = hiltViewModel(),
     onLogoutConfirmed: () -> Unit
 ) {
 
     val colors = arrayOf(
-        0.06f to Color(0xffA3FF0D),
+        0.06f to MaterialTheme.colorScheme.primary,
         0.22f to Color(0xff74B583),
         0.39f to Color(0xff58959A),
         0.62f to Color(0xff003963),
@@ -101,8 +107,15 @@ fun SettingsScreen(
                     horizontalArrangement = Arrangement.spacedBy(24.dp)
                 ) {
                     Image(
-                        modifier = Modifier.size(50.dp),
-                        painter = painterResource(R.drawable.generic_avatar),
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .size(50.dp)
+                            .clip(CircleShape),
+                        painter = if (user.imageUri != null) {
+                            rememberAsyncImagePainter(user.imageUri)
+                        } else {
+                            painterResource(R.drawable.generic_avatar)
+                        },
                         contentDescription = "Avatar image placeholder"
                     )
 
@@ -125,19 +138,16 @@ fun SettingsScreen(
         ) {
 
             var showLanguageDialog by remember { mutableStateOf(false) }
-            var showColorSchemeDialog by remember { mutableStateOf(false) }
             var showAboutDialog by remember { mutableStateOf(false) }
             var showHelpDialog by remember { mutableStateOf(false) }
             var showDeleteDialog by remember { mutableStateOf(false) }
             var showSignOutDialog by remember { mutableStateOf(false) }
             var selectedLanguage by remember { mutableStateOf("English") }
-            var selectedColorScheme by remember { mutableStateOf("Light Mode") }
 
             val context = LocalContext.current
 
             val textLabelsWithActions = mapOf(
                 "Language" to { showLanguageDialog = true },
-                "Light/Dark Mode" to { showColorSchemeDialog = true },
                 "About" to { showAboutDialog = true },
                 "Help" to { showHelpDialog = true },
                 "Delete account" to { showDeleteDialog = true },
@@ -158,19 +168,6 @@ fun SettingsScreen(
                     onDismiss = { showLanguageDialog = false },
                     onConfirm = {
                         selectedLanguage = it
-                        Toast.makeText(context, "Selected: $it", Toast.LENGTH_SHORT).show()
-                    }
-                )
-            }
-
-            if (showColorSchemeDialog) {
-                SelectionDialog(
-                    text = "Choose color mode",
-                    options = listOf("Light Mode","Dark Mode"),
-                    currentOption = selectedColorScheme,
-                    onDismiss = { showColorSchemeDialog = false },
-                    onConfirm = {
-                        selectedColorScheme = it
                         Toast.makeText(context, "Selected: $it", Toast.LENGTH_SHORT).show()
                     }
                 )

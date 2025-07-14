@@ -17,6 +17,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.jakubn.codequizapp.theme.Typography
+
 @Composable
 fun SelectionDialog(
     text: String,
@@ -30,7 +32,7 @@ fun SelectionDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
-            Text(text)
+            Text(text, style = Typography.bodyLarge)
         },
         text = {
             Column {
@@ -73,7 +75,7 @@ fun SelectionDialog(
 fun InfoDialog(title: String, message: String, onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(title) },
+        title = { Text(title, style = Typography.bodyLarge) },
         text = { Text(message) },
         confirmButton = {
             Button(onClick = onDismiss) { Text("OK") }
@@ -91,7 +93,7 @@ fun ConfirmationDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(title) },
+        title = { Text(title, style = Typography.bodyLarge) },
         text = { Text(message) },
         confirmButton = {
             Button(onClick = onConfirm) { Text(confirmText) }

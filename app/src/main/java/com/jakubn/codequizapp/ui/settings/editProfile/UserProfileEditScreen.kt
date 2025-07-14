@@ -57,7 +57,6 @@ fun UserProfileEditScreen(
 
     val isLoading = userState is CustomState.Loading || updateOperationState is CustomState.Loading
 
-    // NEW: LaunchedEffect to collect toast events from the ViewModel
     LaunchedEffect(Unit) {
         viewModel.toastEvent.collect { message ->
             Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
@@ -86,7 +85,7 @@ fun UserProfileEditScreen(
     }
 
     val gradientColors = arrayOf(
-        0.06f to Color(0xffA3FF0D),
+        0.06f to MaterialTheme.colorScheme.primary,
         0.22f to Color(0xff74B583),
         0.39f to Color(0xff58959A),
         0.62f to Color(0xff003963),
