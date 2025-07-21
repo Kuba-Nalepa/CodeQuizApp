@@ -399,7 +399,8 @@ private fun UserProfileSection(user: User, points: Int) {
                 .clip(CircleShape)
                 .border(2.dp, Color.Black, CircleShape),
             model = user.imageUri ?: R.drawable.sample_avatar,
-            contentDescription = "User profile"
+            contentDescription = "User profile",
+            contentScale = ContentScale.Crop
         )
         Text(
             modifier = Modifier.padding(top = 15.dp),

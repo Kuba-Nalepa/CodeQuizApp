@@ -215,9 +215,9 @@ private fun ProfilePictureSection(
 
 @Composable
 private fun UserNameDisplay(userState: CustomState<User>) {
-    when (val currentUserState = userState) {
+    when (userState) {
         is CustomState.Success -> {
-            currentUserState.result.name?.let {
+            userState.result.name?.let {
                 Text(
                     text = it.lowercase(Locale.ROOT),
                     style = Typography.titleLarge,

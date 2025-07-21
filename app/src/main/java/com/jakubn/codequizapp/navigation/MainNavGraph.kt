@@ -33,7 +33,6 @@ fun MainNavGraph(
             composable(route = Screen.Home.route) {
                 MainScreen(navController) {
                     HomeScreen(
-                        user = user,
                         createGame = {
                             appContext.startActivity(
                                 Intent(

@@ -16,4 +16,6 @@ interface UserDataRepository {
 
     suspend fun getUsers(): Flow<List<User>>
 
+    suspend fun observeUserData(): Flow<User?>
+
 }

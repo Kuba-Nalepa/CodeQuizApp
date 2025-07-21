@@ -127,6 +127,26 @@ class UserDataRepository @Inject constructor(
         }
     }.flowOn(Dispatchers.IO)
 
+    override suspend fun observeUserData(): Flow<User?> {
+        return callbackFlow {
+            val currentUserUid = firebaseAuth.currentUser?.uid
+            val docRef = currentUserUid?.let { firebaseFirestore.collection("users").document(it) }
+            val subscription = docRef?.addSnapshotListener { value, error ->
+                if (error != null) {
+                    close(error)
+                    return@addSnapshotListener
+                }
+                if (value != null) {
+                    val user = value.toObject(User::class.java)
+                    trySend(user)
+                }
+            }
+            awaitClose {
+                subscription?.remove()
+            }
+        }.flowOn(Dispatchers.IO)
+    }
+
     override suspend fun updateUserProfile(updatedUser: User): Flow<Unit> = flow {
         val userId = updatedUser.uid ?: throw Exception("User not authenticated")
         val userDocRef = firebaseFirestore.collection("users").document(userId)

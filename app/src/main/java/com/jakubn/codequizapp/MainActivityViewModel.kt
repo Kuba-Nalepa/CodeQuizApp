@@ -17,25 +17,12 @@ class MainViewModel @Inject constructor(
 
     val currentUser: StateFlow<CustomState<User>> = userManager.userState
 
-    init {
-        // Any other ViewModel-specific startup logic can go here.
-        // Initial user loading is handled by UserManager's init block.
-    }
-
-    /**
-     * Delegates the logout action to the UserManager.
-     * UserManager will handle the actual sign-out logic and update its internal userState.
-     */
     fun logout() {
         viewModelScope.launch {
             userManager.onUserLoggedOut()
         }
     }
 
-    /**
-     * Delegates the successful login/registration event to the UserManager.
-     * UserManager will update its internal userState with the newly authenticated user.
-     */
     fun onLoginSuccess(loggedInUser: User) {
         viewModelScope.launch {
             userManager.onUserAuthenticated(loggedInUser)

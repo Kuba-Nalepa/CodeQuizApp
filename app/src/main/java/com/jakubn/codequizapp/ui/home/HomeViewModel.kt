@@ -19,16 +19,16 @@ class HomeViewModel @Inject constructor(
 ) :
     ViewModel() {
 
-    private val _state = MutableStateFlow<CustomState<User>>(CustomState.Idle)
-    val state: StateFlow<CustomState<User>> = _state
+    private val _state = MutableStateFlow<CustomState<User?>>(CustomState.Idle)
+    val state: StateFlow<CustomState<User?>> = _state
 
     init {
-        getUserData()
+        observeUserData()
     }
 
-    private fun getUserData() {
+    private fun observeUserData() {
         viewModelScope.launch {
-            userDataRepository.getUserData()
+            userDataRepository.observeUserData()
                 .onStart {
                     _state.value = CustomState.Loading
                 }

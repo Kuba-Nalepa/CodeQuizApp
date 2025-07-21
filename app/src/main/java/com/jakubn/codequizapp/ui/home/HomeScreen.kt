@@ -10,11 +10,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -26,17 +29,19 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.jakubn.codequizapp.R
+import com.jakubn.codequizapp.model.CustomState
 import com.jakubn.codequizapp.model.User
 import com.jakubn.codequizapp.theme.Typography
 import java.util.Locale
 
 @Composable
 fun HomeScreen(
-    user: User,
     homeViewModel: HomeViewModel = hiltViewModel(),
     createGame: () -> Unit,
     playGame: () -> Unit
 ) {
+
+    val userState by homeViewModel.state.collectAsState()
 
     val colors = arrayOf(
         0.06f to Color(0xffA3FF0D),
@@ -53,142 +58,13 @@ fun HomeScreen(
             .padding(20.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 10.dp),
-            verticalArrangement = Arrangement.Top,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = "<CODE/QUIZ>",
-                style = Typography.bodyMedium,
-                color = Color(0xff7BAFC4)
-            )
+        Text(
+            text = "<CODE/QUIZ>",
+            style = Typography.bodyMedium,
+            color = Color(0xff7BAFC4)
+        )
 
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 20.dp)
-            ) {
-                Text(
-                    modifier = Modifier.fillMaxWidth(),
-                    text = "hi ${user.name}".lowercase(Locale.ROOT),
-                    style = Typography.titleLarge,
-                    color = MaterialTheme.colorScheme.secondary,
-                    maxLines = 2
-                )
-                Text(
-                    modifier = Modifier.fillMaxWidth(),
-                    text = "you have already".lowercase(Locale.ROOT),
-                    style = Typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.secondary
-                )
-            }
-        }
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 10.dp, bottom = 20.dp)
-                .clip(shape = RoundedCornerShape(20.dp))
-                .background(Color(0x52D9D9D9)),
-            horizontalArrangement = Arrangement.SpaceAround,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "${user.gamesPlayed}",
-                style = Typography.titleMedium,
-                fontSize = 44.sp
-            )
-            Text(
-                modifier = Modifier.padding(vertical = 20.dp),
-                text = "games\nplayed",
-                style = Typography.titleMedium,
-                textAlign = TextAlign.Center,
-            )
-        }
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(20.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .clip(shape = RoundedCornerShape(20.dp))
-                    .background(Color(0x52D9D9D9)),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-
-                Text(
-                    modifier = Modifier.padding(top = 10.dp, bottom = 10.dp),
-                    text = "${user.wins}",
-                    style = Typography.titleMedium,
-                    color = Color(0xffA3FF0D)
-                )
-                Text(
-                    modifier = Modifier.padding(bottom = 10.dp),
-                    text = "wins",
-                    style = Typography.titleSmall,
-                    textAlign = TextAlign.Center
-                )
-            }
-
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .clip(shape = RoundedCornerShape(20.dp))
-                    .background(Color(0x52D9D9D9)),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-
-                Text(
-                    modifier = Modifier.padding(top = 10.dp, bottom = 10.dp),
-                    text = "${user.gamesPlayed - user.wins}",
-                    style = Typography.titleMedium
-                )
-
-                Text(
-                    modifier = Modifier.padding(bottom = 10.dp),
-                    text = "losses",
-                    style = Typography.titleSmall,
-                    textAlign = TextAlign.Center
-                )
-            }
-        }
-
-
-        Button(
-            modifier = Modifier.padding(vertical = 20.dp),
-            onClick = {
-
-            }
-        ) {
-            Image(
-                modifier = Modifier,
-                painter = painterResource(R.drawable.ic_players),
-                contentDescription = "Friends icon"
-            )
-            Text(
-                modifier = Modifier.padding(horizontal = 20.dp),
-                text = "friends",
-                textAlign = TextAlign.Center,
-                color = Color.Black,
-                style = Typography.titleMedium
-            )
-            Spacer(modifier = Modifier.weight(1f))
-            Text(
-                modifier = Modifier,
-                text = "${user.friends?.size ?: 0}",  // TODO but later
-                textAlign = TextAlign.Center,
-                color = Color.Black,
-                style = Typography.titleMedium
-            )
-        }
+        UserSectionContainer(userState)
 
         Text(
             modifier = Modifier.padding(bottom = 20.dp),
@@ -232,5 +108,183 @@ fun HomeScreen(
                 )
             }
         }
+    }
+}
+
+
+@Composable
+fun UserSectionContainer(userState: CustomState<User?>) {
+
+    when (userState) {
+        is CustomState.Success -> {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth(),
+                verticalArrangement = Arrangement.Top,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 20.dp)
+                ) {
+                    Text(
+                        modifier = Modifier.fillMaxWidth(),
+                        text = "hi ${userState.result?.name}".lowercase(Locale.ROOT),
+                        style = Typography.titleLarge,
+                        color = MaterialTheme.colorScheme.secondary,
+                        maxLines = 2
+                    )
+                    Text(
+                        modifier = Modifier.fillMaxWidth(),
+                        text = "you have already".lowercase(Locale.ROOT),
+                        style = Typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.secondary
+                    )
+                }
+            }
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 10.dp, bottom = 20.dp)
+                    .clip(shape = RoundedCornerShape(20.dp))
+                    .background(Color(0x52D9D9D9)),
+                horizontalArrangement = Arrangement.SpaceAround,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "${userState.result?.gamesPlayed}",
+                    style = Typography.titleMedium,
+                    fontSize = 44.sp
+                )
+                Text(
+                    modifier = Modifier.padding(vertical = 20.dp),
+                    text = "games\nplayed",
+                    style = Typography.titleMedium,
+                    textAlign = TextAlign.Center,
+                )
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(20.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(shape = RoundedCornerShape(20.dp))
+                        .background(Color(0x52D9D9D9)),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+
+                    Text(
+                        modifier = Modifier.padding(top = 10.dp, bottom = 10.dp),
+                        text = "${userState.result?.wins}",
+                        style = Typography.titleMedium,
+                        color = Color(0xffA3FF0D)
+                    )
+                    Text(
+                        modifier = Modifier.padding(bottom = 10.dp),
+                        text = "wins",
+                        style = Typography.titleSmall,
+                        textAlign = TextAlign.Center
+                    )
+                }
+
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(shape = RoundedCornerShape(20.dp))
+                        .background(Color(0x52D9D9D9)),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+
+                    Text(
+                        modifier = Modifier.padding(top = 10.dp, bottom = 10.dp),
+                        text = "${(userState.result?.gamesPlayed)?.minus((userState.result.wins))}",
+                        style = Typography.titleMedium
+                    )
+
+                    Text(
+                        modifier = Modifier.padding(bottom = 10.dp),
+                        text = "losses",
+                        style = Typography.titleSmall,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+
+            Button(
+                modifier = Modifier.padding(vertical = 20.dp),
+                onClick = {
+
+                }
+            ) {
+                Image(
+                    modifier = Modifier,
+                    painter = painterResource(R.drawable.ic_players),
+                    contentDescription = "Friends icon"
+                )
+                Text(
+                    modifier = Modifier.padding(horizontal = 20.dp),
+                    text = "friends",
+                    textAlign = TextAlign.Center,
+                    color = Color.Black,
+                    style = Typography.titleMedium
+                )
+                Spacer(modifier = Modifier.weight(1f))
+                Text(
+                    modifier = Modifier,
+                    text = "${userState.result?.friends?.size ?: 0}",
+                    textAlign = TextAlign.Center,
+                    color = Color.Black,
+                    style = Typography.titleMedium
+                )
+            }
+        }
+
+        is CustomState.Failure -> {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth(),
+                verticalArrangement = Arrangement.Top,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    modifier = Modifier.fillMaxWidth(),
+                    text = "Failed to fetch user's data.",
+                    textAlign = TextAlign.Center,
+                    style = Typography.bodyLarge
+                )
+            }
+        }
+
+        CustomState.Loading -> {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth(),
+                verticalArrangement = Arrangement.Top,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                CircularProgressIndicator()
+            }
+        }
+
+        CustomState.Idle -> {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth(),
+                verticalArrangement = Arrangement.Top,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // Nothing
+            }
+        }
+
     }
 }
