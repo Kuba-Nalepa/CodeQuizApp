@@ -114,7 +114,7 @@ fun SettingsScreen(
                         painter = if (user.imageUri != null) {
                             rememberAsyncImagePainter(user.imageUri)
                         } else {
-                            painterResource(R.drawable.generic_avatar)
+                            painterResource(R.drawable.sample_avatar)
                         },
                         contentDescription = "Avatar image placeholder"
                     )

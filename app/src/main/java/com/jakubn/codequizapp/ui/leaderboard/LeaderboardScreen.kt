@@ -187,7 +187,7 @@ private fun LeaderboardItem(position: Int, user: User) {
                     painter = if (!user.imageUri.isNullOrEmpty()) {
                         rememberAsyncImagePainter(model = Uri.parse(user.imageUri))
                     } else {
-                        painterResource(R.drawable.generic_avatar)
+                        painterResource(R.drawable.sample_avatar)
                     },
                     contentDescription = "User Avatar"
                 )
