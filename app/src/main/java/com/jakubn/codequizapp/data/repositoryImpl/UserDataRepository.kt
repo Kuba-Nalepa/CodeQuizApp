@@ -1,6 +1,7 @@
 package com.jakubn.codequizapp.data.repositoryImpl
 
 import android.net.Uri
+import android.util.Log
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
@@ -9,10 +10,12 @@ import com.google.firebase.firestore.QuerySnapshot
 import com.google.firebase.storage.FirebaseStorage
 import com.jakubn.codequizapp.model.User
 import com.jakubn.codequizapp.data.repository.UserDataRepository
+import com.jakubn.codequizapp.model.FriendshipRequest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.tasks.await
@@ -101,7 +104,7 @@ class UserDataRepository @Inject constructor(
         }
     }
 
-    override suspend fun getUsers(): Flow<List<User>> = callbackFlow{
+    override suspend fun getUsers(): Flow<List<User>> = callbackFlow {
         val userDocRef = firebaseFirestore.collection("users")
 
         val subscription =
@@ -146,6 +149,201 @@ class UserDataRepository @Inject constructor(
             }
         }.flowOn(Dispatchers.IO)
     }
+
+    override suspend fun sendFriendshipRequest(senderId: String, receiverId: String) {
+        val db = FirebaseFirestore.getInstance()
+        val friendshipDocRef = db.collection("friendships")
+
+        val query1 = friendshipDocRef
+            .whereEqualTo("senderId", senderId)
+            .whereEqualTo("receiverId", receiverId)
+
+        val query2 = friendshipDocRef
+            .whereEqualTo("senderId", receiverId)
+            .whereEqualTo("receiverId", senderId)
+
+        try {
+            val result1 = query1.get().await()
+            val result2 = query2.get().await()
+
+            if (result1.isEmpty && result2.isEmpty) {
+                val requestData = hashMapOf(
+                    "senderId" to senderId,
+                    "receiverId" to receiverId,
+                    "status" to "pending"
+                )
+                friendshipDocRef.add(requestData).await()
+            }
+        } catch (e: Exception) {
+            Log.e("TAG", "Failed sending request: ${e.message}")
+        }
+    }
+
+    override suspend fun acceptFriendshipRequest(friendshipId: String) {
+        val myUserId = firebaseAuth.currentUser?.uid
+            ?: throw Exception("User is not authenticated.")
+
+        val friendshipRef = firebaseFirestore.collection("friendships").document(friendshipId)
+
+        firebaseFirestore.runTransaction { transaction ->
+            val friendshipSnapshot = transaction.get(friendshipRef)
+            val friendship = friendshipSnapshot.toObject(FriendshipRequest::class.java)
+
+            if (friendship != null && friendship.status == "pending" && friendship.receiverId == myUserId) {
+                transaction.update(friendshipRef, "status", "accepted")
+
+                val senderUserRef =
+                    friendship.senderId?.let { firebaseFirestore.collection("users").document(it) }
+                val receiverUserRef = firebaseFirestore.collection("users").document(friendship.receiverId)
+                val senderUser = senderUserRef?.let { transaction.get(it).toObject(User::class.java) }
+                val receiverUser = transaction.get(receiverUserRef).toObject(User::class.java)
+
+                if (senderUser != null && receiverUser != null) {
+                    val senderFriendData = hashMapOf(
+                        "uid" to receiverUser.uid,
+                        "name" to receiverUser.name,
+                        "imageUri" to receiverUser.imageUri,
+                        "score" to receiverUser.score
+                    )
+                    transaction.set(senderUserRef.collection("friends").document(receiverUser.uid!!), senderFriendData)
+
+                    val receiverFriendData = hashMapOf(
+                        "uid" to senderUser.uid,
+                        "name" to senderUser.name,
+                        "imageUri" to senderUser.imageUri,
+                        "score" to senderUser.score
+                    )
+                    transaction.set(receiverUserRef.collection("friends").document(senderUser.uid!!), receiverFriendData)
+                }
+            } else {
+                throw Exception("Friendship request is invalid or already accepted.")
+            }
+        }.await()
+    }
+
+    override suspend fun deleteFriend(friendshipId: String, friendId: String) {
+        val myUserId = firebaseAuth.currentUser?.uid
+            ?: throw Exception("User is not authenticated.")
+
+        firebaseFirestore.runTransaction { transaction ->
+            val friendshipRef = firebaseFirestore.collection("friendships").document(friendshipId)
+            transaction.delete(friendshipRef)
+
+            val myFriendsCollectionRef = firebaseFirestore.collection("users").document(myUserId).collection("friends")
+            transaction.delete(myFriendsCollectionRef.document(friendId))
+
+            val friendFriendsCollectionRef = firebaseFirestore.collection("users").document(friendId).collection("friends")
+            transaction.delete(friendFriendsCollectionRef.document(myUserId))
+        }.await()
+    }
+
+    override suspend fun listenForPendingFriendsRequest(): Flow<List<FriendshipRequest>> {
+        val myUserId = firebaseAuth.currentUser?.uid
+        val db = FirebaseFirestore.getInstance()
+
+        val senderFlow = callbackFlow {
+            val docRef = db.collection("friendships")
+                .whereEqualTo("senderId", myUserId)
+                .whereEqualTo("status", "accepted")
+
+            val subscription = docRef.addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    close(error)
+                    return@addSnapshotListener
+                }
+                val friendships = snapshot?.documents?.map { doc ->
+                    FriendshipRequest(
+                        id = doc.id,
+                        senderId = doc.getString("senderId") ?: "",
+                        receiverId = doc.getString("receiverId") ?: "",
+                        status = doc.getString("status") ?: ""
+                    )
+                } ?: emptyList()
+                trySend(friendships)
+            }
+
+            awaitClose { subscription.remove() }
+        }
+
+        val receiverFlow = callbackFlow {
+            val docRef = db.collection("friendships")
+                .whereEqualTo("receiverId", myUserId)
+                .whereEqualTo("status", "accepted")
+
+            val subscription = docRef.addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    close(error)
+                    return@addSnapshotListener
+                }
+                val friendships = snapshot?.documents?.map { doc ->
+                    FriendshipRequest(
+                        id = doc.id,
+                        senderId = doc.getString("senderId") ?: "",
+                        receiverId = doc.getString("receiverId") ?: "",
+                        status = doc.getString("status") ?: ""
+                    )
+                } ?: emptyList()
+                trySend(friendships)
+            }
+
+            awaitClose { subscription.remove() }
+        }
+
+        return combine(senderFlow, receiverFlow) { senderFriends, receiverFriends ->
+            senderFriends + receiverFriends
+        }.flowOn(Dispatchers.IO)
+    }
+
+    override suspend fun listenForFriendsList(): Flow<List<User>> {
+        return callbackFlow {
+            val myUserId = firebaseAuth.currentUser?.uid
+
+            val docRef = myUserId?.let { firebaseFirestore.collection("users").document(it).collection("friends") }
+
+            val subscription = docRef?.addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    close(error)
+                    return@addSnapshotListener
+                }
+                val friends = snapshot?.documents?.mapNotNull { it.toObject(User::class.java) } ?: emptyList()
+                trySend(friends)
+            }
+            awaitClose { subscription?.remove() }
+        }.flowOn(Dispatchers.IO)
+    }
+
+    override fun listenForFriendshipRequestStatus(myUserId: String, otherUserId: String): Flow<FriendshipRequest?> = callbackFlow {
+        val query1 = firebaseFirestore.collection("friendships")
+            .whereEqualTo("senderId", myUserId)
+            .whereEqualTo("receiverId", otherUserId)
+
+        val query2 = firebaseFirestore.collection("friendships")
+            .whereEqualTo("senderId", otherUserId)
+            .whereEqualTo("receiverId", myUserId)
+
+        val listener1 = query1.addSnapshotListener { snapshot, error ->
+            if (error != null) {
+                close(error)
+                return@addSnapshotListener
+            }
+            val friendship = snapshot?.documents?.firstOrNull()?.toObject(FriendshipRequest::class.java)?.copy(id = snapshot.documents.first().id)
+            trySend(friendship)
+        }
+
+        val listener2 = query2.addSnapshotListener { snapshot, error ->
+            if (error != null) {
+                close(error)
+                return@addSnapshotListener
+            }
+            val friendship = snapshot?.documents?.firstOrNull()?.toObject(FriendshipRequest::class.java)?.copy(id = snapshot.documents.first().id)
+            trySend(friendship)
+        }
+
+        awaitClose {
+            listener1.remove()
+            listener2.remove()
+        }
+    }.flowOn(Dispatchers.IO)
 
     override suspend fun updateUserProfile(updatedUser: User): Flow<Unit> = flow {
         val userId = updatedUser.uid ?: throw Exception("User not authenticated")

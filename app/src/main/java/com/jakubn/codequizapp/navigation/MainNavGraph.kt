@@ -57,7 +57,7 @@ fun MainNavGraph(
 
             composable(route = Screen.Leaderboard.route) {
                 MainScreen(navController) {
-                    LeaderboardScreen()
+                    LeaderboardScreen(user)
                 }
             }
 

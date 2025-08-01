@@ -1,6 +1,7 @@
 package com.jakubn.codequizapp.data.repository
 
 import android.net.Uri
+import com.jakubn.codequizapp.model.FriendshipRequest
 import com.jakubn.codequizapp.model.User
 import kotlinx.coroutines.flow.Flow
 
@@ -17,5 +18,17 @@ interface UserDataRepository {
     suspend fun getUsers(): Flow<List<User>>
 
     suspend fun observeUserData(): Flow<User?>
+
+    suspend fun sendFriendshipRequest(senderId: String, receiverId: String)
+
+    suspend fun acceptFriendshipRequest(friendshipId: String)
+
+    suspend fun deleteFriend(friendshipId: String, friendId: String)
+
+    suspend fun listenForPendingFriendsRequest(): Flow<List<FriendshipRequest>>
+
+    suspend fun listenForFriendsList(): Flow<List<User>>
+
+    fun listenForFriendshipRequestStatus(myUserId: String, otherUserId: String): Flow<FriendshipRequest?>
 
 }

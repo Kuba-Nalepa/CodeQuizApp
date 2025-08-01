@@ -101,3 +101,11 @@ data class Lobby(
     var hasMemberFinishedGame: Boolean? = null,
     var hasMemberLeftGame: Boolean? = null
 )
+
+
+data class FriendshipRequest(
+    val id: String? = null,
+    val senderId: String? = null,
+    val receiverId: String? = null,
+    val status: String? = null
+)

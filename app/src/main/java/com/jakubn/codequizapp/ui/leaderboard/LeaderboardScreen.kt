@@ -1,6 +1,7 @@
 package com.jakubn.codequizapp.ui.leaderboard
 
 import android.net.Uri
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -29,6 +30,7 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -40,6 +42,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.paint
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -48,18 +51,46 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.rememberAsyncImagePainter
 import com.jakubn.codequizapp.R
 import com.jakubn.codequizapp.model.CustomState
+import com.jakubn.codequizapp.model.FriendshipRequest
 import com.jakubn.codequizapp.model.User
 import com.jakubn.codequizapp.theme.Typography
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LeaderboardScreen(
+    user: User,
     viewModel: LeaderboardViewModel = hiltViewModel()
 ) {
     val leaderboardState by viewModel.leaderboardUsers.collectAsState()
+    val friendshipStatus by viewModel.friendshipStatus.collectAsState()
     val sheetState = rememberModalBottomSheetState()
 
     var selectedUser by remember { mutableStateOf<User?>(null) }
+    val context = LocalContext.current
+
+    LaunchedEffect(Unit) {
+        viewModel.uiEvents.collect { event ->
+            when (event) {
+                "friend_request_sent" -> {
+                    selectedUser?.let {
+                        Toast.makeText(context, "Friend request sent to ${it.name}", Toast.LENGTH_SHORT).show()
+                    }
+                }
+                // "player_challenged" -> {
+                //     Toast.makeText(context, "Player challenged!", Toast.LENGTH_SHORT).show()
+                // }
+
+            }
+        }
+    }
+
+    LaunchedEffect(key1 = selectedUser) {
+        selectedUser?.let { selected ->
+            val myUserId = user.uid ?: return@let
+            val otherUserId = selected.uid ?: return@let
+            viewModel.startListeningForFriendshipStatus(myUserId, otherUserId)
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -91,8 +122,18 @@ fun LeaderboardScreen(
                 },
                 sheetState = sheetState
             ) {
-                selectedUser?.let { user ->
-                    UserMenuBottomSheet(user = user, inviteFriend = { }, textMessage = { }, challangePlayer = { }  )
+                selectedUser?.let { selectedUser ->
+                    selectedUser.uid?.let { selectedUserUid ->
+                        user.uid?.let { userUid ->
+                            UserMenuBottomSheet(
+                                user = selectedUser,
+                                friendshipStatus = friendshipStatus,
+                                inviteFriend = { viewModel.sendFriendshipRequest(userUid, selectedUserUid) },
+                                textMessage = { /* TODO */ },
+                                challengePlayer = { /* TODO */ }
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -155,13 +196,9 @@ private fun LeaderboardItem(position: Int, user: User, onCLick: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .height(72.dp)
-            .clickable {
-                onCLick()
-            },
+            .clickable { onCLick() },
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface.copy(
-                alpha = 0.8f
-            )
+            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f)
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         shape = RoundedCornerShape(16.dp)
@@ -184,7 +221,6 @@ private fun LeaderboardItem(position: Int, user: User, onCLick: () -> Unit) {
                     modifier = Modifier.width(36.dp),
                     textAlign = TextAlign.Start
                 )
-
                 when (position) {
                     1 -> Icon(
                         painter = painterResource(R.drawable.ic_first_place),
@@ -192,27 +228,22 @@ private fun LeaderboardItem(position: Int, user: User, onCLick: () -> Unit) {
                         tint = goldColor,
                         modifier = Modifier.size(28.dp)
                     )
-
                     2 -> Icon(
                         painter = painterResource(R.drawable.ic_second_place),
                         contentDescription = "Second place",
                         tint = silverColor,
                         modifier = Modifier.size(28.dp)
                     )
-
                     3 -> Icon(
                         painter = painterResource(R.drawable.ic_third_place),
                         contentDescription = "Third place",
                         tint = bronzeColor,
                         modifier = Modifier.size(28.dp)
                     )
-
                     else -> Spacer(modifier = Modifier.size(28.dp))
                 }
             }
-
             Spacer(modifier = Modifier.width(16.dp))
-
             Row(
                 modifier = Modifier.weight(1f),
                 verticalAlignment = Alignment.CenterVertically,
@@ -231,7 +262,6 @@ private fun LeaderboardItem(position: Int, user: User, onCLick: () -> Unit) {
                     },
                     contentDescription = "User Avatar"
                 )
-
                 user.name?.let {
                     Text(
                         text = it,
@@ -247,7 +277,6 @@ private fun LeaderboardItem(position: Int, user: User, onCLick: () -> Unit) {
                     modifier = Modifier.fillMaxWidth(0.8f)
                 )
             }
-
             Text(
                 text = "${user.score}",
                 style = MaterialTheme.typography.titleSmall,
@@ -259,9 +288,17 @@ private fun LeaderboardItem(position: Int, user: User, onCLick: () -> Unit) {
 }
 
 @Composable
-private fun UserMenuBottomSheet(user: User, inviteFriend: () -> Unit, textMessage: () -> Unit, challangePlayer: () -> Unit) {
+private fun UserMenuBottomSheet(
+    user: User,
+    friendshipStatus: CustomState<FriendshipRequest?>,
+    inviteFriend: () -> Unit,
+    textMessage: () -> Unit,
+    challengePlayer: () -> Unit
+) {
+
     Column(
-        modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Top
     ) {
         Image(
@@ -272,7 +309,6 @@ private fun UserMenuBottomSheet(user: User, inviteFriend: () -> Unit, textMessag
                 .size(120.dp)
                 .clip(CircleShape)
         )
-
         user.name?.let { username ->
             Text(
                 modifier = Modifier.padding(top = 10.dp),
@@ -290,33 +326,110 @@ private fun UserMenuBottomSheet(user: User, inviteFriend: () -> Unit, textMessag
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(5.dp)) {
-                Icon(
-                    modifier = Modifier.size(40.dp).clip(RoundedCornerShape(100)).clickable {
-                        inviteFriend()
-                    }.padding(5.dp),
-                    painter = painterResource(R.drawable.ic_person_add),
-                    tint = Color.Black,
-                    contentDescription = "Add friend"
-                )
-                Text(style = Typography.labelSmall, text = "Add friend")
+            when (friendshipStatus) {
+                is CustomState.Loading -> {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(5.dp)
+                    ) {
+                        CircularProgressIndicator(modifier = Modifier.size(40.dp), strokeWidth = 2.dp)
+                        Text(style = Typography.labelSmall, text = "Checking...")
+                    }
+                }
+                is CustomState.Success -> {
+                    val request = friendshipStatus.result
+                    val buttonText = when (request?.status) {
+                        "pending" -> "Request sent"
+                        "accepted" -> "Friends"
+                        else -> "Add friend"
+                    }
+                    val isEnabled = request?.status != "pending" && request?.status != "accepted"
+
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(5.dp)
+                    ) {
+                        Icon(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(RoundedCornerShape(100))
+                                .clickable(enabled = isEnabled) { inviteFriend() }
+                                .padding(5.dp),
+                            painter = when (request?.status) {
+                                "accepted" -> painterResource(R.drawable.ic_friend)
+                                "pending" -> painterResource(R.drawable.ic_avatar)
+                                else -> painterResource(R.drawable.ic_person_add)
+                            },
+                            tint = when (request?.status) {
+                                "accepted" -> Color(0xFF007211)
+                                "pending" -> Color.Gray
+                                else -> Color.Black
+                            },
+                            contentDescription = buttonText
+                        )
+                        Text(style = Typography.labelSmall, text = buttonText)
+                    }
+                }
+                is CustomState.Failure -> {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(5.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_error),
+                            contentDescription = "Error",
+                            tint = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.size(40.dp)
+                        )
+                        Text(text = "Error", style = Typography.labelSmall, color = MaterialTheme.colorScheme.error)
+                    }
+                }
+                CustomState.Idle -> {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(5.dp)
+                    ) {
+                        Icon(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(RoundedCornerShape(100))
+                                .clickable { inviteFriend() }
+                                .padding(5.dp),
+                            painter = painterResource(R.drawable.ic_person_add),
+                            tint = Color.Black,
+                            contentDescription = "Add friend"
+                        )
+                        Text(style = Typography.labelSmall, text = "Add friend")
+                    }
+                }
             }
-            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(5.dp)) {
+
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(5.dp)
+            ) {
                 Icon(
-                    modifier = Modifier.size(40.dp).clip(RoundedCornerShape(100)).clickable {
-                        textMessage()
-                    }.padding(5.dp),
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(RoundedCornerShape(100))
+                        .clickable { textMessage() }
+                        .padding(5.dp),
                     painter = painterResource(R.drawable.ic_message),
                     tint = Color.Black,
                     contentDescription = "Text a message"
                 )
                 Text(style = Typography.labelSmall, text = "Text a message")
             }
-            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(5.dp)) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(5.dp)
+            ) {
                 Icon(
-                    modifier = Modifier.size(40.dp).clip(RoundedCornerShape(100)).clickable {
-                        challangePlayer()
-                    }.padding(5.dp),
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(RoundedCornerShape(100))
+                        .clickable { challengePlayer() }
+                        .padding(5.dp),
                     painter = painterResource(R.drawable.ic_play),
                     tint = Color.Black,
                     contentDescription = "Challenge the player"
