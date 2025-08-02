@@ -312,38 +312,46 @@ class UserDataRepository @Inject constructor(
         }.flowOn(Dispatchers.IO)
     }
 
-    override fun listenForFriendshipRequestStatus(myUserId: String, otherUserId: String): Flow<FriendshipRequest?> = callbackFlow {
-        val query1 = firebaseFirestore.collection("friendships")
-            .whereEqualTo("senderId", myUserId)
-            .whereEqualTo("receiverId", otherUserId)
+    override fun listenForFriendshipRequestStatus(myUserId: String, otherUserId: String): Flow<FriendshipRequest?> {
 
-        val query2 = firebaseFirestore.collection("friendships")
-            .whereEqualTo("senderId", otherUserId)
-            .whereEqualTo("receiverId", myUserId)
+        val myUserIsSenderFlow: Flow<FriendshipRequest?> = callbackFlow {
+            val query = firebaseFirestore.collection("friendships")
+                .whereEqualTo("senderId", myUserId)
+                .whereEqualTo("receiverId", otherUserId)
 
-        val listener1 = query1.addSnapshotListener { snapshot, error ->
-            if (error != null) {
-                close(error)
-                return@addSnapshotListener
+            val listener = query.addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    close(error)
+                    return@addSnapshotListener
+                }
+                val friendship = snapshot?.documents?.firstOrNull()?.toObject(FriendshipRequest::class.java)?.copy(id = snapshot.documents.first().id)
+                trySend(friendship)
             }
-            val friendship = snapshot?.documents?.firstOrNull()?.toObject(FriendshipRequest::class.java)?.copy(id = snapshot.documents.first().id)
-            trySend(friendship)
+
+            awaitClose { listener.remove() }
         }
 
-        val listener2 = query2.addSnapshotListener { snapshot, error ->
-            if (error != null) {
-                close(error)
-                return@addSnapshotListener
+        val myUserIsReceiverFlow: Flow<FriendshipRequest?> = callbackFlow {
+            val query = firebaseFirestore.collection("friendships")
+                .whereEqualTo("senderId", otherUserId)
+                .whereEqualTo("receiverId", myUserId)
+
+            val listener = query.addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    close(error)
+                    return@addSnapshotListener
+                }
+                val friendship = snapshot?.documents?.firstOrNull()?.toObject(FriendshipRequest::class.java)?.copy(id = snapshot.documents.first().id)
+                trySend(friendship)
             }
-            val friendship = snapshot?.documents?.firstOrNull()?.toObject(FriendshipRequest::class.java)?.copy(id = snapshot.documents.first().id)
-            trySend(friendship)
+
+            awaitClose { listener.remove() }
         }
 
-        awaitClose {
-            listener1.remove()
-            listener2.remove()
-        }
-    }.flowOn(Dispatchers.IO)
+        return combine(myUserIsSenderFlow, myUserIsReceiverFlow) { friendship1, friendship2 ->
+            friendship1 ?: friendship2
+        }.flowOn(Dispatchers.IO)
+    }
 
     override suspend fun updateUserProfile(updatedUser: User): Flow<Unit> = flow {
         val userId = updatedUser.uid ?: throw Exception("User not authenticated")
