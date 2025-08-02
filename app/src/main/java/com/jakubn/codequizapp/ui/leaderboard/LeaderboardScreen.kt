@@ -125,7 +125,7 @@ fun LeaderboardScreen(
                 selectedUser?.let { selectedUser ->
                     selectedUser.uid?.let { selectedUserUid ->
                         user.uid?.let { userUid ->
-                            UserMenuBottomSheet(
+                            UserMenuBottomSheetContent(
                                 user = selectedUser,
                                 friendshipStatus = friendshipStatus,
                                 inviteFriend = { viewModel.sendFriendshipRequest(userUid, selectedUserUid) },
@@ -262,9 +262,9 @@ private fun LeaderboardItem(position: Int, user: User, onCLick: () -> Unit) {
                     },
                     contentDescription = "User Avatar"
                 )
-                user.name?.let {
+                user.name?.let { name ->
                     Text(
-                        text = it,
+                        text = name,
                         style = MaterialTheme.typography.titleSmall,
                         color = Color.Black,
                         maxLines = 1,
@@ -288,7 +288,7 @@ private fun LeaderboardItem(position: Int, user: User, onCLick: () -> Unit) {
 }
 
 @Composable
-private fun UserMenuBottomSheet(
+private fun UserMenuBottomSheetContent(
     user: User,
     friendshipStatus: CustomState<FriendshipRequest?>,
     inviteFriend: () -> Unit,

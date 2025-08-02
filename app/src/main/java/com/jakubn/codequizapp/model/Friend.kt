@@ -1,7 +1,8 @@
 package com.jakubn.codequizapp.model
 
 data class Friend(
+    val uid: String? = null,
     val name: String? = null,
-    val imageUrl: String? = null,
-    val score: Int? = null
+    val imageUri: String? = null,
+    val status: String? = null
 )

@@ -1,39 +1,58 @@
 package com.jakubn.codequizapp.ui.home
 
+import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import coil.compose.rememberAsyncImagePainter
 import com.jakubn.codequizapp.R
 import com.jakubn.codequizapp.model.CustomState
+import com.jakubn.codequizapp.model.Friend
 import com.jakubn.codequizapp.model.User
 import com.jakubn.codequizapp.theme.Typography
 import java.util.Locale
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     homeViewModel: HomeViewModel = hiltViewModel(),
@@ -42,6 +61,8 @@ fun HomeScreen(
 ) {
 
     val userState by homeViewModel.state.collectAsState()
+    val friendsState by homeViewModel.friendsState.collectAsState()
+    var showBottomSheet by remember { mutableStateOf(false) }
 
     val colors = arrayOf(
         0.06f to Color(0xffA3FF0D),
@@ -64,7 +85,7 @@ fun HomeScreen(
             color = Color(0xff7BAFC4)
         )
 
-        UserSectionContainer(userState)
+        UserSectionContainer(userState, friendsState) { showBottomSheet = true }
 
         Text(
             modifier = Modifier.padding(bottom = 20.dp),
@@ -107,13 +128,25 @@ fun HomeScreen(
 
                 )
             }
+
+            if (showBottomSheet) {
+                val sheetState = rememberModalBottomSheetState()
+                ModalBottomSheet(
+                    onDismissRequest = { showBottomSheet = false },
+                    sheetState = sheetState
+                ) {
+                    FriendsListBottomSheet(
+                        friendsState = friendsState,
+                        onCloseBottomSheet = { showBottomSheet = false }
+                    )
+                }
+            }
+        }
         }
     }
-}
-
 
 @Composable
-fun UserSectionContainer(userState: CustomState<User?>) {
+fun UserSectionContainer(userState: CustomState<User?>, friendsState: CustomState<List<Friend>>, onFriendsClick: () -> Unit) {
 
     when (userState) {
         is CustomState.Success -> {
@@ -220,10 +253,8 @@ fun UserSectionContainer(userState: CustomState<User?>) {
             }
 
             Button(
-                modifier = Modifier.padding(vertical = 20.dp),
-                onClick = {
-
-                }
+                modifier = Modifier.padding(vertical = 20.dp).fillMaxWidth(),
+                onClick = onFriendsClick
             ) {
                 Image(
                     modifier = Modifier,
@@ -238,13 +269,34 @@ fun UserSectionContainer(userState: CustomState<User?>) {
                     style = Typography.titleMedium
                 )
                 Spacer(modifier = Modifier.weight(1f))
-                Text(
-                    modifier = Modifier,
-                    text = "${userState.result?.friends?.size ?: 0}",
-                    textAlign = TextAlign.Center,
-                    color = Color.Black,
-                    style = Typography.titleMedium
-                )
+
+                when (friendsState) {
+                    is CustomState.Success -> {
+                        val friendsCount = friendsState.result.size
+                        Text(
+                            modifier = Modifier,
+                            text = friendsCount.toString(),
+                            textAlign = TextAlign.Center,
+                            color = Color.Black,
+                            style = Typography.titleMedium
+                        )
+                    }
+                    is CustomState.Loading -> {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            color = Color.Black
+                        )
+                    }
+                    else -> {
+                        Text(
+                            modifier = Modifier,
+                            text = "-",
+                            textAlign = TextAlign.Center,
+                            color = Color.Black,
+                            style = Typography.titleMedium
+                        )
+                    }
+                }
             }
         }
 
@@ -286,5 +338,130 @@ fun UserSectionContainer(userState: CustomState<User?>) {
             }
         }
 
+    }
+}
+
+@Composable
+fun FriendsListBottomSheet(
+    friendsState: CustomState<List<Friend>>,
+    onCloseBottomSheet: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Friends",
+                style = Typography.titleMedium,
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        when (friendsState) {
+            is CustomState.Success -> {
+                val friendsList = friendsState.result
+                if (friendsList.isNotEmpty()) {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(friendsList) { friend ->
+                            FriendMenuItem(
+                                friend = friend,
+                                onClick = {
+                                    TODO()
+                                }
+                            )
+                        }
+                    }
+                } else {
+                    Text(
+                        text = "You don't have any friends yet.",
+                        style = Typography.bodyLarge,
+                        modifier = Modifier.padding(top = 16.dp)
+                    )
+                }
+            }
+
+            is CustomState.Failure -> {
+                Text(
+                    text = "Failed to load friends: ${friendsState.message}",
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.padding(top = 16.dp),
+                    textAlign = TextAlign.Center
+                )
+            }
+
+            is CustomState.Loading -> {
+                CircularProgressIndicator(modifier = Modifier.padding(top = 16.dp))
+            }
+
+            is CustomState.Idle -> {
+                // Nothing
+            }
+        }
+    }
+}
+
+@Composable
+private fun FriendMenuItem(friend: Friend, onClick: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(72.dp)
+            .clickable { onClick() },
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f)
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 20.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Start
+        ) {
+            Image(
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .size(56.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.secondary),
+                painter = if (!friend.imageUri.isNullOrEmpty()) {
+                    rememberAsyncImagePainter(model = Uri.parse(friend.imageUri))
+                } else {
+                    painterResource(R.drawable.sample_avatar)
+                },
+                contentDescription = "User Avatar"
+            )
+
+            Spacer(modifier = Modifier.size(8.dp))
+
+            friend.name?.let { name ->
+                Text(
+                    text = name,
+                    style = MaterialTheme.typography.titleSmall,
+                    color = Color.Black,
+                    maxLines = 1,
+                    modifier = Modifier.weight(1f)
+                )
+            } ?: Text(
+                text = "Unknown User",
+                style = MaterialTheme.typography.titleSmall,
+                maxLines = 1,
+                modifier = Modifier.weight(1f)
+            )
+        }
     }
 }

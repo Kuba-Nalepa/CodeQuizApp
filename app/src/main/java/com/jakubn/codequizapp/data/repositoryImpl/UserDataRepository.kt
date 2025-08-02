@@ -10,6 +10,7 @@ import com.google.firebase.firestore.QuerySnapshot
 import com.google.firebase.storage.FirebaseStorage
 import com.jakubn.codequizapp.model.User
 import com.jakubn.codequizapp.data.repository.UserDataRepository
+import com.jakubn.codequizapp.model.Friend
 import com.jakubn.codequizapp.model.FriendshipRequest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
@@ -237,7 +238,7 @@ class UserDataRepository @Inject constructor(
         }.await()
     }
 
-    override suspend fun listenForPendingFriendsRequest(): Flow<List<FriendshipRequest>> {
+    override suspend fun observePendingFriendsRequest(): Flow<List<FriendshipRequest>> {
         val myUserId = firebaseAuth.currentUser?.uid
         val db = FirebaseFirestore.getInstance()
 
@@ -294,7 +295,7 @@ class UserDataRepository @Inject constructor(
         }.flowOn(Dispatchers.IO)
     }
 
-    override suspend fun listenForFriendsList(): Flow<List<User>> {
+    override suspend fun listenForFriendsList(userId: String): Flow<List<Friend>> {
         return callbackFlow {
             val myUserId = firebaseAuth.currentUser?.uid
 
@@ -305,7 +306,7 @@ class UserDataRepository @Inject constructor(
                     close(error)
                     return@addSnapshotListener
                 }
-                val friends = snapshot?.documents?.mapNotNull { it.toObject(User::class.java) } ?: emptyList()
+                val friends = snapshot?.documents?.mapNotNull { it.toObject(Friend::class.java) } ?: emptyList()
                 trySend(friends)
             }
             awaitClose { subscription?.remove() }
