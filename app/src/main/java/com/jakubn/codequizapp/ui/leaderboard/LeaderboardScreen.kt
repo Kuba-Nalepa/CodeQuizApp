@@ -339,35 +339,76 @@ private fun UserMenuBottomSheetContent(
                 is CustomState.Success -> {
                     val request = friendshipStatus.result
                     val buttonText = when (request?.status) {
-                        "pending" -> "Request sent"
-                        "accepted" -> "Friends"
-                        else -> "Add friend"
+                        "pending" -> "Sent"
+                        "accepted" -> "Friend"
+                        else -> "Add"
                     }
                     val isEnabled = request?.status != "pending" && request?.status != "accepted"
 
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(5.dp)
+                    Row(modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceAround,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(
-                            modifier = Modifier
-                                .size(40.dp)
-                                .clip(RoundedCornerShape(100))
-                                .clickable(enabled = isEnabled) { inviteFriend() }
-                                .padding(5.dp),
-                            painter = when (request?.status) {
-                                "accepted" -> painterResource(R.drawable.ic_friend)
-                                "pending" -> painterResource(R.drawable.ic_avatar)
-                                else -> painterResource(R.drawable.ic_person_add)
-                            },
-                            tint = when (request?.status) {
-                                "accepted" -> Color(0xFF007211)
-                                "pending" -> Color.Gray
-                                else -> Color.Black
-                            },
-                            contentDescription = buttonText
-                        )
-                        Text(style = Typography.labelSmall, text = buttonText)
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(5.dp)
+                        ) {
+                            Icon(
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .clip(RoundedCornerShape(100))
+                                    .clickable(enabled = isEnabled) { inviteFriend() }
+                                    .padding(5.dp),
+                                painter = when (request?.status) {
+                                    "accepted" -> painterResource(R.drawable.ic_friend)
+                                    "pending" -> painterResource(R.drawable.ic_avatar)
+                                    else -> painterResource(R.drawable.ic_person_add)
+                                },
+                                tint = when (request?.status) {
+                                    "accepted" -> Color(0xFF007211)
+                                    "pending" -> Color.Gray
+                                    else -> Color.Black
+                                },
+                                contentDescription = buttonText
+                            )
+                            Text(style = Typography.labelSmall, text = buttonText)
+                        }
+
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(5.dp)
+                        ) {
+                            Icon(
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .clip(RoundedCornerShape(100))
+                                    .clickable { textMessage() }
+                                    .padding(5.dp),
+                                painter = painterResource(R.drawable.ic_message),
+                                tint = Color.Black,
+                                contentDescription = "Message"
+                            )
+                            Text(style = Typography.labelSmall, text = "Message")
+                        }
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(5.dp)
+                        ) {
+                            Icon(
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .clip(RoundedCornerShape(100))
+                                    .clickable { challengePlayer() }
+                                    .padding(5.dp),
+                                painter = painterResource(R.drawable.ic_play),
+                                tint = Color.Black,
+                                contentDescription = "Challenge the player"
+                            )
+                            Text(style = Typography.labelSmall, text = "Challenge")
+                        }
                     }
                 }
                 is CustomState.Failure -> {
@@ -402,39 +443,6 @@ private fun UserMenuBottomSheetContent(
                         Text(style = Typography.labelSmall, text = "Add friend")
                     }
                 }
-            }
-
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(5.dp)
-            ) {
-                Icon(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(RoundedCornerShape(100))
-                        .clickable { textMessage() }
-                        .padding(5.dp),
-                    painter = painterResource(R.drawable.ic_message),
-                    tint = Color.Black,
-                    contentDescription = "Text a message"
-                )
-                Text(style = Typography.labelSmall, text = "Text a message")
-            }
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(5.dp)
-            ) {
-                Icon(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(RoundedCornerShape(100))
-                        .clickable { challengePlayer() }
-                        .padding(5.dp),
-                    painter = painterResource(R.drawable.ic_play),
-                    tint = Color.Black,
-                    contentDescription = "Challenge the player"
-                )
-                Text(style = Typography.labelSmall, text = "Challenge")
             }
         }
     }

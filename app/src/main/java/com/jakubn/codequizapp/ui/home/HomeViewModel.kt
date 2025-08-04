@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.jakubn.codequizapp.data.repositoryImpl.UserDataRepository
 import com.jakubn.codequizapp.model.CustomState
 import com.jakubn.codequizapp.model.Friend
+import com.jakubn.codequizapp.model.FriendshipRequest
 import com.jakubn.codequizapp.model.User
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,6 +27,10 @@ class HomeViewModel @Inject constructor(
     private val _friendsState = MutableStateFlow<CustomState<List<Friend>>>(CustomState.Idle)
     val friendsState: StateFlow<CustomState<List<Friend>>> = _friendsState
 
+    private val _requestsState = MutableStateFlow<CustomState<List<FriendshipRequest>>>(CustomState.Idle)
+    val requestsState: StateFlow<CustomState<List<FriendshipRequest>>> = _requestsState
+
+
     init {
         observeUserData()
     }
@@ -40,12 +45,14 @@ class HomeViewModel @Inject constructor(
                 .catch { throwable ->
                     _state.value = CustomState.Failure(throwable.message)
                     _friendsState.value = CustomState.Failure(throwable.message)
+                    _requestsState.value = CustomState.Failure(throwable.message)
 
                 }
                 .collect { user ->
                     _state.value = CustomState.Success(user)
                     if (user?.uid != null) {
                         observeFriends(user.uid)
+                        observePendingRequests(user.uid)
                     } else {
                         _friendsState.value = CustomState.Success(emptyList())
                     }
@@ -56,7 +63,7 @@ class HomeViewModel @Inject constructor(
 
     private fun observeFriends(userId: String) {
         viewModelScope.launch {
-            userDataRepository.listenForFriendsList(userId)
+            userDataRepository.observeFriendsList(userId)
                 .onStart {
                     _friendsState.value = CustomState.Loading
                 }
@@ -68,4 +75,16 @@ class HomeViewModel @Inject constructor(
                 }
         }
     }
+
+    private fun observePendingRequests(userId: String) {
+        viewModelScope.launch {
+            userDataRepository.observePendingFriendsRequestsWithSenderData(userId)
+                .onStart { _requestsState.value = CustomState.Loading }
+                .catch { throwable -> _requestsState.value = CustomState.Failure(throwable.message) }
+                .collect { requestsList ->
+                    _requestsState.value = CustomState.Success(requestsList)
+                }
+        }
+    }
+
 }

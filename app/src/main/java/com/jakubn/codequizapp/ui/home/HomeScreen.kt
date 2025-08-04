@@ -3,7 +3,6 @@ package com.jakubn.codequizapp.ui.home
 import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -17,12 +16,16 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Done
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
@@ -48,6 +51,7 @@ import coil.compose.rememberAsyncImagePainter
 import com.jakubn.codequizapp.R
 import com.jakubn.codequizapp.model.CustomState
 import com.jakubn.codequizapp.model.Friend
+import com.jakubn.codequizapp.model.FriendshipRequest
 import com.jakubn.codequizapp.model.User
 import com.jakubn.codequizapp.theme.Typography
 import java.util.Locale
@@ -59,9 +63,9 @@ fun HomeScreen(
     createGame: () -> Unit,
     playGame: () -> Unit
 ) {
-
     val userState by homeViewModel.state.collectAsState()
     val friendsState by homeViewModel.friendsState.collectAsState()
+    val requestsState by homeViewModel.requestsState.collectAsState()
     var showBottomSheet by remember { mutableStateOf(false) }
 
     val colors = arrayOf(
@@ -137,30 +141,30 @@ fun HomeScreen(
                 ) {
                     FriendsListBottomSheet(
                         friendsState = friendsState,
+                        requestsState = requestsState,
                         onCloseBottomSheet = { showBottomSheet = false }
                     )
                 }
             }
         }
-        }
     }
+}
 
 @Composable
-fun UserSectionContainer(userState: CustomState<User?>, friendsState: CustomState<List<Friend>>, onFriendsClick: () -> Unit) {
-
+fun UserSectionContainer(
+    userState: CustomState<User?>,
+    friendsState: CustomState<List<Friend>>,
+    onFriendsClick: () -> Unit
+) {
     when (userState) {
         is CustomState.Success -> {
             Column(
-                modifier = Modifier
-                    .fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.Top,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-
                 Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 20.dp)
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 20.dp)
                 ) {
                     Text(
                         modifier = Modifier.fillMaxWidth(),
@@ -177,13 +181,8 @@ fun UserSectionContainer(userState: CustomState<User?>, friendsState: CustomStat
                     )
                 }
             }
-
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 10.dp, bottom = 20.dp)
-                    .clip(shape = RoundedCornerShape(20.dp))
-                    .background(Color(0x52D9D9D9)),
+                modifier = Modifier.fillMaxWidth().padding(top = 10.dp, bottom = 20.dp).clip(shape = RoundedCornerShape(20.dp)).background(Color(0x52D9D9D9)),
                 horizontalArrangement = Arrangement.SpaceAround,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -199,21 +198,16 @@ fun UserSectionContainer(userState: CustomState<User?>, friendsState: CustomStat
                     textAlign = TextAlign.Center,
                 )
             }
-
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(20.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .clip(shape = RoundedCornerShape(20.dp))
-                        .background(Color(0x52D9D9D9)),
+                    modifier = Modifier.weight(1f).clip(shape = RoundedCornerShape(20.dp)).background(Color(0x52D9D9D9)),
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-
                     Text(
                         modifier = Modifier.padding(top = 10.dp, bottom = 10.dp),
                         text = "${userState.result?.wins}",
@@ -227,22 +221,16 @@ fun UserSectionContainer(userState: CustomState<User?>, friendsState: CustomStat
                         textAlign = TextAlign.Center
                     )
                 }
-
                 Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .clip(shape = RoundedCornerShape(20.dp))
-                        .background(Color(0x52D9D9D9)),
+                    modifier = Modifier.weight(1f).clip(shape = RoundedCornerShape(20.dp)).background(Color(0x52D9D9D9)),
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-
                     Text(
                         modifier = Modifier.padding(top = 10.dp, bottom = 10.dp),
                         text = "${(userState.result?.gamesPlayed)?.minus((userState.result.wins))}",
                         style = Typography.titleMedium
                     )
-
                     Text(
                         modifier = Modifier.padding(bottom = 10.dp),
                         text = "losses",
@@ -251,7 +239,6 @@ fun UserSectionContainer(userState: CustomState<User?>, friendsState: CustomStat
                     )
                 }
             }
-
             Button(
                 modifier = Modifier.padding(vertical = 20.dp).fillMaxWidth(),
                 onClick = onFriendsClick
@@ -269,7 +256,6 @@ fun UserSectionContainer(userState: CustomState<User?>, friendsState: CustomStat
                     style = Typography.titleMedium
                 )
                 Spacer(modifier = Modifier.weight(1f))
-
                 when (friendsState) {
                     is CustomState.Success -> {
                         val friendsCount = friendsState.result.size
@@ -299,11 +285,9 @@ fun UserSectionContainer(userState: CustomState<User?>, friendsState: CustomStat
                 }
             }
         }
-
         is CustomState.Failure -> {
             Column(
-                modifier = Modifier
-                    .fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.Top,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -315,35 +299,31 @@ fun UserSectionContainer(userState: CustomState<User?>, friendsState: CustomStat
                 )
             }
         }
-
         CustomState.Loading -> {
             Column(
-                modifier = Modifier
-                    .fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.Top,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 CircularProgressIndicator()
             }
         }
-
         CustomState.Idle -> {
             Column(
-                modifier = Modifier
-                    .fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.Top,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 // Nothing
             }
         }
-
     }
 }
 
 @Composable
 fun FriendsListBottomSheet(
     friendsState: CustomState<List<Friend>>,
+    requestsState: CustomState<List<FriendshipRequest>>,
     onCloseBottomSheet: () -> Unit
 ) {
     Column(
@@ -358,14 +338,64 @@ fun FriendsListBottomSheet(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Friends",
+                text = "Pending Invitations",
                 style = Typography.titleMedium,
-                modifier = Modifier.padding(bottom = 16.dp)
+                modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
             )
         }
+        when (requestsState) {
+            is CustomState.Success -> {
+                val invitations = requestsState.result
+                if (invitations.isNotEmpty()) {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(invitations) { request ->
+                            FriendRequestItem(
+                                request = request,
+                                onAccept = { /* TODO */ },
+                                onDecline = { /* TODO */ }
+                            )
+                        }
+                    }
+                } else {
+                    Text(
+                        text = "No pending invitations.",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            }
 
+            is CustomState.Failure -> {
+                Text(
+                    text = "Failed to load invitations: ${requestsState.message}",
+                    style = Typography.labelSmall,
+                    textAlign = TextAlign.Center
+                )
+            }
+
+            is CustomState.Loading -> {
+                CircularProgressIndicator(modifier = Modifier.padding(16.dp))
+            }
+
+            is CustomState.Idle -> {
+                // Do nothing
+            }
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Friends",
+                style = Typography.titleMedium
+            )
+        }
         Spacer(modifier = Modifier.height(8.dp))
-
         when (friendsState) {
             is CustomState.Success -> {
                 val friendsList = friendsState.result
@@ -377,7 +407,10 @@ fun FriendsListBottomSheet(
                         items(friendsList) { friend ->
                             FriendMenuItem(
                                 friend = friend,
-                                onClick = {
+                                textFriend = {
+                                    TODO()
+                                },
+                                playGame = {
                                     TODO()
                                 }
                             )
@@ -391,7 +424,6 @@ fun FriendsListBottomSheet(
                     )
                 }
             }
-
             is CustomState.Failure -> {
                 Text(
                     text = "Failed to load friends: ${friendsState.message}",
@@ -400,11 +432,9 @@ fun FriendsListBottomSheet(
                     textAlign = TextAlign.Center
                 )
             }
-
             is CustomState.Loading -> {
                 CircularProgressIndicator(modifier = Modifier.padding(top = 16.dp))
             }
-
             is CustomState.Idle -> {
                 // Nothing
             }
@@ -413,55 +443,111 @@ fun FriendsListBottomSheet(
 }
 
 @Composable
-private fun FriendMenuItem(friend: Friend, onClick: () -> Unit) {
+fun FriendRequestItem(
+    request: FriendshipRequest,
+    onAccept: () -> Unit,
+    onDecline: () -> Unit
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(72.dp)
-            .clickable { onClick() },
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f)
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+            .height(72.dp),
         shape = RoundedCornerShape(16.dp)
     ) {
         Row(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 20.dp),
+                .fillMaxWidth()
+                .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Start
         ) {
             Image(
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
-                    .size(56.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.secondary),
-                painter = if (!friend.imageUri.isNullOrEmpty()) {
-                    rememberAsyncImagePainter(model = Uri.parse(friend.imageUri))
+                    .size(40.dp)
+                    .clip(CircleShape),
+                painter = if (!request.senderImageUri.isNullOrEmpty()) {
+                    rememberAsyncImagePainter(model = Uri.parse(request.senderImageUri))
                 } else {
-                    painterResource(R.drawable.sample_avatar)
+                    painterResource(R.drawable.generic_avatar)
                 },
                 contentDescription = "User Avatar"
             )
+            Spacer(modifier = Modifier.size(16.dp))
+            Text(
+                text = "${request.senderName}",
+                style = Typography.bodyMedium,
+                modifier = Modifier.weight(1f)
+            )
+            Row {
+                IconButton(onClick = onAccept) {
+                    Icon(imageVector = Icons.Default.Done, contentDescription = "Accept")
+                }
+                IconButton(onClick = onDecline) {
+                    Icon(imageVector = Icons.Default.Close, contentDescription = "Decline")
+                }
+            }
+        }
+    }
+}
 
-            Spacer(modifier = Modifier.size(8.dp))
-
+@Composable
+private fun FriendMenuItem(friend: Friend, textFriend: () -> Unit, playGame: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(72.dp),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Start
+        ) {
+            Image(
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape),
+                painter = if (!friend.imageUri.isNullOrEmpty()) {
+                    rememberAsyncImagePainter(model = Uri.parse(friend.imageUri))
+                } else {
+                    painterResource(R.drawable.generic_avatar)
+                },
+                contentDescription = "User Avatar"
+            )
+            Spacer(modifier = Modifier.size(16.dp))
             friend.name?.let { name ->
                 Text(
                     text = name,
-                    style = MaterialTheme.typography.titleSmall,
+                    style = Typography.bodyMedium,
                     color = Color.Black,
                     maxLines = 1,
                     modifier = Modifier.weight(1f)
                 )
             } ?: Text(
                 text = "Unknown User",
-                style = MaterialTheme.typography.titleSmall,
+                style = Typography.bodyMedium,
                 maxLines = 1,
                 modifier = Modifier.weight(1f)
             )
+            Spacer(modifier = Modifier.weight(1f))
+
+            Row {
+                IconButton(onClick = textFriend) {
+                    Icon(painter = painterResource(R.drawable.ic_message),
+                        tint = Color.Black,
+                        contentDescription = "Text a message")
+                }
+
+                IconButton(onClick = playGame) {
+                    Icon(painter = painterResource(R.drawable.ic_play),
+                        tint = Color.Black,
+                        contentDescription = "Play with friend")
+                }
+            }
         }
     }
 }
