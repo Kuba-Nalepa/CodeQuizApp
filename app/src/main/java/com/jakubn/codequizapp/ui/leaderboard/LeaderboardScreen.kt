@@ -6,6 +6,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -38,8 +39,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.paint
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -67,13 +70,18 @@ fun LeaderboardScreen(
 
     var selectedUser by remember { mutableStateOf<User?>(null) }
     val context = LocalContext.current
+    val isSheetVisible = selectedUser != null
 
     LaunchedEffect(Unit) {
         viewModel.uiEvents.collect { event ->
             when (event) {
                 "friend_request_sent" -> {
                     selectedUser?.let {
-                        Toast.makeText(context, "Friend request sent to ${it.name}", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(
+                            context,
+                            "Friend request sent to ${it.name}",
+                            Toast.LENGTH_SHORT
+                        ).show()
                     }
                 }
                 // "player_challenged" -> {
@@ -99,6 +107,11 @@ fun LeaderboardScreen(
                 painterResource(R.drawable.background_auth),
                 contentScale = ContentScale.FillBounds
             )
+            .then(
+                if (isSheetVisible) Modifier
+                    .background(Color.Black.copy(alpha = 0.2f))
+                    .blur(12.dp) else Modifier
+            )
             .padding(horizontal = 24.dp, vertical = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -120,19 +133,42 @@ fun LeaderboardScreen(
                 onDismissRequest = {
                     selectedUser = null
                 },
-                sheetState = sheetState
+                sheetState = sheetState,
+                dragHandle = {}
             ) {
-                selectedUser?.let { selectedUser ->
-                    selectedUser.uid?.let { selectedUserUid ->
-                        user.uid?.let { userUid ->
-                            UserMenuBottomSheetContent(
-                                user = selectedUser,
-                                friendshipStatus = friendshipStatus,
-                                inviteFriend = { viewModel.sendFriendshipRequest(userUid, selectedUserUid) },
-                                textMessage = { /* TODO */ },
-                                challengePlayer = { /* TODO */ }
-                            )
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(
+                            brush = Brush.verticalGradient(
+                                colorStops = arrayOf(
+                                    0.32f to Color(0xff000226),
+                                    0.91f to Color(0xff58959A),
+                                    1f to Color(0xffffffff)
+                                )
+                            ),
+                            shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
+                        )
+                        .padding(horizontal = 20.dp, vertical = 18.dp)
+                ) {
+                    selectedUser?.let { selectedUser ->
+                        selectedUser.uid?.let { selectedUserUid ->
+                            user.uid?.let { userUid ->
+                                UserMenuBottomSheetContent(
+                                    user = selectedUser,
+                                    friendshipStatus = friendshipStatus,
+                                    inviteFriend = {
+                                        viewModel.sendFriendshipRequest(
+                                            userUid,
+                                            selectedUserUid
+                                        )
+                                    },
+                                    textMessage = { /* TODO */ },
+                                    challengePlayer = { /* TODO */ }
+                                )
+                            }
                         }
+
                     }
                 }
             }
@@ -228,18 +264,21 @@ private fun LeaderboardItem(position: Int, user: User, onCLick: () -> Unit) {
                         tint = goldColor,
                         modifier = Modifier.size(28.dp)
                     )
+
                     2 -> Icon(
                         painter = painterResource(R.drawable.ic_second_place),
                         contentDescription = "Second place",
                         tint = silverColor,
                         modifier = Modifier.size(28.dp)
                     )
+
                     3 -> Icon(
                         painter = painterResource(R.drawable.ic_third_place),
                         contentDescription = "Third place",
                         tint = bronzeColor,
                         modifier = Modifier.size(28.dp)
                     )
+
                     else -> Spacer(modifier = Modifier.size(28.dp))
                 }
             }
@@ -315,7 +354,7 @@ private fun UserMenuBottomSheetContent(
                 text = username,
                 style = Typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
+                color = Color.White
             )
         }
 
@@ -332,10 +371,14 @@ private fun UserMenuBottomSheetContent(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(5.dp)
                     ) {
-                        CircularProgressIndicator(modifier = Modifier.size(40.dp), strokeWidth = 2.dp)
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(40.dp),
+                            strokeWidth = 2.dp
+                        )
                         Text(style = Typography.labelSmall, text = "Checking...")
                     }
                 }
+
                 is CustomState.Success -> {
                     val request = friendshipStatus.result
                     val buttonText = when (request?.status) {
@@ -345,7 +388,8 @@ private fun UserMenuBottomSheetContent(
                     }
                     val isEnabled = request?.status != "pending" && request?.status != "accepted"
 
-                    Row(modifier = Modifier.fillMaxWidth(),
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceAround,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -367,12 +411,16 @@ private fun UserMenuBottomSheetContent(
                                 },
                                 tint = when (request?.status) {
                                     "accepted" -> Color(0xFF007211)
-                                    "pending" -> Color.Gray
-                                    else -> Color.Black
+                                    "pending" -> Color(0xff58959A)
+                                    else -> Color.White
                                 },
                                 contentDescription = buttonText
                             )
-                            Text(style = Typography.labelSmall, text = buttonText)
+                            Text(
+                                style = Typography.labelSmall,
+                                text = buttonText,
+                                color = Color.White
+                            )
                         }
 
                         Column(
@@ -387,10 +435,14 @@ private fun UserMenuBottomSheetContent(
                                     .clickable { textMessage() }
                                     .padding(5.dp),
                                 painter = painterResource(R.drawable.ic_message),
-                                tint = Color.Black,
+                                tint = Color.White,
                                 contentDescription = "Message"
                             )
-                            Text(style = Typography.labelSmall, text = "Message")
+                            Text(
+                                style = Typography.labelSmall,
+                                text = "Message",
+                                color = Color.White
+                            )
                         }
                         Column(
                             modifier = Modifier.weight(1f),
@@ -404,13 +456,18 @@ private fun UserMenuBottomSheetContent(
                                     .clickable { challengePlayer() }
                                     .padding(5.dp),
                                 painter = painterResource(R.drawable.ic_play),
-                                tint = Color.Black,
+                                tint = Color.White,
                                 contentDescription = "Challenge the player"
                             )
-                            Text(style = Typography.labelSmall, text = "Challenge")
+                            Text(
+                                style = Typography.labelSmall,
+                                text = "Challenge",
+                                color = Color.White
+                            )
                         }
                     }
                 }
+
                 is CustomState.Failure -> {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
@@ -422,9 +479,14 @@ private fun UserMenuBottomSheetContent(
                             tint = MaterialTheme.colorScheme.error,
                             modifier = Modifier.size(40.dp)
                         )
-                        Text(text = "Error", style = Typography.labelSmall, color = MaterialTheme.colorScheme.error)
+                        Text(
+                            text = "Error",
+                            style = Typography.labelSmall,
+                            color = MaterialTheme.colorScheme.error
+                        )
                     }
                 }
+
                 CustomState.Idle -> {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
