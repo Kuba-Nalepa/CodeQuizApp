@@ -4,12 +4,14 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.jakubn.codequizapp.data.repositoryImpl.UserDataRepository
 import com.jakubn.codequizapp.model.CustomState
+import com.jakubn.codequizapp.model.Friend
 import com.jakubn.codequizapp.model.FriendshipRequest
 import com.jakubn.codequizapp.model.User
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
@@ -27,6 +29,9 @@ class LeaderboardViewModel @Inject constructor(
 
     private val _friendshipStatus = MutableStateFlow<CustomState<FriendshipRequest?>>(CustomState.Idle)
     val friendshipStatus: StateFlow<CustomState<FriendshipRequest?>> = _friendshipStatus
+
+    private val _friendsList = MutableStateFlow<List<Friend>>(emptyList())
+    val friendsList: StateFlow<List<Friend>> = _friendsList.asStateFlow()
 
     private val _uiEvents = Channel<String>(Channel.BUFFERED)
     val uiEvents = _uiEvents.receiveAsFlow()
@@ -68,9 +73,17 @@ class LeaderboardViewModel @Inject constructor(
         }
     }
 
+    fun fetchMyFriends(userId: String) {
+        viewModelScope.launch {
+            userDataRepository.observeFriendsList(userId).collect { friends ->
+                _friendsList.value = friends
+            }
+        }
+    }
+
     fun startListeningForFriendshipStatus(myUserId: String, otherUserId: String) {
         viewModelScope.launch {
-            userDataRepository.listenForFriendshipRequestStatus(myUserId, otherUserId)
+            userDataRepository.observeFriendshipRequestStatus(myUserId, otherUserId)
                 .onStart {
                     _friendshipStatus.value = CustomState.Loading
                 }

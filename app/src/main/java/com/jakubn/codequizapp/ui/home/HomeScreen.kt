@@ -166,7 +166,9 @@ fun HomeScreen(
                         FriendsListBottomSheet(
                             friendsState = friendsState,
                             requestsState = requestsState,
-                            onCloseBottomSheet = { showBottomSheet = false }
+                            onCloseBottomSheet = { showBottomSheet = false },
+                            onAcceptRequest = homeViewModel::acceptFriendRequest,
+                            onDeclineRequest = homeViewModel::declineFriendRequest
                         )
                     }
                 }
@@ -368,7 +370,9 @@ fun UserSectionContainer(
 fun FriendsListBottomSheet(
     friendsState: CustomState<List<Friend>>,
     requestsState: CustomState<List<FriendshipRequest>>,
-    onCloseBottomSheet: () -> Unit
+    onCloseBottomSheet: () -> Unit,
+    onAcceptRequest: (String) -> Unit,
+    onDeclineRequest: (String) -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -400,8 +404,8 @@ fun FriendsListBottomSheet(
                         items(invitations) { request ->
                             FriendRequestItem(
                                 request = request,
-                                onAccept = { /* TODO */ },
-                                onDecline = { /* TODO */ }
+                                onAccept = { request.id?.let { onAcceptRequest(it) } },
+                                onDecline = { request.id?.let { onDeclineRequest(it) } }
                             )
                         }
                     }
@@ -446,7 +450,7 @@ fun FriendsListBottomSheet(
                 val friendsList = friendsState.result
                 if (friendsList.isNotEmpty()) {
                     LazyColumn(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth().heightIn(min = 100.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         items(friendsList) { friend ->
@@ -463,7 +467,7 @@ fun FriendsListBottomSheet(
                     }
                 } else {
                     Column(
-                        modifier = Modifier.heightIn(min = 150.dp),
+                        modifier = Modifier.fillMaxWidth().heightIn(min = 150.dp),
                         verticalArrangement = Arrangement.SpaceEvenly
                     ) {
                         Text(

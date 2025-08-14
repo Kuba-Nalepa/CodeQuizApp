@@ -87,4 +87,15 @@ class HomeViewModel @Inject constructor(
         }
     }
 
+    fun acceptFriendRequest(friendshipId: String) {
+        viewModelScope.launch {
+            userDataRepository.acceptFriendshipRequest(friendshipId)
+        }
+    }
+
+    fun declineFriendRequest(friendshipId: String) {
+        viewModelScope.launch {
+            userDataRepository.declineFriendshipRequest(friendshipId)
+        }
+    }
 }
