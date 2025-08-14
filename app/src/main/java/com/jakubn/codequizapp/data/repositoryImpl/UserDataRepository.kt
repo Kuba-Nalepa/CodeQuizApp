@@ -208,22 +208,6 @@ class UserDataRepository @Inject constructor(
         }
     }
 
-    override suspend fun deleteFriend(friendshipId: String, friendId: String) {
-        val myUserId = firebaseAuth.currentUser?.uid
-            ?: throw Exception("User is not authenticated.")
-
-        firebaseFirestore.runTransaction { transaction ->
-            val friendshipRef = firebaseFirestore.collection("friendships").document(friendshipId)
-            transaction.delete(friendshipRef)
-
-            val myFriendsCollectionRef = firebaseFirestore.collection("users").document(myUserId).collection("friends")
-            transaction.delete(myFriendsCollectionRef.document(friendId))
-
-            val friendFriendsCollectionRef = firebaseFirestore.collection("users").document(friendId).collection("friends")
-            transaction.delete(friendFriendsCollectionRef.document(myUserId))
-        }.await()
-    }
-
     override suspend fun observeFriendsList(userId: String): Flow<List<Friend>> {
         return callbackFlow {
             val docRef = firebaseFirestore.collection("users").document(userId).collection("friends")
@@ -327,35 +311,6 @@ class UserDataRepository @Inject constructor(
             awaitClose { subscription.remove() }
         }.flowOn(Dispatchers.IO)
     }
-
-    override suspend fun isFriend(userId: String, friendId: String): Boolean {
-        val friendDoc = firebaseFirestore.collection("users").document(userId)
-            .collection("friends").document(friendId).get().await()
-        return friendDoc.exists()
-    }
-
-    override suspend fun addFriendToFriendsList(userId: String, friendId: String) {
-        withContext(Dispatchers.IO) {
-            val userRef = firebaseFirestore.collection("users").document(userId)
-            val friendRef = firebaseFirestore.collection("users").document(friendId)
-
-            val userSnapshot = userRef.get().await()
-            val friendSnapshot = friendRef.get().await()
-
-            val user = userSnapshot.toObject(User::class.java)
-            val friend = friendSnapshot.toObject(User::class.java)
-
-            if (user != null && friend != null) {
-                val friendData = Friend(
-                    uid = friend.uid,
-                    name = friend.name,
-                    imageUri = friend.imageUri
-                )
-                userRef.collection("friends").document(friend.uid!!).set(friendData).await()
-            }
-        }
-    }
-
 
     override suspend fun updateUserProfile(updatedUser: User): Flow<Unit> = flow {
         val userId = updatedUser.uid ?: throw Exception("User not authenticated")

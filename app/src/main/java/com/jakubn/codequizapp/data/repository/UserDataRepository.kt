@@ -26,13 +26,7 @@ interface UserDataRepository {
 
     suspend fun declineFriendshipRequest(friendshipId: String)
 
-    suspend fun deleteFriend(friendshipId: String, friendId: String)
-
     suspend fun observeFriendsList(userId: String): Flow<List<Friend>>
-
-    suspend fun isFriend(userId: String, friendId: String): Boolean
-
-    suspend fun addFriendToFriendsList(userId: String, friendId: String)
 
     fun observeFriendshipRequestStatus(myUserId: String, otherUserId: String): Flow<FriendshipRequest?>
 
