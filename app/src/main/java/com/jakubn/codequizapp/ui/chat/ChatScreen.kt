@@ -138,7 +138,7 @@ fun ChatMessage(message: Message, myUid: String) {
             color = Color.Black,
             modifier = Modifier
                 .background(
-                    color = if (isMe) MaterialTheme.colorScheme.primary else Color(0xFFE1E1E1),
+                    color = if (isMe) MaterialTheme.colorScheme.primary else Color(0xFFBEBEBE),
                     shape = MaterialTheme.shapes.medium
                 )
                 .padding(8.dp)
@@ -180,7 +180,7 @@ fun MessageInputField(
                 text = ""
             }
         }) {
-            Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Send", tint = Color.White)
+            Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Send",  tint = if (text.isNotEmpty()) MaterialTheme.colorScheme.primary else Color.White)
         }
     }
 }
