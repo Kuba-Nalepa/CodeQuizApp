@@ -6,7 +6,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.material.icons.Icons
@@ -57,14 +56,17 @@ fun ChatScreen(
                 painterResource(R.drawable.background_auth),
                 contentScale = ContentScale.FillBounds,
             )
-            .background(Color(0x66000000))
-            .padding(20.dp),
-        verticalArrangement = Arrangement.SpaceBetween
     ) {
+        ChatTopAppBar(friend)
+
         when (val state = messagesState) {
             is CustomState.Success -> {
                 user.uid?.let {
-                    Box(modifier = Modifier.weight(1f)) {
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(horizontal = 16.dp)
+                    ) {
                         ChatHistory(
                             messageList = state.result,
                             myUid = user.uid,
@@ -75,7 +77,11 @@ fun ChatScreen(
             }
 
             is CustomState.Failure -> {
-                Text(text = "Error: ${state.message}", color = Color.Red, modifier = Modifier.align(Alignment.CenterHorizontally))
+                Text(
+                    text = "Error: ${state.message}",
+                    color = Color.Red,
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                )
             }
 
             is CustomState.Loading -> {
@@ -91,7 +97,6 @@ fun ChatScreen(
         }
 
         MessageInputField(
-            friend = friend,
             onSendMessage = { messageText ->
                 user.uid?.let { viewModel.sendMessage(it, messageText) }
             }
@@ -102,7 +107,9 @@ fun ChatScreen(
 @Composable
 fun ChatHistory(messageList: List<Message>, myUid: String, listState: LazyListState) {
     LazyColumn(
-        modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 16.dp),
         reverseLayout = true,
         state = listState
     ) {
@@ -128,18 +135,19 @@ fun ChatMessage(message: Message, myUid: String) {
         Text(
             text = message.text,
             style = Typography.bodySmall,
-            color = Color.White,
-            modifier = Modifier.background(
-                color = if (isMe) Color(0xFF003963) else Color(0xFFB7B7B7),
-                shape = MaterialTheme.shapes.medium
-            ).padding(8.dp)
+            color = Color.Black,
+            modifier = Modifier
+                .background(
+                    color = if (isMe) MaterialTheme.colorScheme.primary else Color(0xFFE1E1E1),
+                    shape = MaterialTheme.shapes.medium
+                )
+                .padding(8.dp)
         )
     }
 }
 
 @Composable
 fun MessageInputField(
-    friend: Friend,
     onSendMessage: (String) -> Unit
 ) {
     var text by remember { mutableStateOf("") }
@@ -154,7 +162,13 @@ fun MessageInputField(
             modifier = Modifier.weight(1f),
             value = text,
             onValueChange = { text = it },
-            placeholder = { Text(text = "Message ${friend.name}", color = Color(0xFFB7B7B7), style = Typography.bodyMedium) },
+            placeholder = {
+                Text(
+                    text = "Message",
+                    color = Color(0xFFB7B7B7),
+                    style = Typography.bodyMedium
+                )
+            },
             maxLines = 3,
             shape = RoundedCornerShape(20.dp),
             textStyle = Typography.bodyMedium
@@ -167,6 +181,24 @@ fun MessageInputField(
             }
         }) {
             Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Send", tint = Color.White)
+        }
+    }
+}
+
+@Composable
+fun ChatTopAppBar(friend: Friend) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color.Transparent)
+            .padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        friend.name?.let {
+            Text(
+                text = it,
+                style = Typography.bodyLarge,
+            )
         }
     }
 }
