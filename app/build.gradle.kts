@@ -84,6 +84,7 @@ dependencies {
     implementation("com.google.firebase:firebase-analytics")
     implementation("com.google.firebase:firebase-database")
     implementation("com.google.firebase:firebase-storage-ktx:21.0.2")
+    implementation("com.google.firebase:firebase-functions-ktx")
 
 
     // Dependency Injection (Hilt)

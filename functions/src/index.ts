@@ -1,26 +1,28 @@
 import {
   onDocumentUpdated,
 } from "firebase-functions/v2/firestore";
+import {onCall, HttpsError} from "firebase-functions/v2/https";
 import * as admin from "firebase-admin";
 
 admin.initializeApp();
+const firestore = admin.firestore();
 
 interface FriendshipRequest {
-    senderId: string;
-    receiverId: string;
-    status: string;
+  senderId: string;
+  receiverId: string;
+  status: string;
 }
 
 interface User {
-    uid: string;
-    name: string;
-    imageUri: string;
+  uid: string;
+  name: string;
+  imageUri: string;
 }
 
 interface Friend {
-    uid: string;
-    name: string;
-    imageUri: string;
+  uid: string;
+  name: string;
+  imageUri: string;
 }
 
 export const onFriendshipAccepted = onDocumentUpdated(
@@ -116,3 +118,77 @@ export const onDeleteFriendshipAfterAccept = onDocumentUpdated(
     return;
   }
 );
+
+
+export const createChat = onCall(async (request) => {
+  const {data, auth} = request;
+
+  if (!auth) {
+    throw new HttpsError("unauthenticated", "User not authenticated.");
+  }
+
+  const myUid = auth.uid;
+  const friendUid = data.friendUid;
+
+  if (!friendUid) {
+    throw new HttpsError("invalid-argument", "Missing friendUid.");
+  }
+
+  const participants = [myUid, friendUid].sort();
+  const chatId = participants.join("_");
+  const chatRef = firestore.collection("chats").doc(chatId);
+
+  const chatDoc = await chatRef.get();
+  if (chatDoc.exists) {
+    return {chatId: chatId};
+  }
+
+  await chatRef.set({members: participants});
+
+  return {chatId: chatId};
+});
+
+export const sendMessage = onCall(async (request) => {
+  const {data, auth} = request;
+
+  if (!auth) {
+    throw new HttpsError("unauthenticated", "User not authenticated.");
+  }
+
+  const myUid = auth.uid;
+  const chatId = data.chatId;
+  const messageText = data.messageText;
+
+  if (!chatId || !messageText) {
+    throw new HttpsError("invalid-argument", "Missing chatId or messageText.");
+  }
+
+  const chatRef = firestore.collection("chats").doc(chatId);
+  const messagesRef = chatRef.collection("messages");
+
+  const newMessage = {
+    senderId: myUid,
+    text: messageText,
+    timestamp: admin.firestore.FieldValue.serverTimestamp(),
+  };
+  await messagesRef.add(newMessage);
+
+  return {success: true};
+});
+
+export const checkChatExists = onCall(async (request) => {
+  const {data, auth} = request;
+  const myUid = auth?.uid;
+  const friendUid = data.friendUid;
+
+  if (!myUid || !friendUid) {
+    throw new HttpsError("invalid-argument", "Missing user UIDs.");
+  }
+
+  const participants = [myUid, friendUid].sort();
+  const chatId = participants.join("_");
+  const chatRef = firestore.collection("chats").doc(chatId);
+
+  const doc = await chatRef.get();
+  return {exists: doc.exists, chatId: chatId};
+});

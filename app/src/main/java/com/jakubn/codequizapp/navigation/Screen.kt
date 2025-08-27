@@ -47,7 +47,14 @@ sealed class Screen(val route: String) {
     // --- Profile/Settings Details Screens ---
     @Serializable
     data object UserProfileEdit : Screen("user_profile_edit_screen")
+
+    // --- Miscellaneous ---
     @Serializable
-    data object Chat : Screen("chat_screen")
+    data object Chat : Screen("chat_screen?friendUid={friendUid}&friendName={friendName}") {
+        // A helper function to build the final route
+        fun createRoute(friendUid: String, friendName: String): String {
+            return "chat_screen?friendUid=$friendUid&friendName=$friendName"
+        }
+    }
 
 }

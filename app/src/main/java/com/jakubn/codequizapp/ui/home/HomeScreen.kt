@@ -62,7 +62,8 @@ import java.util.Locale
 fun HomeScreen(
     homeViewModel: HomeViewModel = hiltViewModel(),
     createGame: () -> Unit,
-    playGame: () -> Unit
+    playGame: () -> Unit,
+    navigateToChat: (Friend) -> Unit
 ) {
     val userState by homeViewModel.state.collectAsState()
     val friendsState by homeViewModel.friendsState.collectAsState()
@@ -168,7 +169,8 @@ fun HomeScreen(
                             requestsState = requestsState,
                             onCloseBottomSheet = { showBottomSheet = false },
                             onAcceptRequest = homeViewModel::acceptFriendRequest,
-                            onDeclineRequest = homeViewModel::declineFriendRequest
+                            onDeclineRequest = homeViewModel::declineFriendRequest,
+                            navigateToChat = navigateToChat
                         )
                     }
                 }
@@ -372,7 +374,8 @@ fun FriendsListBottomSheet(
     requestsState: CustomState<List<FriendshipRequest>>,
     onCloseBottomSheet: () -> Unit,
     onAcceptRequest: (String) -> Unit,
-    onDeclineRequest: (String) -> Unit
+    onDeclineRequest: (String) -> Unit,
+    navigateToChat: (Friend) -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -457,7 +460,7 @@ fun FriendsListBottomSheet(
                             FriendMenuItem(
                                 friend = friend,
                                 textFriend = {
-                                    TODO()
+                                    navigateToChat(friend)
                                 },
                                 playGame = {
                                     TODO()

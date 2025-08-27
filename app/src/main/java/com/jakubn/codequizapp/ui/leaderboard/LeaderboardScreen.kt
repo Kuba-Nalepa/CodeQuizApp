@@ -54,6 +54,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.rememberAsyncImagePainter
 import com.jakubn.codequizapp.R
 import com.jakubn.codequizapp.model.CustomState
+import com.jakubn.codequizapp.model.Friend
 import com.jakubn.codequizapp.model.FriendshipRequest
 import com.jakubn.codequizapp.model.User
 import com.jakubn.codequizapp.theme.Typography
@@ -62,6 +63,7 @@ import com.jakubn.codequizapp.theme.Typography
 @Composable
 fun LeaderboardScreen(
     user: User,
+    navigateToChat: (Friend) -> Unit,
     viewModel: LeaderboardViewModel = hiltViewModel()
 ) {
     user.uid?.let { viewModel.fetchMyFriends(it) }
@@ -89,7 +91,7 @@ fun LeaderboardScreen(
                         ).show()
                     }
                 }
-                // "player_challenged" -> {
+                // "player_challenged" -> {     //TODO Later
                 //     Toast.makeText(context, "Player challenged!", Toast.LENGTH_SHORT).show()
                 // }
 
@@ -169,7 +171,17 @@ fun LeaderboardScreen(
                                             selectedUserUid
                                         )
                                     },
-                                    textMessage = { /* TODO */ },
+                                    textMessage = {
+                                        selectedUser.let { friend ->
+                                            navigateToChat(
+                                                Friend(
+                                                uid = friend.uid,
+                                                name = friend.name,
+                                                imageUri = friend.imageUri
+                                            )
+                                            )
+                                        }
+                                    },
                                     challengePlayer = { /* TODO */ }
                                 )
                             }

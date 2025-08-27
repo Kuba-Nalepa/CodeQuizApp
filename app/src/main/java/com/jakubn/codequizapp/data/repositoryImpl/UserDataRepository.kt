@@ -2,17 +2,23 @@ package com.jakubn.codequizapp.data.repositoryImpl
 
 import android.net.Uri
 import android.util.Log
+import com.google.firebase.Firebase
+import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreException
+import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.QuerySnapshot
+import com.google.firebase.functions.functions
 import com.google.firebase.storage.FirebaseStorage
 import com.jakubn.codequizapp.model.User
 import com.jakubn.codequizapp.data.repository.UserDataRepository
 import com.jakubn.codequizapp.model.Friend
 import com.jakubn.codequizapp.model.FriendshipRequest
+import com.jakubn.codequizapp.model.Message
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -210,21 +216,26 @@ class UserDataRepository @Inject constructor(
 
     override suspend fun observeFriendsList(userId: String): Flow<List<Friend>> {
         return callbackFlow {
-            val docRef = firebaseFirestore.collection("users").document(userId).collection("friends")
+            val docRef =
+                firebaseFirestore.collection("users").document(userId).collection("friends")
 
             val subscription = docRef.addSnapshotListener { snapshot, error ->
                 if (error != null) {
                     close(error)
                     return@addSnapshotListener
                 }
-                val friends = snapshot?.documents?.mapNotNull { it.toObject(Friend::class.java) } ?: emptyList()
+                val friends = snapshot?.documents?.mapNotNull { it.toObject(Friend::class.java) }
+                    ?: emptyList()
                 trySend(friends)
             }
             awaitClose { subscription.remove() }
         }.flowOn(Dispatchers.IO)
     }
 
-    override fun observeFriendshipRequestStatus(myUserId: String, otherUserId: String): Flow<FriendshipRequest?> {
+    override fun observeFriendshipRequestStatus(
+        myUserId: String,
+        otherUserId: String
+    ): Flow<FriendshipRequest?> {
 
         val myUserIsSenderFlow: Flow<FriendshipRequest?> = callbackFlow {
             val query = firebaseFirestore.collection("friendships")
@@ -236,7 +247,9 @@ class UserDataRepository @Inject constructor(
                     close(error)
                     return@addSnapshotListener
                 }
-                val friendship = snapshot?.documents?.firstOrNull()?.toObject(FriendshipRequest::class.java)?.copy(id = snapshot.documents.first().id)
+                val friendship =
+                    snapshot?.documents?.firstOrNull()?.toObject(FriendshipRequest::class.java)
+                        ?.copy(id = snapshot.documents.first().id)
                 trySend(friendship)
             }
 
@@ -253,7 +266,9 @@ class UserDataRepository @Inject constructor(
                     close(error)
                     return@addSnapshotListener
                 }
-                val friendship = snapshot?.documents?.firstOrNull()?.toObject(FriendshipRequest::class.java)?.copy(id = snapshot.documents.first().id)
+                val friendship =
+                    snapshot?.documents?.firstOrNull()?.toObject(FriendshipRequest::class.java)
+                        ?.copy(id = snapshot.documents.first().id)
                 trySend(friendship)
             }
 
@@ -292,7 +307,8 @@ class UserDataRepository @Inject constructor(
                     .whereIn("uid", senderIds.toList())
                     .get()
                     .addOnSuccessListener { sendersSnapshot ->
-                        val sendersMap = sendersSnapshot.documents.associateBy({ it.id }, { it.toObject(User::class.java) })
+                        val sendersMap = sendersSnapshot.documents.associateBy({ it.id },
+                            { it.toObject(User::class.java) })
 
                         val requestsWithSenderData = requests.map { request ->
                             val sender = sendersMap[request.senderId]
@@ -312,6 +328,64 @@ class UserDataRepository @Inject constructor(
         }.flowOn(Dispatchers.IO)
     }
 
+    override suspend fun createChat(userUid: String, friendUid: String): String {
+        val functions = Firebase.functions
+
+        val data = hashMapOf(
+            "friendUid" to friendUid
+        )
+
+        val result = functions
+            .getHttpsCallable("createChat")
+            .call(data)
+            .await()
+
+        val responseData = result.data as Map<String, Any>
+        return responseData["chatId"] as String
+    }
+
+    override suspend fun sendMessage(chatId: String, userUid: String, messageText: String) {
+        val functions = Firebase.functions
+
+        val data = hashMapOf(
+            "chatId" to chatId,
+            "messageText" to messageText
+        )
+
+        functions
+            .getHttpsCallable("sendMessage")
+            .call(data)
+            .await()
+    }
+
+    override fun observeChatMessages(chatId: String): Flow<List<Message>> = callbackFlow {
+        val messagesRef = firebaseFirestore.collection("chats").document(chatId).collection("messages")
+
+        val subscription = messagesRef
+            .orderBy("timestamp", Query.Direction.DESCENDING)
+            .addSnapshotListener { snapshot, exception ->
+                if (exception != null) {
+                    if (exception.code == FirebaseFirestoreException.Code.NOT_FOUND) {
+                        trySend(emptyList()).isSuccess
+                    } else {
+                        cancel(message = "Error getting messages", cause = exception)
+                    }
+                    return@addSnapshotListener
+                }
+
+                if (snapshot != null && !snapshot.isEmpty) {
+                    val messages = snapshot.documents.map { doc ->
+                        doc.toObject(Message::class.java)!!
+                    }
+                    trySend(messages).isSuccess
+                } else {
+                    trySend(emptyList()).isSuccess
+                }
+            }
+
+        awaitClose { subscription.remove() }
+    }
+
     override suspend fun updateUserProfile(updatedUser: User): Flow<Unit> = flow {
         val userId = updatedUser.uid ?: throw Exception("User not authenticated")
         val userDocRef = firebaseFirestore.collection("users").document(userId)
@@ -328,4 +402,18 @@ class UserDataRepository @Inject constructor(
         }
 
     }.flowOn(Dispatchers.IO)
+
+    override suspend fun checkChatExists(myUserId: String, friendUid: String): Boolean {
+        val data = hashMapOf(
+            "myUid" to myUserId,
+            "friendUid" to friendUid
+        )
+        val result = Firebase.functions
+            .getHttpsCallable("checkChatExists")
+            .call(data)
+            .await()
+
+        val responseData = result.data as Map<String, Any>
+        return responseData["exists"] as Boolean
+    }
 }

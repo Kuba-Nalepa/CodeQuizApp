@@ -28,6 +28,14 @@ fun MainScreen(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
+    val bottomBarRoutes = listOf(
+        Screen.Home.route,
+        Screen.Leaderboard.route,
+        Screen.Settings.route,
+    )
+
+    val showBottomBar = currentRoute in bottomBarRoutes
+
     val routes = listOf(
         BottomNavItem(
             Screen.Home.route,
@@ -45,36 +53,36 @@ fun MainScreen(
             "Settings"
         )
     )
+
     Scaffold(
         bottomBar = {
-            if (currentRoute == null) return@Scaffold
-
-            BottomNavigation(backgroundColor = Color(0xF2000226)) {
-                routes.forEach { screen ->
-                    BottomNavigationItem(
-                        modifier = Modifier.align(Alignment.CenterVertically),
-                        icon = {
-                            Icon(
-                                modifier = Modifier.padding(vertical = 10.dp),
-                                imageVector = screen.icon,
-                                contentDescription = screen.label,
-                                tint = Color(0xffA3FF0D)
-                            )
-                        },
-                        selected = currentRoute == screen.route,
-                        onClick = {
-                            navController.navigate(screen.route) {
-                                popUpTo(navController.graph.findStartDestination().id) {
-                                    saveState = true
+            if (showBottomBar) {
+                BottomNavigation(backgroundColor = Color(0xF2000226)) {
+                    routes.forEach { screen ->
+                        BottomNavigationItem(
+                            modifier = Modifier.align(Alignment.CenterVertically),
+                            icon = {
+                                Icon(
+                                    modifier = Modifier.padding(vertical = 10.dp),
+                                    imageVector = screen.icon,
+                                    contentDescription = screen.label,
+                                    tint = Color(0xffA3FF0D)
+                                )
+                            },
+                            selected = currentRoute == screen.route,
+                            onClick = {
+                                navController.navigate(screen.route) {
+                                    popUpTo(navController.graph.findStartDestination().id) {
+                                        saveState = true
+                                    }
+                                    launchSingleTop = true
+                                    restoreState = true
                                 }
-                                launchSingleTop = true
-                                restoreState = true
                             }
-                        }
-                    )
+                        )
+                    }
                 }
             }
-
         }
     ) { innerPadding ->
         content(Modifier.padding(innerPadding))

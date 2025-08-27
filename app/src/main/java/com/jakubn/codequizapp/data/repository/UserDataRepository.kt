@@ -3,6 +3,7 @@ package com.jakubn.codequizapp.data.repository
 import android.net.Uri
 import com.jakubn.codequizapp.model.Friend
 import com.jakubn.codequizapp.model.FriendshipRequest
+import com.jakubn.codequizapp.model.Message
 import com.jakubn.codequizapp.model.User
 import kotlinx.coroutines.flow.Flow
 
@@ -32,4 +33,11 @@ interface UserDataRepository {
 
     fun observePendingFriendsRequestsWithSenderData(userId: String): Flow<List<FriendshipRequest>>
 
+    fun observeChatMessages(chatId: String): Flow<List<Message>>
+
+    suspend fun createChat(userUid: String,friendUid: String): String
+
+    suspend fun sendMessage(chatId: String, userUid: String, messageText: String)
+
+    suspend fun checkChatExists(myUserId: String, friendUid: String): Boolean
 }
