@@ -120,7 +120,7 @@ fun HomeScreen(
                 Text(
                     text = "Create Game".uppercase(),
                     textAlign = TextAlign.Center,
-                    color = Color(0xffA3FF0D),
+                    color = MaterialTheme.colorScheme.primary,
                     style = Typography.bodyLarge,
                     softWrap = true
                 )
@@ -250,7 +250,7 @@ fun UserSectionContainer(
                         modifier = Modifier.padding(top = 10.dp, bottom = 10.dp),
                         text = "${userState.result?.wins}",
                         style = Typography.titleMedium,
-                        color = Color(0xffA3FF0D)
+                        color = MaterialTheme.colorScheme.primary
                     )
                     Text(
                         modifier = Modifier.padding(bottom = 10.dp),
@@ -396,8 +396,7 @@ fun FriendsListBottomSheet(
                     ) {
                         Text(
                             text = "Pending Invitations",
-                            style = Typography.titleSmall,
-                            color = Color.White
+                            style = Typography.titleSmall
                         )
                     }
                     LazyColumn(
@@ -443,7 +442,6 @@ fun FriendsListBottomSheet(
         ) {
             Text(
                 text = "Friends",
-                color = Color.White,
                 style = Typography.titleSmall
             )
         }
@@ -476,7 +474,6 @@ fun FriendsListBottomSheet(
                         Text(
                             modifier = Modifier.fillMaxWidth(),
                             textAlign = TextAlign.Start,
-                            color = Color.White,
                             text = "You don't have any friends yet.",
                             style = Typography.bodySmall
                         )
@@ -497,7 +494,7 @@ fun FriendsListBottomSheet(
             is CustomState.Failure -> {
                 Text(
                     text = "Failed to load friends: ${friendsState.message}",
-                    style = MaterialTheme.typography.bodyLarge,
+                    style = Typography.bodyMedium,
                     modifier = Modifier.padding(top = 16.dp),
                     textAlign = TextAlign.Center
                 )
@@ -545,7 +542,6 @@ fun FriendRequestItem(
         Text(
             text = "${request.senderName}",
             style = Typography.bodyMedium,
-            color = Color.White,
             modifier = Modifier.weight(1f)
         )
         Row {
@@ -595,14 +591,12 @@ private fun FriendMenuItem(friend: Friend, textFriend: () -> Unit, playGame: () 
             Text(
                 text = name,
                 style = Typography.bodyMedium,
-                color = Color.White,
                 maxLines = 1,
                 modifier = Modifier.weight(1f)
             )
         } ?: Text(
             text = "Unknown User",
             style = Typography.bodyMedium,
-            color = Color.White,
             maxLines = 1,
             modifier = Modifier.weight(1f)
         )

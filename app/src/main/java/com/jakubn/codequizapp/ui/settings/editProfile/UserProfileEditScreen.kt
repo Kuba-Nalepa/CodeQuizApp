@@ -157,7 +157,6 @@ fun UserProfileEditScreen(
                     isUploadingImage -> "UPLOADING IMAGE..."
                     else -> "UPDATE PROFILE".uppercase(Locale.ROOT)
                 },
-                color = Color.White,
                 style = Typography.bodyLarge
             )
         }

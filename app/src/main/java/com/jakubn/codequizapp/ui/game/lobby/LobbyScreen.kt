@@ -23,6 +23,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -300,11 +301,11 @@ fun PlayerContainer(
                             Icon(
                                 painter = painterResource(R.drawable.ic_rank),
                                 contentDescription = "Rank",
-                                tint = Color(0xFFA3FF0D)
+                                tint = MaterialTheme.colorScheme.primary
                             )
                             Text(
                                 text = " ${user.wins}", //TODO user's rank
-                                color = Color(0xFFA3FF0D),
+                                color = MaterialTheme.colorScheme.primary,
                                 style = Typography.titleSmall,
                                 softWrap = true
                             )

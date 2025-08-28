@@ -354,7 +354,6 @@ private fun OpponentSection(user: User, points: Int) {
                 modifier = Modifier.padding(top = 5.dp),
                 text = user.name ?: "Unknown Player",
                 style = Typography.bodyMedium,
-                color = Color.White,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
@@ -378,8 +377,7 @@ private fun WaitingForOpponent() {
             text = "Waiting for opponent to finish...",
             style = Typography.titleMedium,
             textAlign = TextAlign.Center,
-            modifier = Modifier.padding(16.dp),
-            color = Color.White
+            modifier = Modifier.padding(16.dp)
         )
         CircularProgressIndicator(
             modifier = Modifier.padding(16.dp)
@@ -405,8 +403,7 @@ private fun UserProfileSection(user: User, points: Int) {
         Text(
             modifier = Modifier.padding(top = 15.dp),
             text = user.name ?: "",
-            style = Typography.titleMedium,
-            color = Color.White
+            style = Typography.titleMedium
         )
         Text(
             modifier = Modifier.padding(top = 5.dp),
@@ -446,8 +443,7 @@ private fun StatItem(label: String, value: String, color: Color) {
     ) {
         Text(
             text = label,
-            style = Typography.bodyMedium,
-            color = Color.White
+            style = Typography.bodyMedium
         )
         Text(text = value, style = Typography.bodyMedium, color = color)
     }

@@ -130,7 +130,7 @@ fun LeaderboardScreen(
 
         Text(
             text = "Leaderboard",
-            style = MaterialTheme.typography.titleMedium,
+            style = Typography.titleMedium,
             color = Color.White,
             modifier = Modifier.padding(bottom = 24.dp)
         )
@@ -270,7 +270,7 @@ private fun LeaderboardItem(position: Int, user: User, onCLick: () -> Unit) {
             ) {
                 Text(
                     text = "$position.",
-                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                    style = Typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                     color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.width(36.dp),
                     textAlign = TextAlign.Start
@@ -322,21 +322,21 @@ private fun LeaderboardItem(position: Int, user: User, onCLick: () -> Unit) {
                 user.name?.let { name ->
                     Text(
                         text = name,
-                        style = MaterialTheme.typography.titleSmall,
+                        style = Typography.titleSmall,
                         color = Color.Black,
                         maxLines = 1,
                         modifier = Modifier.fillMaxWidth(0.8f)
                     )
                 } ?: Text(
                     text = "Unknown User",
-                    style = MaterialTheme.typography.titleSmall,
+                    style = Typography.titleSmall,
                     maxLines = 1,
                     modifier = Modifier.fillMaxWidth(0.8f)
                 )
             }
             Text(
                 text = "${user.score}",
-                style = MaterialTheme.typography.titleSmall,
+                style = Typography.titleSmall,
                 color = Color.Black,
                 textAlign = TextAlign.End
             )
@@ -371,8 +371,7 @@ private fun UserMenuBottomSheetContent(
                 modifier = Modifier.padding(top = 10.dp),
                 text = username,
                 style = Typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = Color.White
+                fontWeight = FontWeight.Bold
             )
         }
 
@@ -397,7 +396,7 @@ private fun UserMenuBottomSheetContent(
                         tint = Color(0xFF007211),
                         contentDescription = "Friend"
                     )
-                    Text(style = Typography.labelSmall, text = "Friend", color = Color.White)
+                    Text(style = Typography.labelSmall, text = "Friend")
                 } else {
                     when (friendshipStatus) {
                         is CustomState.Loading -> {
@@ -405,7 +404,7 @@ private fun UserMenuBottomSheetContent(
                                 modifier = Modifier.size(40.dp),
                                 strokeWidth = 2.dp
                             )
-                            Text(style = Typography.labelSmall, text = "Checking...", color = Color.White)
+                            Text(style = Typography.labelSmall, text = "Checking...")
                         }
 
                         is CustomState.Success -> {
@@ -434,7 +433,6 @@ private fun UserMenuBottomSheetContent(
                             Text(
                                 style = Typography.labelSmall,
                                 text = buttonText,
-                                color = Color.White
                             )
                         }
 
@@ -463,7 +461,7 @@ private fun UserMenuBottomSheetContent(
                                 tint = Color.White,
                                 contentDescription = "Add friend"
                             )
-                            Text(style = Typography.labelSmall, text = "Add friend", color = Color.White)
+                            Text(style = Typography.labelSmall, text = "Add friend")
                         }
                     }
                 }
@@ -487,7 +485,6 @@ private fun UserMenuBottomSheetContent(
                 Text(
                     style = Typography.labelSmall,
                     text = "Message",
-                    color = Color.White
                 )
             }
 
@@ -508,8 +505,7 @@ private fun UserMenuBottomSheetContent(
                 )
                 Text(
                     style = Typography.labelSmall,
-                    text = "Challenge",
-                    color = Color.White
+                    text = "Challenge"
                 )
             }
         }

@@ -74,6 +74,12 @@ fun ChatScreen(
                         )
                     }
                 }
+
+                MessageInputField(
+                    onSendMessage = { messageText ->
+                        user.uid?.let { viewModel.sendMessage(it, messageText) }
+                    }
+                )
             }
 
             is CustomState.Failure -> {
@@ -95,12 +101,6 @@ fun ChatScreen(
                 // Nothing
             }
         }
-
-        MessageInputField(
-            onSendMessage = { messageText ->
-                user.uid?.let { viewModel.sendMessage(it, messageText) }
-            }
-        )
     }
 }
 

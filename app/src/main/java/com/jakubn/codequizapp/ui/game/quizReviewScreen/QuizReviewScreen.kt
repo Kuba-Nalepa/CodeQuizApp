@@ -142,8 +142,7 @@ fun QuestionTemplateReview(
         Text(
             text = question.title.orEmpty(),
             textAlign = TextAlign.Center,
-            style = Typography.titleMedium,
-            color = Color.White
+            style = Typography.titleMedium
         )
 
         Column(

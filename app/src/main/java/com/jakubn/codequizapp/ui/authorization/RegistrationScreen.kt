@@ -95,8 +95,7 @@ fun RegistrationScreen(navHostController: NavHostController, viewModel: Registra
                 Text(
                     textAlign = TextAlign.Center,
                     style = Typography.bodyMedium,
-                    text = "Your mind is key to success",
-                    color = Color.White
+                    text = "Your mind is key to success"
                 )
             }
 

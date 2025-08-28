@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -100,7 +101,6 @@ fun LoginScreen(viewModel: LoginViewModel = hiltViewModel(), logIn: (User) -> Un
                 modifier = Modifier.padding(vertical = 20.dp),
                 style = Typography.bodyMedium,
                 text = "Forgot password?",
-                color = Color.White,
                 textAlign = TextAlign.Center
             )
         }
@@ -132,7 +132,7 @@ fun LoginScreen(viewModel: LoginViewModel = hiltViewModel(), logIn: (User) -> Un
                 viewModel.signInUser(email,password)
             }
         ) {
-            Text(text = "Sign In".uppercase(), color = Color(0xffA3FF0D), style = Typography.bodyLarge)
+            Text(text = "Sign In".uppercase(), color = MaterialTheme.colorScheme.primary, style = Typography.bodyLarge)
         }
     }
 

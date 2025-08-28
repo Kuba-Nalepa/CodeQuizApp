@@ -122,7 +122,6 @@ fun CreateGameScreen(
                 Text(
                     modifier = Modifier.padding(vertical = 10.dp),
                     text = "Choose category",
-                    color = Color.White,
                     style = Typography.titleSmall
                 )
 
@@ -144,7 +143,6 @@ fun CreateGameScreen(
                 Text(
                     modifier = Modifier.padding(vertical = 10.dp),
                     text = "Select the number of questions",
-                    color = Color.White,
                     style = Typography.titleSmall
                 )
                 QuizNumberSelection(indexSelection) {
@@ -156,7 +154,6 @@ fun CreateGameScreen(
                 Text(
                     modifier = Modifier.padding(vertical = 10.dp),
                     text = "Set time for one question",
-                    color = Color.White,
                     style = Typography.titleSmall
                 )
 
@@ -164,7 +161,6 @@ fun CreateGameScreen(
 
                 Text(
                     text = "$quizTimeSecondsIndicator seconds",
-                    color = Color.White,
                     style = Typography.bodyMedium
                 )
             }

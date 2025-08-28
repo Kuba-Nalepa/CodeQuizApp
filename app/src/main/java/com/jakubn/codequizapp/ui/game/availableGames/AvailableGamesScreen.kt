@@ -129,8 +129,7 @@ fun EmptyState() {
         Text(
             text = "There are no available games right now",
             textAlign = TextAlign.Center,
-            style = Typography.bodyMedium,
-            color = Color.White
+            style = Typography.bodyMedium
         )
     }
 }
