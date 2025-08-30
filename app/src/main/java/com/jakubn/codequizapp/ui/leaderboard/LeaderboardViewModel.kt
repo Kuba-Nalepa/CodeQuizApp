@@ -62,10 +62,10 @@ class LeaderboardViewModel @Inject constructor(
 
     }
 
-    fun sendFriendshipRequest(senderId: String, receiverId: String) {
+    fun sendFriendshipRequest(senderId: String, receiverId: String, senderName: String) {
         viewModelScope.launch {
             try {
-                userDataRepository.sendFriendshipRequest(senderId, receiverId)
+                userDataRepository.sendFriendshipRequest(senderId, receiverId, senderName)
                 _uiEvents.send("friend_request_sent")
             } catch (e: Exception) {
                 _uiEvents.send("error")

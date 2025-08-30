@@ -3,7 +3,6 @@ package com.jakubn.codequizapp.data.repositoryImpl
 import android.net.Uri
 import android.util.Log
 import com.google.firebase.Firebase
-import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
@@ -157,7 +156,7 @@ class UserDataRepository @Inject constructor(
         }.flowOn(Dispatchers.IO)
     }
 
-    override suspend fun sendFriendshipRequest(senderId: String, receiverId: String) {
+    override suspend fun sendFriendshipRequest(senderId: String, receiverId: String, senderName: String) {
         val db = FirebaseFirestore.getInstance()
         val friendshipDocRef = db.collection("friendships")
 
@@ -177,7 +176,8 @@ class UserDataRepository @Inject constructor(
                 val requestData = hashMapOf(
                     "senderId" to senderId,
                     "receiverId" to receiverId,
-                    "status" to "pending"
+                    "status" to "pending",
+                    "senderName" to senderName
                 )
                 friendshipDocRef.add(requestData).await()
             }

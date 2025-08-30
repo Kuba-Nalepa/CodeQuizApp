@@ -1,6 +1,10 @@
 package com.jakubn.codequizapp.ui.home
 
+import android.Manifest
 import android.net.Uri
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -20,6 +24,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Done
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -31,6 +37,7 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -70,6 +77,24 @@ fun HomeScreen(
     val requestsState by homeViewModel.requestsState.collectAsState()
     var showBottomSheet by remember { mutableStateOf(false) }
 
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = { isGranted ->
+            if (isGranted) {
+                // Permission is granted
+            } else {
+                // Permission is denied. You might want to show a message to the user.
+            }
+        }
+    )
+
+
+    LaunchedEffect(key1 = true) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
+
     val colors = arrayOf(
         0.06f to Color(0xffA3FF0D),
         0.22f to Color(0xff74B583),
@@ -87,91 +112,104 @@ fun HomeScreen(
                     .background(Color.Black.copy(alpha = 0.2f))
                     .blur(12.dp) else Modifier
             )
-            .padding(20.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(
-            text = "<CODE/QUIZ>",
-            style = Typography.bodyMedium,
-            color = Color(0xff7BAFC4)
-        )
-
-        UserSectionContainer(userState, friendsState) { showBottomSheet = true }
-
-        Text(
-            modifier = Modifier.padding(bottom = 20.dp),
-            text = "Ready to test your programming skills?",
-            style = Typography.bodyLarge,
-            textAlign = TextAlign.Center
-        )
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(20.dp),
-            verticalAlignment = Alignment.CenterVertically
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
         ) {
-            Button(
-                modifier = Modifier.weight(1f),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0x52FFFFFF)),
-                shape = RoundedCornerShape(20.dp),
-                onClick = createGame
-
+            Text(
+                modifier = Modifier.align(Alignment.Center),
+                text = "<CODE/QUIZ>",
+                style = Typography.bodyMedium,
+                color = Color(0xff7BAFC4)
+            )
+            Column(
+                modifier = Modifier.align(Alignment.CenterEnd).padding(end = 20.dp),
             ) {
-                Text(
-                    text = "Create Game".uppercase(),
-                    textAlign = TextAlign.Center,
-                    color = MaterialTheme.colorScheme.primary,
-                    style = Typography.bodyLarge,
-                    softWrap = true
-                )
+                NotificationBadge(onClick = {},3)
             }
-            Button(
-                modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(20.dp),
-                onClick = playGame,
+        }
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            UserSectionContainer(userState, friendsState) { showBottomSheet = true }
+
+            Text(
+                modifier = Modifier.padding(bottom = 20.dp),
+                text = "Ready to test your programming skills?",
+                style = Typography.bodyLarge,
+                textAlign = TextAlign.Center
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(20.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = "Play Now".uppercase(),
-                    textAlign = TextAlign.Center,
-                    color = Color(0xFF000000),
-                    style = Typography.bodyLarge,
-                    softWrap = true
-
-                )
-            }
-
-            if (showBottomSheet) {
-                val sheetState = rememberModalBottomSheetState()
-                ModalBottomSheet(
-                    onDismissRequest = { showBottomSheet = false },
-                    sheetState = sheetState,
-                    shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
-                    dragHandle = {}
+                Button(
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0x52FFFFFF)),
+                    shape = RoundedCornerShape(20.dp),
+                    onClick = createGame
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(
-                                brush = Brush.verticalGradient(
-                                    colorStops = arrayOf(
-                                        0.32f to Color(0xff000226),
-                                        0.91f to Color(0xff58959A),
-                                        1f to Color(0xffffffff)
-                                    )
-                                ),
-                                shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
-                            )
-                            .padding(horizontal = 28.dp)
-                    ) {
+                    Text(
+                        text = "Create Game".uppercase(),
+                        textAlign = TextAlign.Center,
+                        color = MaterialTheme.colorScheme.primary,
+                        style = Typography.bodyLarge,
+                        softWrap = true
+                    )
+                }
+                Button(
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(20.dp),
+                    onClick = playGame,
+                ) {
+                    Text(
+                        text = "Play Now".uppercase(),
+                        textAlign = TextAlign.Center,
+                        color = Color(0xFF000000),
+                        style = Typography.bodyLarge,
+                        softWrap = true
+                    )
+                }
 
-                        FriendsListBottomSheet(
-                            friendsState = friendsState,
-                            requestsState = requestsState,
-                            onCloseBottomSheet = { showBottomSheet = false },
-                            onAcceptRequest = homeViewModel::acceptFriendRequest,
-                            onDeclineRequest = homeViewModel::declineFriendRequest,
-                            navigateToChat = navigateToChat
-                        )
+                if (showBottomSheet) {
+                    val sheetState = rememberModalBottomSheetState()
+                    ModalBottomSheet(
+                        onDismissRequest = { showBottomSheet = false },
+                        sheetState = sheetState,
+                        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
+                        dragHandle = {}
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(
+                                    brush = Brush.verticalGradient(
+                                        colorStops = arrayOf(
+                                            0.32f to Color(0xff000226),
+                                            0.91f to Color(0xff58959A),
+                                            1f to Color(0xffffffff)
+                                        )
+                                    ),
+                                    shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
+                                )
+                                .padding(horizontal = 28.dp)
+                        ) {
+                            FriendsListBottomSheet(
+                                friendsState = friendsState,
+                                requestsState = requestsState,
+                                onCloseBottomSheet = { showBottomSheet = false },
+                                onAcceptRequest = homeViewModel::acceptFriendRequest,
+                                onDeclineRequest = homeViewModel::declineFriendRequest,
+                                navigateToChat = navigateToChat
+                            )
+                        }
                     }
                 }
             }
@@ -451,7 +489,9 @@ fun FriendsListBottomSheet(
                 val friendsList = friendsState.result
                 if (friendsList.isNotEmpty()) {
                     LazyColumn(
-                        modifier = Modifier.fillMaxWidth().heightIn(min = 100.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 100.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         items(friendsList) { friend ->
@@ -468,7 +508,9 @@ fun FriendsListBottomSheet(
                     }
                 } else {
                     Column(
-                        modifier = Modifier.fillMaxWidth().heightIn(min = 150.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 150.dp),
                         verticalArrangement = Arrangement.SpaceEvenly
                     ) {
                         Text(
@@ -618,6 +660,30 @@ private fun FriendMenuItem(friend: Friend, textFriend: () -> Unit, playGame: () 
                     contentDescription = "Play with friend"
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun NotificationBadge(onClick: () -> Unit, notificationCount: Int) {
+    BadgedBox(
+        badge = {
+            if (notificationCount > 0) {
+                Badge(
+                    containerColor = MaterialTheme.colorScheme.secondary,
+                    contentColor = Color.White
+                ) {
+                    Text("$notificationCount")
+                }
+            }
+        }
+    ) {
+        IconButton(
+            onClick = {onClick()},
+        ) {
+            Icon(painter = painterResource(R.drawable.ic_notifications),
+                contentDescription = "Notifications bell",
+                tint = Color(0xff7BAFC4))
         }
     }
 }

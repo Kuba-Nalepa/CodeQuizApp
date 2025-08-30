@@ -1,5 +1,6 @@
 import {
   onDocumentUpdated,
+  onDocumentCreated,
 } from "firebase-functions/v2/firestore";
 import {onCall, HttpsError} from "firebase-functions/v2/https";
 import * as admin from "firebase-admin";
@@ -17,6 +18,7 @@ interface User {
   uid: string;
   name: string;
   imageUri: string;
+  fcmToken?: string;
 }
 
 interface Friend {
@@ -192,3 +194,50 @@ export const checkChatExists = onCall(async (request) => {
   const doc = await chatRef.get();
   return {exists: doc.exists, chatId: chatId};
 });
+
+export const sendFriendRequestNotification = onDocumentCreated(
+  "friendships/{requestId}",
+  async (event) => {
+    if (!event.data) {
+      console.log("No data found in event.data.");
+      return;
+    }
+
+    const request = event.data.data();
+    const receiverId = request.receiverId;
+    const senderName = request.senderName;
+
+    const userDoc = await admin
+      .firestore()
+      .collection("users")
+      .doc(receiverId)
+      .get();
+
+    const fcmToken = userDoc.data()?.fcmToken;
+
+    if (!fcmToken) {
+      console.log("There is no token.");
+      return null;
+    }
+
+    const payload = {
+      notification: {
+        title: "New invitation!",
+        body: `${senderName} has sent You an invitation.`,
+      },
+      data: {
+        type: "friend_request",
+      },
+      token: fcmToken,
+    };
+
+    return admin.messaging().send(payload)
+      .then((response) => {
+        console.log("Notification sent successfully:", response);
+        return null;
+      })
+      .catch((error) => {
+        console.error("Error sending notification:", error);
+      });
+  }
+);

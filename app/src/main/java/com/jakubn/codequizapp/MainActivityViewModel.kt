@@ -6,7 +6,9 @@ import com.jakubn.codequizapp.data.UserManager
 import com.jakubn.codequizapp.model.CustomState
 import com.jakubn.codequizapp.model.User
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -17,6 +19,9 @@ class MainViewModel @Inject constructor(
 
     val currentUser: StateFlow<CustomState<User>> = userManager.userState
 
+    private val _navigationEvent = MutableSharedFlow<String>()
+    val navigationEvent = _navigationEvent.asSharedFlow()
+
     fun logout() {
         viewModelScope.launch {
             userManager.onUserLoggedOut()
@@ -26,6 +31,12 @@ class MainViewModel @Inject constructor(
     fun onLoginSuccess(loggedInUser: User) {
         viewModelScope.launch {
             userManager.onUserAuthenticated(loggedInUser)
+        }
+    }
+
+    fun navigateTo(route: String) {
+        viewModelScope.launch {
+            _navigationEvent.emit(route)
         }
     }
 }

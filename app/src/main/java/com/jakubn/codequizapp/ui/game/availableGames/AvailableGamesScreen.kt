@@ -199,7 +199,8 @@ fun FounderInfo(data: Game) {
                     .background(MaterialTheme.colorScheme.primary)
                     .padding(4.dp),
                 text = it,
-                style = Typography.labelMedium
+                style = Typography.labelMedium,
+                color = Color.Black
             )
         }
     }

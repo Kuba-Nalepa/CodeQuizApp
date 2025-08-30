@@ -144,6 +144,7 @@ fun LoginScreen(viewModel: LoginViewModel = hiltViewModel(), logIn: (User) -> Un
                 Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
                 viewModel.resetState()
                 logIn(currentState.result)
+                currentState.result.uid?.let { viewModel.saveFCMToken(it) }
 
             }
             is CustomState.Failure -> {

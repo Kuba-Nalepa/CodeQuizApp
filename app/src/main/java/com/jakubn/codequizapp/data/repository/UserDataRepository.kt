@@ -21,7 +21,7 @@ interface UserDataRepository {
 
     suspend fun observeUserData(): Flow<User?>
 
-    suspend fun sendFriendshipRequest(senderId: String, receiverId: String)
+    suspend fun sendFriendshipRequest(senderId: String, receiverId: String, senderName: String)
 
     suspend fun acceptFriendshipRequest(friendshipId: String)
 

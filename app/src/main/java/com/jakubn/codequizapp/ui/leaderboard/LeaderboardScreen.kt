@@ -166,10 +166,13 @@ fun LeaderboardScreen(
                                     isFriend = isFriend,
                                     friendshipStatus = friendshipStatus,
                                     inviteFriend = {
-                                        viewModel.sendFriendshipRequest(
-                                            userUid,
-                                            selectedUserUid
-                                        )
+                                        user.name?.let {
+                                            viewModel.sendFriendshipRequest(
+                                                userUid,
+                                                selectedUserUid,
+                                                it
+                                            )
+                                        }
                                     },
                                     textMessage = {
                                         selectedUser.let { friend ->

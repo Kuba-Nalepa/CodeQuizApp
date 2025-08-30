@@ -85,6 +85,9 @@ dependencies {
     implementation("com.google.firebase:firebase-database")
     implementation("com.google.firebase:firebase-storage-ktx:21.0.2")
     implementation("com.google.firebase:firebase-functions-ktx")
+    implementation("com.google.firebase:firebase-messaging:25.0.0")
+    implementation ("com.google.firebase:firebase-messaging-ktx")
+
 
 
     // Dependency Injection (Hilt)

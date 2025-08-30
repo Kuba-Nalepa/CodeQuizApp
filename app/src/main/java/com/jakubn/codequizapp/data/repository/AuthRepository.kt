@@ -14,4 +14,6 @@ interface AuthRepository {
 
     fun signOutUser()
 
+    suspend fun saveFCMTokenToFirestore(userId: String)
+
 }

@@ -4,6 +4,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.UserProfileChangeRequest
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.messaging.FirebaseMessaging
 import com.jakubn.codequizapp.model.User
 import com.jakubn.codequizapp.data.repository.AuthRepository
 import kotlinx.coroutines.Dispatchers
@@ -18,7 +19,8 @@ import javax.inject.Singleton
 @Singleton
 class AuthRepository @Inject constructor(
     private val firebaseAuth: FirebaseAuth,
-    private val firebaseFirestore: FirebaseFirestore
+    private val firebaseFirestore: FirebaseFirestore,
+    private val firebaseMessaging: FirebaseMessaging
 ) : AuthRepository {
 
     override suspend fun signUpUser(
@@ -69,5 +71,14 @@ class AuthRepository @Inject constructor(
 
     override fun signOutUser() {
         firebaseAuth.signOut()
+    }
+
+    override suspend fun saveFCMTokenToFirestore(userId: String) {
+        try {
+            val token = firebaseMessaging.token.await()
+            firebaseFirestore.collection("users").document(userId).update("fcmToken", token).await()
+        } catch (e: Exception) {
+            // Obsługa błędu TODO()
+        }
     }
 }
