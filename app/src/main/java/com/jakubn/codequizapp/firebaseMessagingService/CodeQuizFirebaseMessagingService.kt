@@ -72,7 +72,7 @@ class CodeQuizFirebaseMessagingService : FirebaseMessagingService() {
         val pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
 
         val notificationBuilder = NotificationCompat.Builder(this, channelId)
-            .setLargeIcon(BitmapFactory.decodeResource(resources, R.drawable.icon_login))
+            .setSmallIcon(R.drawable.notifications_logo)
             .setContentTitle(title)
             .setContentText(message)
             .setContentIntent(pendingIntent)

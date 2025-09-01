@@ -17,6 +17,14 @@
         android:theme="@style/Theme.ChallengeApp"
         tools:targetApi="31" >
 
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/notifications_logo" />
+
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_color"
+            android:resource="@color/notification_color_icon" />
+
         <activity android:name=".AuthorizationActivity"
             android:exported="true"
             android:theme="@style/Theme.ChallengeApp" >
