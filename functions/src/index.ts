@@ -195,28 +195,36 @@ export const checkChatExists = onCall(async (request) => {
   return {exists: doc.exists, chatId: chatId};
 });
 
-export const sendFriendRequestNotification = onDocumentCreated(
+export const handleNewFriendshipRequest = onDocumentCreated(
   "friendships/{requestId}",
   async (event) => {
     if (!event.data) {
-      console.log("No data found in event.data.");
-      return;
+      console.log("No data found in the event.");
+      return null;
     }
 
     const request = event.data.data();
     const receiverId = request.receiverId;
     const senderName = request.senderName;
 
-    const userDoc = await admin
+    const userRef = admin
       .firestore()
       .collection("users")
-      .doc(receiverId)
-      .get();
+      .doc(receiverId);
 
+    const userDoc = await userRef.get();
     const fcmToken = userDoc.data()?.fcmToken;
 
+    await userRef.update({
+      unreadFriendInvitations: admin.firestore.FieldValue.increment(1),
+    });
+
+    console.log(
+      `Friendship notification count increased for user: ${receiverId}`
+    );
+
     if (!fcmToken) {
-      console.log("There is no token.");
+      console.log("No FCM token, not sending notification.");
       return null;
     }
 
@@ -231,13 +239,70 @@ export const sendFriendRequestNotification = onDocumentCreated(
       token: fcmToken,
     };
 
-    return admin.messaging().send(payload)
-      .then((response) => {
-        console.log("Notification sent successfully:", response);
-        return null;
-      })
-      .catch((error) => {
-        console.error("Error sending notification:", error);
-      });
+    try {
+      await admin.messaging().send(payload);
+      console.log("FCM notification sent successfully.");
+      return null;
+    } catch (error) {
+      console.error("Error sending FCM notification:", error);
+      return null;
+    }
+
+    return null;
+  }
+);
+
+export const handleNewGameInvite = onDocumentCreated(
+  "gameInvitations/{inviteId}",
+  async (event) => {
+    if (!event.data) {
+      console.log("No data found in the event.");
+      return null;
+    }
+
+    const inviteData = event.data.data();
+    const receiverId = inviteData.receiverId;
+    const senderName = inviteData.senderName;
+
+    const userRef = admin
+      .firestore()
+      .collection("users")
+      .doc(receiverId);
+
+    const userDoc = await userRef.get();
+    const fcmToken = userDoc.data()?.fcmToken;
+
+    await userRef.update({
+      unreadGameInvitations: admin.firestore.FieldValue.increment(1),
+    });
+
+    console.log(`Game invite count increased for user: ${receiverId}`);
+
+    if (!fcmToken) {
+      console.log("No FCM token, not sending notification.");
+      return null;
+    }
+
+    const payload = {
+      notification: {
+        title: "New invitation!",
+        body: `${senderName} has invited you to a game.`,
+      },
+      data: {
+        type: "game_invite",
+      },
+      token: fcmToken,
+    };
+
+    try {
+      await admin.messaging().send(payload);
+      console.log("FCM notification sent successfully.");
+      return null;
+    } catch (error) {
+      console.error("Error sending FCM notification:", error);
+      return null;
+    }
+
+    return null;
   }
 );

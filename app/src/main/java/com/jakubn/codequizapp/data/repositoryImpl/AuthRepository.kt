@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -74,11 +75,14 @@ class AuthRepository @Inject constructor(
     }
 
     override suspend fun saveFCMTokenToFirestore(userId: String) {
-        try {
-            val token = firebaseMessaging.token.await()
-            firebaseFirestore.collection("users").document(userId).update("fcmToken", token).await()
-        } catch (e: Exception) {
-            // Obsługa błędu TODO()
+        withContext(Dispatchers.IO) {
+            try {
+                val token = firebaseMessaging.token.await()
+                firebaseFirestore.collection("users").document(userId).update("fcmToken", token).await()
+            } catch (e: Exception) {
+                // Obsługa błędu TODO()
+            }
         }
+
     }
 }

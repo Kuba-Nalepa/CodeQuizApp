@@ -35,9 +35,21 @@ interface UserDataRepository {
 
     fun observeChatMessages(chatId: String): Flow<List<Message>>
 
+    fun observeFriendInvitationsCount(userId: String): Flow<Long>
+
+    fun observeGameInvitationsCount(userId: String): Flow<Long>
+
     suspend fun createChat(userUid: String,friendUid: String): String
 
     suspend fun sendMessage(chatId: String, userUid: String, messageText: String)
 
     suspend fun checkChatExists(myUserId: String, friendUid: String): Boolean
+
+    suspend fun resetFriendInvitationCount(userId: String)
+
+    suspend fun resetGameInvitationCount(userId: String)
+
+    suspend fun decrementFriendInvitationCount(userId: String)
+
+    suspend fun decrementGameInvitationCount(userId: String)
 }

@@ -76,6 +76,7 @@ fun HomeScreen(
     val friendsState by homeViewModel.friendsState.collectAsState()
     val requestsState by homeViewModel.requestsState.collectAsState()
     var showBottomSheet by remember { mutableStateOf(false) }
+    val notificationState by homeViewModel.notificationState.collectAsState()
 
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission(),
@@ -87,7 +88,6 @@ fun HomeScreen(
             }
         }
     )
-
 
     LaunchedEffect(key1 = true) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -124,9 +124,12 @@ fun HomeScreen(
                 color = Color(0xff7BAFC4)
             )
             Column(
-                modifier = Modifier.align(Alignment.CenterEnd).padding(end = 20.dp),
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .padding(end = 20.dp),
             ) {
-                NotificationBadge(onClick = {},3)
+
+                NotificationBadge(onClick = { showBottomSheet = true }, notificationState)
             }
         }
 
@@ -181,7 +184,9 @@ fun HomeScreen(
                 if (showBottomSheet) {
                     val sheetState = rememberModalBottomSheetState()
                     ModalBottomSheet(
-                        onDismissRequest = { showBottomSheet = false },
+                        onDismissRequest = {
+                            showBottomSheet = false
+                        },
                         sheetState = sheetState,
                         shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
                         dragHandle = {}
@@ -205,8 +210,12 @@ fun HomeScreen(
                                 friendsState = friendsState,
                                 requestsState = requestsState,
                                 onCloseBottomSheet = { showBottomSheet = false },
-                                onAcceptRequest = homeViewModel::acceptFriendRequest,
-                                onDeclineRequest = homeViewModel::declineFriendRequest,
+                                onAcceptRequest = { friendshipId ->
+                                    homeViewModel.acceptFriendRequest(friendshipId)
+                                },
+                                onDeclineRequest = { friendshipId ->
+                                    homeViewModel.declineFriendRequest(friendshipId)
+                                },
                                 navigateToChat = navigateToChat
                             )
                         }
@@ -576,7 +585,7 @@ fun FriendRequestItem(
             painter = if (!request.senderImageUri.isNullOrEmpty()) {
                 rememberAsyncImagePainter(model = Uri.parse(request.senderImageUri))
             } else {
-                painterResource(R.drawable.generic_avatar)
+                painterResource(R.drawable.sample_avatar)
             },
             contentDescription = "User Avatar"
         )
@@ -624,7 +633,7 @@ private fun FriendMenuItem(friend: Friend, textFriend: () -> Unit, playGame: () 
             painter = if (!friend.imageUri.isNullOrEmpty()) {
                 rememberAsyncImagePainter(model = Uri.parse(friend.imageUri))
             } else {
-                painterResource(R.drawable.generic_avatar)
+                painterResource(R.drawable.sample_avatar)
             },
             contentDescription = "User Avatar"
         )
@@ -665,25 +674,47 @@ private fun FriendMenuItem(friend: Friend, textFriend: () -> Unit, playGame: () 
 }
 
 @Composable
-private fun NotificationBadge(onClick: () -> Unit, notificationCount: Int) {
-    BadgedBox(
-        badge = {
-            if (notificationCount > 0) {
-                Badge(
-                    containerColor = MaterialTheme.colorScheme.secondary,
-                    contentColor = Color.White
+private fun NotificationBadge(onClick: () -> Unit, notificationsState: CustomState<Int>) {
+    when (notificationsState) {
+        is CustomState.Success -> {
+            val notificationsNumber = notificationsState.result
+            BadgedBox(
+                badge = {
+                    if (notificationsNumber > 0) {
+                        Badge(
+                            containerColor = MaterialTheme.colorScheme.secondary,
+                            contentColor = Color.White
+                        ) {
+                            Text("$notificationsNumber")
+                        }
+                    }
+                }
+            ) {
+                IconButton(
+                    onClick = { onClick() },
                 ) {
-                    Text("$notificationCount")
+                    Icon(
+                        painter = painterResource(R.drawable.ic_notifications),
+                        contentDescription = "Notifications bell",
+                        tint = Color(0xff7BAFC4)
+                    )
                 }
             }
         }
-    ) {
-        IconButton(
-            onClick = {onClick()},
-        ) {
-            Icon(painter = painterResource(R.drawable.ic_notifications),
-                contentDescription = "Notifications bell",
-                tint = Color(0xff7BAFC4))
+
+        is CustomState.Failure -> {
+            Icon(
+                painter = painterResource(R.drawable.ic_close),
+                contentDescription = "Something went wrong",
+                tint = MaterialTheme.colorScheme.error
+            )
         }
+
+        CustomState.Loading -> {
+            CircularProgressIndicator()
+        }
+
+        CustomState.Idle -> {}
     }
+
 }

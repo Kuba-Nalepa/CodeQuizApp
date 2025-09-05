@@ -180,7 +180,7 @@ private fun ProfilePictureSection(
                 selectedLocalAvatarUri != null -> rememberAsyncImagePainter(selectedLocalAvatarUri)
                 userState is CustomState.Success && !(userState.result.imageUri.isNullOrEmpty()) ->
                     rememberAsyncImagePainter(Uri.parse(userState.result.imageUri))
-                else -> painterResource(R.drawable.generic_avatar)
+                else -> painterResource(R.drawable.sample_avatar)
             },
             contentDescription = "Profile Picture",
             contentScale = ContentScale.Crop,
