@@ -15,6 +15,7 @@ import com.jakubn.codequizapp.model.User
 import com.jakubn.codequizapp.data.repository.UserDataRepository
 import com.jakubn.codequizapp.model.Friend
 import com.jakubn.codequizapp.model.FriendshipRequest
+import com.jakubn.codequizapp.model.GameRequest
 import com.jakubn.codequizapp.model.Message
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -92,25 +93,25 @@ class UserDataRepository @Inject constructor(
     }
 
     override suspend fun uploadProfileImage(imageUri: Uri): String {
-            val userId = firebaseAuth.currentUser?.uid
-                ?: throw Exception("User not authenticated. Cannot upload image.")
+        val userId = firebaseAuth.currentUser?.uid
+            ?: throw Exception("User not authenticated. Cannot upload image.")
 
-            return try {
-                val storageRef = firebaseStorage.reference
-                val fileName = "avatars/${UUID.randomUUID()}.jpg"
-                val imageRef = storageRef.child("users/$userId/$fileName")
+        return try {
+            val storageRef = firebaseStorage.reference
+            val fileName = "avatars/${UUID.randomUUID()}.jpg"
+            val imageRef = storageRef.child("users/$userId/$fileName")
 
-                val uploadTask = imageRef.putFile(imageUri)
-                uploadTask.await()
+            val uploadTask = imageRef.putFile(imageUri)
+            uploadTask.await()
 
-                val downloadUrl = imageRef.downloadUrl.await()
-                downloadUrl.toString()
-            } catch (e: Exception) {
-                throw Exception("Failed to upload image to Firebase Storage: ${e.localizedMessage}", e)
-            }
+            val downloadUrl = imageRef.downloadUrl.await()
+            downloadUrl.toString()
+        } catch (e: Exception) {
+            throw Exception("Failed to upload image to Firebase Storage: ${e.localizedMessage}", e)
+        }
     }
 
-    override suspend fun getUsers(): Flow<List<User>> = callbackFlow {
+    override fun observeUsersInRanking(): Flow<List<User>> = callbackFlow {
         val userDocRef = firebaseFirestore.collection("users")
 
         val subscription =
@@ -136,6 +137,13 @@ class UserDataRepository @Inject constructor(
         }
     }.flowOn(Dispatchers.IO)
 
+    override suspend fun getUsersFriends(userId: String): List<Friend> {
+        return firebaseFirestore.collection("users").document(userId).collection("friends").get()
+            .await()
+            .toObjects(Friend::class.java)
+
+    }
+
     override suspend fun observeUserData(): Flow<User?> {
         return callbackFlow {
             val currentUserUid = firebaseAuth.currentUser?.uid
@@ -156,34 +164,38 @@ class UserDataRepository @Inject constructor(
         }.flowOn(Dispatchers.IO)
     }
 
-    override suspend fun sendFriendshipRequest(senderId: String, receiverId: String, senderName: String) {
-            val db = FirebaseFirestore.getInstance()
-            val friendshipDocRef = db.collection("friendships")
+    override suspend fun sendFriendshipRequest(
+        senderId: String,
+        receiverId: String,
+        senderName: String
+    ) {
+        val db = FirebaseFirestore.getInstance()
+        val friendshipDocRef = db.collection("friendships")
 
-            val query1 = friendshipDocRef
-                .whereEqualTo("senderId", senderId)
-                .whereEqualTo("receiverId", receiverId)
+        val query1 = friendshipDocRef
+            .whereEqualTo("senderId", senderId)
+            .whereEqualTo("receiverId", receiverId)
 
-            val query2 = friendshipDocRef
-                .whereEqualTo("senderId", receiverId)
-                .whereEqualTo("receiverId", senderId)
+        val query2 = friendshipDocRef
+            .whereEqualTo("senderId", receiverId)
+            .whereEqualTo("receiverId", senderId)
 
-            try {
-                val result1 = query1.get().await()
-                val result2 = query2.get().await()
+        try {
+            val result1 = query1.get().await()
+            val result2 = query2.get().await()
 
-                if (result1.isEmpty && result2.isEmpty) {
-                    val requestData = hashMapOf(
-                        "senderId" to senderId,
-                        "receiverId" to receiverId,
-                        "status" to "pending",
-                        "senderName" to senderName
-                    )
-                    friendshipDocRef.add(requestData).await()
-                }
-            } catch (e: Exception) {
-                Log.e("TAG", "Failed sending request: ${e.message}")
+            if (result1.isEmpty && result2.isEmpty) {
+                val requestData = hashMapOf(
+                    "senderId" to senderId,
+                    "receiverId" to receiverId,
+                    "status" to "pending",
+                    "senderName" to senderName
+                )
+                friendshipDocRef.add(requestData).await()
             }
+        } catch (e: Exception) {
+            Log.e("TAG", "Failed sending request: ${e.message}")
+        }
     }
 
     override suspend fun acceptFriendshipRequest(friendshipId: String) {
@@ -214,7 +226,7 @@ class UserDataRepository @Inject constructor(
         }
     }
 
-    override suspend fun observeFriendsList(userId: String): Flow<List<Friend>> {
+    override fun observeFriendsList(userId: String): Flow<List<Friend>> {
         return callbackFlow {
             val docRef =
                 firebaseFirestore.collection("users").document(userId).collection("friends")
@@ -279,54 +291,6 @@ class UserDataRepository @Inject constructor(
         }.flowOn(Dispatchers.IO)
     }
 
-    override fun observePendingFriendsRequestsWithSenderData(userId: String): Flow<List<FriendshipRequest>> {
-        return callbackFlow {
-            val docRef = firebaseFirestore.collection("friendships")
-                .whereEqualTo("receiverId", userId)
-                .whereEqualTo("status", "pending")
-
-            val subscription = docRef.addSnapshotListener { snapshot, error ->
-                if (error != null) {
-                    close(error)
-                    return@addSnapshotListener
-                }
-
-                val requests = snapshot?.documents?.mapNotNull { doc ->
-                    doc.toObject(FriendshipRequest::class.java)?.copy(id = doc.id)
-                } ?: emptyList()
-
-                val senderIds = requests.mapNotNull { it.senderId }.toSet()
-
-                if (senderIds.isEmpty()) {
-                    trySend(emptyList()).isSuccess
-                    return@addSnapshotListener
-                }
-
-                firebaseFirestore.collection("users")
-                    .whereIn("uid", senderIds.toList())
-                    .get()
-                    .addOnSuccessListener { sendersSnapshot ->
-                        val sendersMap = sendersSnapshot.documents.associateBy({ it.id },
-                            { it.toObject(User::class.java) })
-
-                        val requestsWithSenderData = requests.map { request ->
-                            val sender = sendersMap[request.senderId]
-                            request.copy(
-                                senderName = sender?.name,
-                                senderImageUri = sender?.imageUri
-                            )
-                        }
-                        trySend(requestsWithSenderData).isSuccess
-                    }
-                    .addOnFailureListener { e ->
-                        close(e)
-                    }
-            }
-
-            awaitClose { subscription.remove() }
-        }.flowOn(Dispatchers.IO)
-    }
-
     override suspend fun createChat(userUid: String, friendUid: String): String {
         val functions = Firebase.functions
         val data = hashMapOf(
@@ -342,9 +306,6 @@ class UserDataRepository @Inject constructor(
     }
 
     override suspend fun sendMessage(chatId: String, userUid: String, messageText: String) {
-        withContext(Dispatchers.IO) {
-
-        }
         val functions = Firebase.functions
 
         val data = hashMapOf(
@@ -359,7 +320,8 @@ class UserDataRepository @Inject constructor(
     }
 
     override fun observeChatMessages(chatId: String): Flow<List<Message>> = callbackFlow {
-        val messagesRef = firebaseFirestore.collection("chats").document(chatId).collection("messages")
+        val messagesRef =
+            firebaseFirestore.collection("chats").document(chatId).collection("messages")
 
         val subscription = messagesRef
             .orderBy("timestamp", Query.Direction.DESCENDING)
@@ -443,6 +405,78 @@ class UserDataRepository @Inject constructor(
         awaitClose { subscription.remove() }
     }.flowOn(Dispatchers.IO)
 
+    override fun observeFriendshipRequests(userId: String): Flow<List<FriendshipRequest>> {
+        return callbackFlow {
+            val docRef = firebaseFirestore.collection("friendships")
+                .whereEqualTo("receiverId", userId)
+                .whereEqualTo("status", "pending")
+
+            val subscription = docRef.addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    close(error)
+                    return@addSnapshotListener
+                }
+
+                val requests = snapshot?.documents?.mapNotNull { doc ->
+                    doc.toObject(FriendshipRequest::class.java)?.copy(id = doc.id)
+                } ?: emptyList()
+
+                val senderIds = requests.mapNotNull { it.senderId }.toSet()
+
+                if (senderIds.isEmpty()) {
+                    trySend(emptyList()).isSuccess
+                    return@addSnapshotListener
+                }
+
+                firebaseFirestore.collection("users")
+                    .whereIn("uid", senderIds.toList())
+                    .get()
+                    .addOnSuccessListener { sendersSnapshot ->
+                        val sendersMap = sendersSnapshot.documents.associateBy({ it.id },
+                            { it.toObject(User::class.java) })
+
+                        val requestsWithSenderData = requests.map { request ->
+                            val sender = sendersMap[request.senderId]
+                            request.copy(
+                                senderName = sender?.name,
+                                senderImageUri = sender?.imageUri
+                            )
+                        }
+                        trySend(requestsWithSenderData).isSuccess
+                    }
+                    .addOnFailureListener { e ->
+                        close(e)
+                    }
+            }
+
+            awaitClose { subscription.remove() }
+        }.flowOn(Dispatchers.IO)
+    }
+
+    override fun observeGameRequest(userId: String): Flow<List<GameRequest>> = callbackFlow {
+        val requestsRef = firebaseFirestore.collection("gameInvitations")
+            .whereEqualTo("receiverId", userId)
+            .whereEqualTo("status", "pending")
+
+        val subscription = requestsRef.addSnapshotListener { snapshot, error ->
+            if (error != null) {
+                close(error)
+                return@addSnapshotListener
+            }
+
+            if (snapshot != null) {
+                val gameRequests = snapshot.documents.mapNotNull { doc ->
+                    doc.toObject(GameRequest::class.java)
+                }
+                trySend(gameRequests)
+            } else {
+                trySend(emptyList())
+            }
+        }
+
+        awaitClose { subscription.remove() }
+    }
+
     override suspend fun decrementFriendInvitationCount(userId: String) {
         withContext(Dispatchers.IO) {
             val userRef = firebaseFirestore.collection("users").document(userId)
@@ -454,20 +488,6 @@ class UserDataRepository @Inject constructor(
         withContext(Dispatchers.IO) {
             val userRef = firebaseFirestore.collection("users").document(userId)
             userRef.update("unreadGameInvitations", FieldValue.increment(-1))
-        }
-    }
-
-    override suspend fun resetFriendInvitationCount(userId: String) {
-        withContext(Dispatchers.IO) {
-            val userRef = firebaseFirestore.collection("users").document(userId)
-            userRef.update("unreadFriendInvitations", 0)
-        }
-    }
-
-    override suspend fun resetGameInvitationCount(userId: String) {
-        withContext(Dispatchers.IO) {
-            val userRef = firebaseFirestore.collection("users").document(userId)
-            userRef.update("unreadGameInvitations", 0)
         }
     }
 }

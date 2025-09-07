@@ -56,5 +56,9 @@ sealed class Screen(val route: String) {
             return "chat_screen?friendUid=$friendUid&friendName=$friendName"
         }
     }
+    @Serializable
+    data object Notifications : Screen("notifications/{userId}") {
+        fun createRoute(userId: String) = "notifications/$userId"
+    }
 
 }

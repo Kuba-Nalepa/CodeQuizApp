@@ -17,7 +17,7 @@ val Typography = Typography(
         fontFamily = ZenDotsFamily,
         fontSize = 52.sp,  // Extended large dimension for title
         letterSpacing = 0.sp,
-        color = PrimaryLight
+        color = Primary
         
     ),
     titleMedium = TextStyle(

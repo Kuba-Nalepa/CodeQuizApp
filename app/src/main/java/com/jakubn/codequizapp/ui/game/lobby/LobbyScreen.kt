@@ -1,11 +1,13 @@
 package com.jakubn.codequizapp.ui.game.lobby
 
+
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,28 +17,41 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.paint
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -49,6 +64,7 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.jakubn.codequizapp.R
 import com.jakubn.codequizapp.model.CustomState
+import com.jakubn.codequizapp.model.Friend
 import com.jakubn.codequizapp.model.User
 import com.jakubn.codequizapp.navigation.Screen
 import com.jakubn.codequizapp.theme.Typography
@@ -62,19 +78,23 @@ fun LobbyScreen(
 ) {
     val gameState by viewModel.state.collectAsState()
     val lobbyState by viewModel.lobby.collectAsState()
+    val friendsState by viewModel.friendsState.collectAsState()
+    var showFriendsBottomSheet by remember { mutableStateOf(false) }
     val context = LocalContext.current
 
     LaunchedEffect(gameState) {
         when (val currentState = gameState) {
             is CustomState.Success -> {
                 if (currentState.result == null) navController.popBackStack()
-                else if (currentState.result.gameInProgress == false && currentState.result.lobby?.hasFounderLeftGame == true)
-                {
+                else if (currentState.result.gameInProgress == false && currentState.result.lobby?.hasFounderLeftGame == true) {
                     viewModel.leaveFromLobby(gameId, user)
-                    if (viewModel.isCurrentUserMember(user)) Toast.makeText(context, "Founder has left.\nRemoved from the lobby.", Toast.LENGTH_SHORT).show()
+                    if (viewModel.isCurrentUserMember(user)) Toast.makeText(
+                        context,
+                        "Founder has left.\nRemoved from the lobby.",
+                        Toast.LENGTH_SHORT
+                    ).show()
                     navController.popBackStack()
-                }
-                else if (currentState.result.gameInProgress == true) {
+                } else if (currentState.result.gameInProgress == true) {
                     navController.navigate(Screen.Quiz.route + "/$gameId")
                 }
 
@@ -95,9 +115,15 @@ fun LobbyScreen(
         val callback = object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 val currentGameState = (gameState as? CustomState.Success)?.result
-                if (viewModel.isCurrentUserFounder(user)) viewModel.setUserLeftGame(currentGameState, user)
+                if (viewModel.isCurrentUserFounder(user)) viewModel.setUserLeftGame(
+                    currentGameState,
+                    user
+                )
                 else if (viewModel.isCurrentUserMember(user)) {
-                    if(viewModel.isMemberReady() == true) viewModel.changeUserReadinessStatus(gameId, user)
+                    if (viewModel.isMemberReady() == true) viewModel.changeUserReadinessStatus(
+                        gameId,
+                        user
+                    )
                     viewModel.leaveFromLobby(gameId, user)
                     navController.popBackStack()
                 }
@@ -165,6 +191,9 @@ fun LobbyScreen(
                         PlayerContainer(
                             user = null,
                             isLoading = true,
+                            inviteFriend = {
+                                showFriendsBottomSheet = true
+                            }
                         )
                     } else {
                         PlayerContainer(
@@ -210,6 +239,22 @@ fun LobbyScreen(
 
             }
         }
+
+        if (showFriendsBottomSheet) {
+            // Wywołaj pobieranie danych, gdy arkusz zostanie otwarty
+            LaunchedEffect(Unit) {
+                user.uid?.let { viewModel.getFriends(it) }
+            }
+
+            FriendsBottomSheet(
+                friendsState = friendsState, // Przekaż CustomState
+                onCloseBottomSheet = { showFriendsBottomSheet = false },
+                onInviteFriend = { friend ->
+                    friend.uid?.let { viewModel.inviteFriend(gameId, it) }
+                    showFriendsBottomSheet = false
+                }
+            )
+        }
     }
 }
 
@@ -223,7 +268,8 @@ fun PlayerContainer(
     isFounder: Boolean = false,
     currentUserStatus: Boolean = false,
     isMember: Boolean = false,
-    changeStatus: () -> Unit = {}
+    changeStatus: () -> Unit = {},
+    inviteFriend: () -> Unit = {}
 ) {
     Box(
         modifier = Modifier
@@ -244,20 +290,17 @@ fun PlayerContainer(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             if (isLoading) {
-                Column(
+                Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(125.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center,
+                        .heightIn(125.dp),
+                    horizontalArrangement = Arrangement.SpaceAround,
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     CircularProgressIndicator()
-                    Text(
-                        modifier = Modifier.padding(top = 20.dp),
-                        text = "Waiting for the other player",
-                        style = Typography.titleSmall,
-                        textAlign = TextAlign.Center
-                    )
+                    Button(onClick = inviteFriend) {
+                        Text("Invite Friend", color = MaterialTheme.colorScheme.onPrimary)
+                    }
                 }
             } else if (user != null) {
                 Row(
@@ -340,18 +383,10 @@ fun PlayerContainer(
                             ) {
                                 Text(
                                     text = "ready",
-                                    style = Typography.titleSmall
+                                    style = Typography.titleSmall,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer
                                 )
-                                if (isReady) Icon(
-                                    modifier = Modifier.size(24.dp),
-                                    painter = painterResource(R.drawable.ready_checked),
-                                    contentDescription = "Toggle icon"
-                                )
-                                else Icon(
-                                    modifier = Modifier.size(24.dp),
-                                    painter = painterResource(R.drawable.ready_unchecked),
-                                    contentDescription = "Toggle icon"
-                                )
+                                ReadyStatusIcon(isReady = isReady)
 
                             }
                         }
@@ -362,6 +397,24 @@ fun PlayerContainer(
             }
         }
     }
+}
+
+@Composable
+fun ReadyStatusIcon(isReady: Boolean) {
+    Icon(
+        modifier = Modifier.size(24.dp),
+        painter = painterResource(
+            id = when (isReady) {
+                true -> R.drawable.ready_checked
+                false -> R.drawable.ready_unchecked
+            }
+        ),
+        contentDescription = when (isReady) {
+            true -> "Ready"
+            false -> "Not Ready"
+        },
+        tint = MaterialTheme.colorScheme.onPrimary
+    )
 }
 
 @Composable
@@ -388,6 +441,164 @@ fun VersusText(
             text = text,
             style = Typography.titleLarge,
             textAlign = TextAlign.Center
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun FriendsBottomSheet(
+    friendsState: CustomState<List<Friend>>,
+    onCloseBottomSheet: () -> Unit,
+    onInviteFriend: (Friend) -> Unit
+) {
+    var selectedFriend by remember { mutableStateOf<Friend?>(null) }
+    val sheetState = rememberModalBottomSheetState()
+
+    ModalBottomSheet(
+        onDismissRequest = { onCloseBottomSheet() },
+        sheetState = sheetState,
+        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
+        dragHandle = {},
+    ) {
+
+        var sheetHeightPx by remember { mutableFloatStateOf(0f) }
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .onGloballyPositioned { coordinates ->
+                    sheetHeightPx = coordinates.size.height.toFloat()
+                }
+                .background(
+                    brush = Brush.verticalGradient(
+                        colorStops = arrayOf(
+                            0.32f to Color(0xff000226),
+                            0.91f to Color(0xff58959A),
+                            1f to Color(0xffffffff)
+                        )
+                    ),
+                    shape = RoundedCornerShape(topStart = 18.dp, topEnd = 18.dp)
+                )
+                .padding(horizontal = 28.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 16.dp)
+            ) {
+                Button(
+                    onClick = { selectedFriend?.let { onInviteFriend(it) } },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 16.dp, bottom = 16.dp),
+                    enabled = selectedFriend != null
+                ) {
+                    Text("Invite", color = MaterialTheme.colorScheme.onPrimaryContainer)
+                }
+
+                when (friendsState) {
+                    is CustomState.Success -> {
+                        if (friendsState.result.isNotEmpty()) {
+                            LazyColumn(
+                                modifier = Modifier
+                                    .weight(1f, fill = false),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                items(friendsState.result) { friend ->
+                                    FriendItem(
+                                        friend = friend,
+                                        isSelected = friend == selectedFriend,
+                                        onSelected = { selectedFriend = it }
+                                    )
+                                }
+                            }
+                        } else {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 32.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text("No friends found.", color = Color.White)
+                            }
+                        }
+                    }
+
+                    is CustomState.Failure -> {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 32.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                "Error loading friends: ${friendsState.message}",
+                                color = Color.Red
+                            )
+                        }
+                    }
+
+                    is CustomState.Loading -> {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 32.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator()
+                        }
+                    }
+
+                    CustomState.Idle -> {}
+                }
+            }
+
+        }
+    }
+}
+
+@Composable
+fun FriendItem(
+    friend: Friend,
+    isSelected: Boolean,
+    onSelected: (Friend) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxSize()
+            .clickable { onSelected(friend) }
+            .clip(RoundedCornerShape(16.dp))
+            .background(Color(0x52D9D9D9))
+            .padding(horizontal = 20.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Start
+    ) {
+        AsyncImage(
+            model = ImageRequest.Builder(LocalContext.current)
+                .data(friend.imageUri)
+                .crossfade(true)
+                .build(),
+            placeholder = painterResource(R.drawable.sample_avatar),
+            error = painterResource(R.drawable.sample_avatar),
+            contentDescription = null,
+            modifier = Modifier
+                .size(50.dp)
+                .clip(CircleShape)
+        )
+        friend.name?.let {
+            Text(
+                text = it,
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(horizontal = 16.dp),
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color.White
+            )
+        }
+        RadioButton(
+            selected = isSelected,
+            onClick = { onSelected(friend) },
         )
     }
 }

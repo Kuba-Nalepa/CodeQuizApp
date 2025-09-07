@@ -3,14 +3,16 @@ package com.jakubn.codequizapp.ui.game.lobby
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.jakubn.codequizapp.data.repositoryImpl.GameRepository
+import com.jakubn.codequizapp.data.repositoryImpl.UserDataRepository
 import com.jakubn.codequizapp.model.CustomState
+import com.jakubn.codequizapp.model.Friend
 import com.jakubn.codequizapp.model.Game
 import com.jakubn.codequizapp.model.Lobby
 import com.jakubn.codequizapp.model.User
-
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
@@ -19,6 +21,7 @@ import javax.inject.Inject
 @HiltViewModel
 class LobbyViewModel @Inject constructor(
     private val gameRepository: GameRepository,
+    private val userDataRepository: UserDataRepository
 ) : ViewModel() {
 
     private val _state = MutableStateFlow<CustomState<Game?>>(CustomState.Idle)
@@ -26,6 +29,9 @@ class LobbyViewModel @Inject constructor(
 
     private val _lobby = MutableStateFlow<CustomState<Lobby?>>(CustomState.Idle)
     val lobby: StateFlow<CustomState<Lobby?>> = _lobby
+
+    private val _friendsState = MutableStateFlow<CustomState<List<Friend>>>(CustomState.Idle)
+    val friendsState: StateFlow<CustomState<List<Friend>>> = _friendsState.asStateFlow()
 
     fun getGameData(gameId: String) {
         viewModelScope.launch {
@@ -36,6 +42,25 @@ class LobbyViewModel @Inject constructor(
                     _lobby.value = CustomState.Success(game.lobby)
                     _state.value = CustomState.Success(game)
                 }
+        }
+    }
+
+    fun getFriends(userId: String) {
+        viewModelScope.launch {
+            _friendsState.value = CustomState.Loading
+            try {
+                val friends = userDataRepository.getUsersFriends(userId)
+                _friendsState.value = CustomState.Success(friends)
+            } catch (e: Exception) {
+                _friendsState.value = CustomState.Failure(e.message)
+            }
+        }
+    }
+
+    fun inviteFriend(gameId: String, friendId: String) {
+        viewModelScope.launch {
+            // TODO gameInvitation business logic
+            println("Invitation sent to friend: $friendId for game: $gameId")
         }
     }
 

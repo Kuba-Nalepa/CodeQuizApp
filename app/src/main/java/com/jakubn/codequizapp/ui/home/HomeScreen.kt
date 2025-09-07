@@ -50,12 +50,15 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
+import coil.request.ImageRequest
 import com.jakubn.codequizapp.R
 import com.jakubn.codequizapp.model.CustomState
 import com.jakubn.codequizapp.model.Friend
@@ -74,9 +77,9 @@ fun HomeScreen(
 ) {
     val userState by homeViewModel.state.collectAsState()
     val friendsState by homeViewModel.friendsState.collectAsState()
-    val requestsState by homeViewModel.requestsState.collectAsState()
+    val requestsState by homeViewModel.friendshipRequestsState.collectAsState()
     var showBottomSheet by remember { mutableStateOf(false) }
-    val notificationState by homeViewModel.notificationState.collectAsState()
+    val notificationsNumberState by homeViewModel.notificationsNumberState.collectAsState()
 
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission(),
@@ -88,6 +91,8 @@ fun HomeScreen(
             }
         }
     )
+
+    // TODO() make the popup when the user invites another player to the game
 
     LaunchedEffect(key1 = true) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -121,7 +126,7 @@ fun HomeScreen(
                 modifier = Modifier.align(Alignment.Center),
                 text = "<CODE/QUIZ>",
                 style = Typography.bodyMedium,
-                color = Color(0xff7BAFC4)
+                color = MaterialTheme.colorScheme.secondary
             )
             Column(
                 modifier = Modifier
@@ -129,7 +134,7 @@ fun HomeScreen(
                     .padding(end = 20.dp),
             ) {
 
-                NotificationBadge(onClick = { showBottomSheet = true }, notificationState)
+                NotificationBadge(onClick = { showBottomSheet = true }, notificationsNumberState)
             }
         }
 
@@ -175,7 +180,7 @@ fun HomeScreen(
                     Text(
                         text = "Play Now".uppercase(),
                         textAlign = TextAlign.Center,
-                        color = Color(0xFF000000),
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
                         style = Typography.bodyLarge,
                         softWrap = true
                     )
@@ -211,10 +216,10 @@ fun HomeScreen(
                                 requestsState = requestsState,
                                 onCloseBottomSheet = { showBottomSheet = false },
                                 onAcceptRequest = { friendshipId ->
-                                    homeViewModel.acceptFriendRequest(friendshipId)
+                                    homeViewModel.acceptFriendshipRequest(friendshipId)
                                 },
                                 onDeclineRequest = { friendshipId ->
-                                    homeViewModel.declineFriendRequest(friendshipId)
+                                    homeViewModel.declineFriendshipRequest(friendshipId)
                                 },
                                 navigateToChat = navigateToChat
                             )
@@ -625,17 +630,18 @@ private fun FriendMenuItem(friend: Friend, textFriend: () -> Unit, playGame: () 
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Start
     ) {
-        Image(
+        AsyncImage(
+            model = ImageRequest.Builder(LocalContext.current)
+                .data(friend.imageUri)
+                .crossfade(true)
+                .build(),
+            placeholder = painterResource(R.drawable.sample_avatar),
+            error = painterResource(R.drawable.sample_avatar),
+            contentDescription = "User Avatar",
             contentScale = ContentScale.Crop,
             modifier = Modifier
                 .size(40.dp)
-                .clip(CircleShape),
-            painter = if (!friend.imageUri.isNullOrEmpty()) {
-                rememberAsyncImagePainter(model = Uri.parse(friend.imageUri))
-            } else {
-                painterResource(R.drawable.sample_avatar)
-            },
-            contentDescription = "User Avatar"
+                .clip(CircleShape)
         )
         Spacer(modifier = Modifier.size(16.dp))
         friend.name?.let { name ->
@@ -643,7 +649,8 @@ private fun FriendMenuItem(friend: Friend, textFriend: () -> Unit, playGame: () 
                 text = name,
                 style = Typography.bodyMedium,
                 maxLines = 1,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                color = MaterialTheme.colorScheme.primary
             )
         } ?: Text(
             text = "Unknown User",
@@ -674,10 +681,10 @@ private fun FriendMenuItem(friend: Friend, textFriend: () -> Unit, playGame: () 
 }
 
 @Composable
-private fun NotificationBadge(onClick: () -> Unit, notificationsState: CustomState<Int>) {
-    when (notificationsState) {
+private fun NotificationBadge(onClick: () -> Unit, notificationsNumberState: CustomState<Int>) {
+    when (notificationsNumberState) {
         is CustomState.Success -> {
-            val notificationsNumber = notificationsState.result
+            val notificationsNumber = notificationsNumberState.result
             BadgedBox(
                 badge = {
                     if (notificationsNumber > 0) {
@@ -696,7 +703,7 @@ private fun NotificationBadge(onClick: () -> Unit, notificationsState: CustomSta
                     Icon(
                         painter = painterResource(R.drawable.ic_notifications),
                         contentDescription = "Notifications bell",
-                        tint = Color(0xff7BAFC4)
+                        tint = MaterialTheme.colorScheme.secondary
                     )
                 }
             }

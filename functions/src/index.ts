@@ -306,3 +306,98 @@ export const handleNewGameInvite = onDocumentCreated(
     return null;
   }
 );
+
+export const inviteFriendToGame = onCall(async (request) => {
+  const { data, auth } = request;
+
+  if (!auth) {
+    throw new HttpsError("unauthenticated", "User not authenticated.");
+  }
+
+  const { friendUid, gameId } = data;
+  const myUid = auth.uid;
+
+  if (!friendUid || !gameId) {
+    throw new HttpsError("invalid-argument", "Missing friendUid or gameId.");
+  }
+
+  const myUserRef = firestore.collection("users").doc(myUid);
+  const friendUserRef = firestore.collection("users").doc(friendUid);
+  const gameRef = firestore.collection("games").doc(gameId);
+
+  const [myUserDoc, friendUserDoc, gameDoc] = await Promise.all([
+    myUserRef.get(),
+    friendUserRef.get(),
+    gameRef.get(),
+  ]);
+
+  if (!myUserDoc.exists || !friendUserDoc.exists || !gameDoc.exists) {
+    throw new HttpsError(
+      "not-found",
+      "One of the required documents (user or game) was not found."
+    );
+  }
+
+  const myUserData = myUserDoc.data() as User;
+  const gameData = gameDoc.data() as any;
+
+  const newInviteRef = firestore.collection("gameInvitations").doc();
+  await newInviteRef.set({
+    senderId: myUid,
+    receiverId: friendUid,
+    senderName: myUserData.name,
+    senderImageUri: myUserData.imageUri,
+    gameId: gameId,
+    category: gameData.category,
+    questionDuration: gameData.questionDuration,
+    status: "pending",
+    timestamp: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  return { inviteId: newInviteRef.id };
+});
+
+export const onGameInviteAccepted = onDocumentUpdated(
+  "gameInvitations/{inviteId}",
+  async (event) => {
+    if (!event.data) {
+      return;
+    }
+
+    const beforeData = event.data.before.data() as any;
+    const afterData = event.data.after.data() as any;
+    const inviteId = event.params.inviteId;
+
+    if (beforeData.status === "pending" && afterData.status === "accepted") {
+      const receiverId = afterData.receiverId;
+      const gameId = afterData.gameId;
+
+      const gameRef = firestore.collection("games").doc(gameId);
+      const gameDoc = await gameRef.get();
+
+      if (!gameDoc.exists) {
+        console.error(`Game document ${gameId} not found.`);
+        return;
+      }
+
+      const lobbyUpdate = {
+        member: {
+          uid: receiverId,
+        },
+        isMemberReady: false,
+      };
+
+      await gameRef.update(lobbyUpdate);
+      console.log(`User ${receiverId} joined lobby for game ${gameId}`);
+
+      // Opcjonalnie: usunięcie dokumentu zaproszenia, aby zachować porządek w kolekcji
+      try {
+        await firestore.collection("gameInvitations").doc(inviteId).delete();
+        console.log(`Game invitation document ${inviteId} deleted.`);
+      } catch (error) {
+        console.error(`Error deleting invitation ${inviteId}:`, error);
+      }
+    }
+    return;
+  }
+);

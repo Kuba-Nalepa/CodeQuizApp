@@ -45,7 +45,7 @@ class LeaderboardViewModel @Inject constructor(
         _leaderboardUsers.value = CustomState.Loading
 
         viewModelScope.launch {
-            userDataRepository.getUsers()
+            userDataRepository.observeUsersInRanking()
                 .onStart {
                     _leaderboardUsers.value = CustomState.Loading
                 }

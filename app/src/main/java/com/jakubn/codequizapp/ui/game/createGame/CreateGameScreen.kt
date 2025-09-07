@@ -189,7 +189,7 @@ fun CreateGameScreen(
                         },
                         enabled = quizCategorySelected.isNotEmpty()
                     ) {
-                        Text(text = "Create Game")
+                        Text(text = "Create Game", color = MaterialTheme.colorScheme.onPrimaryContainer)
                     }
                 }
             }

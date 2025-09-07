@@ -19,6 +19,7 @@ import com.jakubn.codequizapp.GameActivity
 import com.jakubn.codequizapp.model.Friend
 import com.jakubn.codequizapp.ui.chat.ChatScreen
 import com.jakubn.codequizapp.ui.leaderboard.LeaderboardScreen
+import com.jakubn.codequizapp.ui.notifications.NotificationsScreen
 
 @Composable
 fun MainNavGraph(
@@ -126,6 +127,16 @@ fun MainNavGraph(
                 } else {
                     Toast.makeText(appContext, "Something went wrong", Toast.LENGTH_SHORT).show()
                     navController.popBackStack()
+                }
+            }
+
+            composable(
+                route = Screen.Notifications.route,
+                arguments = listOf(navArgument("userId") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val userId = backStackEntry.arguments?.getString("userId")
+                if (userId != null) {
+                    NotificationsScreen(userId = userId)
                 }
             }
         }

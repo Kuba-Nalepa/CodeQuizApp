@@ -28,47 +28,47 @@ class HomeViewModel @Inject constructor(
     private val _friendsState = MutableStateFlow<CustomState<List<Friend>>>(CustomState.Idle)
     val friendsState: StateFlow<CustomState<List<Friend>>> = _friendsState.asStateFlow()
 
-    private val _requestsState =
+    private val _friendshipRequestsState =
         MutableStateFlow<CustomState<List<FriendshipRequest>>>(CustomState.Idle)
-    val requestsState: StateFlow<CustomState<List<FriendshipRequest>>> =
-        _requestsState.asStateFlow()
+    val friendshipRequestsState: StateFlow<CustomState<List<FriendshipRequest>>> =
+        _friendshipRequestsState.asStateFlow()
 
-    private val _notificationState = MutableStateFlow<CustomState<Int>>(CustomState.Idle)
-    val notificationState: StateFlow<CustomState<Int>> = _notificationState.asStateFlow()
+    private val _notificationsNumberState = MutableStateFlow<CustomState<Int>>(CustomState.Idle)
+    val notificationsNumberState: StateFlow<CustomState<Int>> = _notificationsNumberState.asStateFlow()
 
 
     init {
-        observeUserDataAndNotifications()
+        observeUserDataAndNotificationsNumber()
     }
 
-    private fun observeUserDataAndNotifications() {
+    private fun observeUserDataAndNotificationsNumber() {
         viewModelScope.launch {
             userDataRepository.observeUserData()
                 .onStart {
                     _state.value = CustomState.Loading
                     _friendsState.value = CustomState.Loading
-                    _requestsState.value = CustomState.Loading
+                    _friendshipRequestsState.value = CustomState.Loading
                 }
                 .catch { throwable ->
                     _state.value = CustomState.Failure(throwable.message)
                     _friendsState.value = CustomState.Failure(throwable.message)
-                    _requestsState.value = CustomState.Failure(throwable.message)
+                    _friendshipRequestsState.value = CustomState.Failure(throwable.message)
                 }
                 .collect { user ->
                     _state.value = CustomState.Success(user)
                     if (user?.uid != null) {
-                        observeNotifications(user.uid)
+                        observeNotificationsNumber(user.uid)
                         observeFriends(user.uid)
-                        observePendingRequests(user.uid)
+                        observeFriendshipRequests(user.uid)
                     } else {
                         _friendsState.value = CustomState.Success(emptyList())
-                        _requestsState.value = CustomState.Success(emptyList())
+                        _friendshipRequestsState.value = CustomState.Success(emptyList())
                     }
                 }
         }
     }
 
-    private fun observeNotifications(userId: String) {
+    private fun observeNotificationsNumber(userId: String) {
         viewModelScope.launch {
             combine(
                 userDataRepository.observeFriendInvitationsCount(userId),
@@ -76,12 +76,12 @@ class HomeViewModel @Inject constructor(
             ) { friendCount, gameCount ->
                 friendCount.toInt() + gameCount.toInt()
             }
-                .onStart { _notificationState.value = CustomState.Loading }
+                .onStart { _notificationsNumberState.value = CustomState.Loading }
                 .catch { throwable ->
-                    _notificationState.value = CustomState.Failure(throwable.message)
+                    _notificationsNumberState.value = CustomState.Failure(throwable.message)
                 }
                 .collect { totalCount ->
-                    _notificationState.value = CustomState.Success(totalCount)
+                    _notificationsNumberState.value = CustomState.Success(totalCount)
                 }
         }
     }
@@ -97,20 +97,20 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    private fun observePendingRequests(userId: String) {
+    private fun observeFriendshipRequests(userId: String) {
         viewModelScope.launch {
-            userDataRepository.observePendingFriendsRequestsWithSenderData(userId)
-                .onStart { _requestsState.value = CustomState.Loading }
+            userDataRepository.observeFriendshipRequests(userId)
+                .onStart { _friendshipRequestsState.value = CustomState.Loading }
                 .catch { throwable ->
-                    _requestsState.value = CustomState.Failure(throwable.message)
+                    _friendshipRequestsState.value = CustomState.Failure(throwable.message)
                 }
                 .collect { requestsList ->
-                    _requestsState.value = CustomState.Success(requestsList)
+                    _friendshipRequestsState.value = CustomState.Success(requestsList)
                 }
         }
     }
 
-    fun acceptFriendRequest(friendshipId: String) {
+    fun acceptFriendshipRequest(friendshipId: String) {
         viewModelScope.launch {
             val userId = (_state.value as? CustomState.Success)?.result?.uid ?: return@launch
             userDataRepository.acceptFriendshipRequest(friendshipId)
@@ -119,25 +119,11 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    fun declineFriendRequest(friendshipId: String) {
+    fun declineFriendshipRequest(friendshipId: String) {
         viewModelScope.launch {
             val userId = (_state.value as? CustomState.Success)?.result?.uid ?: return@launch
             userDataRepository.declineFriendshipRequest(friendshipId)
             userDataRepository.decrementFriendInvitationCount(userId)
-        }
-    }
-
-    fun resetFriendInvitationCount() {
-        viewModelScope.launch {
-            val userId = (_state.value as? CustomState.Success)?.result?.uid ?: return@launch
-            userDataRepository.resetFriendInvitationCount(userId)
-        }
-    }
-
-    fun resetGameInvitationCount() {
-        viewModelScope.launch {
-            val userId = (_state.value as? CustomState.Success)?.result?.uid ?: return@launch
-            userDataRepository.resetGameInvitationCount(userId)
         }
     }
 }
