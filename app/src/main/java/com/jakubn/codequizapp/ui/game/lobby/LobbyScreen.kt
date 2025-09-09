@@ -241,7 +241,6 @@ fun LobbyScreen(
         }
 
         if (showFriendsBottomSheet) {
-            // Wywołaj pobieranie danych, gdy arkusz zostanie otwarty
             LaunchedEffect(Unit) {
                 user.uid?.let { viewModel.getFriends(it) }
             }

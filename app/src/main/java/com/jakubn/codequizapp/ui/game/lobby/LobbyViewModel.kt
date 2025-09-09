@@ -59,8 +59,11 @@ class LobbyViewModel @Inject constructor(
 
     fun inviteFriend(gameId: String, friendId: String) {
         viewModelScope.launch {
-            // TODO gameInvitation business logic
-            println("Invitation sent to friend: $friendId for game: $gameId")
+            try {
+                gameRepository.inviteFriendToGame(gameId, friendId)
+            } catch (e: Exception) {
+                println(e.message)
+            }
         }
     }
 

@@ -1,7 +1,6 @@
 package com.jakubn.codequizapp.ui.home
 
 import android.Manifest
-import android.net.Uri
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -57,7 +56,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
-import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 import com.jakubn.codequizapp.R
 import com.jakubn.codequizapp.model.CustomState
@@ -73,7 +71,8 @@ fun HomeScreen(
     homeViewModel: HomeViewModel = hiltViewModel(),
     createGame: () -> Unit,
     playGame: () -> Unit,
-    navigateToChat: (Friend) -> Unit
+    navigateToChat: (Friend) -> Unit,
+    navigateToNotifications: () -> Unit
 ) {
     val userState by homeViewModel.state.collectAsState()
     val friendsState by homeViewModel.friendsState.collectAsState()
@@ -87,12 +86,10 @@ fun HomeScreen(
             if (isGranted) {
                 // Permission is granted
             } else {
-                // Permission is denied. You might want to show a message to the user.
+                // Permission is denied.
             }
         }
     )
-
-    // TODO() make the popup when the user invites another player to the game
 
     LaunchedEffect(key1 = true) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -134,7 +131,7 @@ fun HomeScreen(
                     .padding(end = 20.dp),
             ) {
 
-                NotificationBadge(onClick = { showBottomSheet = true }, notificationsNumberState)
+                NotificationBadge(onClick = { navigateToNotifications() }, notificationsNumberState)
             }
         }
 
@@ -582,17 +579,18 @@ fun FriendRequestItem(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Start
     ) {
-        Image(
+        AsyncImage(
+            model = ImageRequest.Builder(LocalContext.current)
+                .data(request.senderImageUri)
+                .crossfade(true)
+                .build(),
+            placeholder = painterResource(R.drawable.sample_avatar),
+            error = painterResource(R.drawable.sample_avatar),
+            contentDescription = "User Avatar",
             contentScale = ContentScale.Crop,
             modifier = Modifier
                 .size(40.dp)
-                .clip(CircleShape),
-            painter = if (!request.senderImageUri.isNullOrEmpty()) {
-                rememberAsyncImagePainter(model = Uri.parse(request.senderImageUri))
-            } else {
-                painterResource(R.drawable.sample_avatar)
-            },
-            contentDescription = "User Avatar"
+                .clip(CircleShape)
         )
         Spacer(modifier = Modifier.size(16.dp))
         Text(
@@ -710,11 +708,13 @@ private fun NotificationBadge(onClick: () -> Unit, notificationsNumberState: Cus
         }
 
         is CustomState.Failure -> {
-            Icon(
-                painter = painterResource(R.drawable.ic_close),
-                contentDescription = "Something went wrong",
-                tint = MaterialTheme.colorScheme.error
-            )
+            IconButton(onClick = onClick) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_close),
+                    contentDescription = "Something went wrong",
+                    tint = MaterialTheme.colorScheme.error
+                )
+            }
         }
 
         CustomState.Loading -> {
@@ -723,5 +723,4 @@ private fun NotificationBadge(onClick: () -> Unit, notificationsNumberState: Cus
 
         CustomState.Idle -> {}
     }
-
 }

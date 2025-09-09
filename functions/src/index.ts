@@ -7,6 +7,7 @@ import * as admin from "firebase-admin";
 
 admin.initializeApp();
 const firestore = admin.firestore();
+const db = admin.database();
 
 interface FriendshipRequest {
   senderId: string;
@@ -19,12 +20,36 @@ interface User {
   name: string;
   imageUri: string;
   fcmToken?: string;
+  unreadFriendInvitations?: number;
+  unreadGameInvitations?: number;
 }
 
 interface Friend {
   uid: string;
   name: string;
   imageUri: string;
+}
+
+interface GameInvite {
+  senderId: string;
+  receiverId: string;
+  senderName: string;
+  senderImageUri: string;
+  gameId: string;
+  category: string;
+  questionDuration: number;
+  status: "pending" | "accepted" | "declined";
+  timestamp: admin.firestore.FieldValue;
+}
+
+interface Game {
+  category: string;
+  questionDuration: number;
+  lobby: {
+    founder: { uid: string };
+    member: { uid: string } | null;
+  };
+
 }
 
 export const onFriendshipAccepted = onDocumentUpdated(
@@ -81,9 +106,7 @@ export const onFriendshipAccepted = onDocumentUpdated(
         .doc(senderId)
         .set(friendDataForReceiver);
 
-      console.log(
-        `Friendship created between ${senderId} and ${receiverId}`
-      );
+      console.log(`Friendship created between ${senderId} and ${receiverId}`);
     }
 
     return;
@@ -112,7 +135,8 @@ export const onDeleteFriendshipAfterAccept = onDocumentUpdated(
         );
       } catch (error) {
         console.error(
-          `Error deleting friendship document ${friendshipId}:`, error
+          `Error deleting friendship document ${friendshipId}:`,
+          error
         );
       }
     }
@@ -120,7 +144,6 @@ export const onDeleteFriendshipAfterAccept = onDocumentUpdated(
     return;
   }
 );
-
 
 export const createChat = onCall(async (request) => {
   const {data, auth} = request;
@@ -207,10 +230,7 @@ export const handleNewFriendshipRequest = onDocumentCreated(
     const receiverId = request.receiverId;
     const senderName = request.senderName;
 
-    const userRef = admin
-      .firestore()
-      .collection("users")
-      .doc(receiverId);
+    const userRef = admin.firestore().collection("users").doc(receiverId);
 
     const userDoc = await userRef.get();
     const fcmToken = userDoc.data()?.fcmToken;
@@ -260,14 +280,11 @@ export const handleNewGameInvite = onDocumentCreated(
       return null;
     }
 
-    const inviteData = event.data.data();
+    const inviteData = event.data.data() as GameInvite;
     const receiverId = inviteData.receiverId;
     const senderName = inviteData.senderName;
 
-    const userRef = admin
-      .firestore()
-      .collection("users")
-      .doc(receiverId);
+    const userRef = admin.firestore().collection("users").doc(receiverId);
 
     const userDoc = await userRef.get();
     const fcmToken = userDoc.data()?.fcmToken;
@@ -308,13 +325,19 @@ export const handleNewGameInvite = onDocumentCreated(
 );
 
 export const inviteFriendToGame = onCall(async (request) => {
-  const { data, auth } = request;
+  const {
+    data,
+    auth,
+  } = request;
 
   if (!auth) {
     throw new HttpsError("unauthenticated", "User not authenticated.");
   }
 
-  const { friendUid, gameId } = data;
+  const {
+    friendUid,
+    gameId,
+  } = data;
   const myUid = auth.uid;
 
   if (!friendUid || !gameId) {
@@ -323,23 +346,23 @@ export const inviteFriendToGame = onCall(async (request) => {
 
   const myUserRef = firestore.collection("users").doc(myUid);
   const friendUserRef = firestore.collection("users").doc(friendUid);
-  const gameRef = firestore.collection("games").doc(gameId);
+  const gameRef = db.ref(`games/${gameId}`);
 
-  const [myUserDoc, friendUserDoc, gameDoc] = await Promise.all([
+  const [myUserDoc, friendUserDoc, gameSnapshot] = await Promise.all([
     myUserRef.get(),
     friendUserRef.get(),
-    gameRef.get(),
+    gameRef.once("value"),
   ]);
 
-  if (!myUserDoc.exists || !friendUserDoc.exists || !gameDoc.exists) {
+  if (!myUserDoc.exists || !friendUserDoc.exists || !gameSnapshot.exists()) {
     throw new HttpsError(
       "not-found",
-      "One of the required documents (user or game) was not found."
+      "One of the required documents (user, friend, or game) was not found."
     );
   }
 
   const myUserData = myUserDoc.data() as User;
-  const gameData = gameDoc.data() as any;
+  const gameData = gameSnapshot.val() as Game;
 
   const newInviteRef = firestore.collection("gameInvitations").doc();
   await newInviteRef.set({
@@ -352,9 +375,11 @@ export const inviteFriendToGame = onCall(async (request) => {
     questionDuration: gameData.questionDuration,
     status: "pending",
     timestamp: admin.firestore.FieldValue.serverTimestamp(),
-  });
+  } as GameInvite);
 
-  return { inviteId: newInviteRef.id };
+  return {
+    inviteId: newInviteRef.id,
+  };
 });
 
 export const onGameInviteAccepted = onDocumentUpdated(
@@ -364,18 +389,18 @@ export const onGameInviteAccepted = onDocumentUpdated(
       return;
     }
 
-    const beforeData = event.data.before.data() as any;
-    const afterData = event.data.after.data() as any;
+    const beforeData = event.data.before.data() as GameInvite;
+    const afterData = event.data.after.data() as GameInvite;
     const inviteId = event.params.inviteId;
 
     if (beforeData.status === "pending" && afterData.status === "accepted") {
       const receiverId = afterData.receiverId;
       const gameId = afterData.gameId;
 
-      const gameRef = firestore.collection("games").doc(gameId);
-      const gameDoc = await gameRef.get();
+      const gameRef = db.ref(`games/${gameId}`);
+      const gameSnapshot = await gameRef.once("value");
 
-      if (!gameDoc.exists) {
+      if (!gameSnapshot.exists()) {
         console.error(`Game document ${gameId} not found.`);
         return;
       }
@@ -390,7 +415,6 @@ export const onGameInviteAccepted = onDocumentUpdated(
       await gameRef.update(lobbyUpdate);
       console.log(`User ${receiverId} joined lobby for game ${gameId}`);
 
-      // Opcjonalnie: usunięcie dokumentu zaproszenia, aby zachować porządek w kolekcji
       try {
         await firestore.collection("gameInvitations").doc(inviteId).delete();
         console.log(`Game invitation document ${inviteId} deleted.`);
@@ -401,3 +425,47 @@ export const onGameInviteAccepted = onDocumentUpdated(
     return;
   }
 );
+
+export const acceptGameInvite = onCall(async (request) => {
+  const {data, auth} = request;
+
+  if (!auth) {
+    throw new HttpsError("unauthenticated", "User not authenticated.");
+  }
+
+  const {inviteId} = data;
+  const myUid = auth.uid;
+
+  if (!inviteId) {
+    throw new HttpsError("invalid-argument", "Missing inviteId.");
+  }
+
+  const inviteRef = firestore.collection("gameInvitations").doc(inviteId);
+  const inviteDoc = await inviteRef.get();
+
+  if (!inviteDoc.exists) {
+    throw new HttpsError("not-found", "Invitation not found.");
+  }
+
+  const inviteData = inviteDoc.data() as GameInvite;
+
+  if (inviteData.receiverId !== myUid) {
+    throw new HttpsError(
+      "permission-denied",
+      "You cannot accept this invitation."
+    );
+  }
+
+  if (inviteData.status !== "pending") {
+    throw new HttpsError(
+      "failed-precondition",
+      "Invitation is no longer pending."
+    );
+  }
+
+  await inviteRef.update({
+    status: "accepted",
+  });
+
+  return {success: true};
+});

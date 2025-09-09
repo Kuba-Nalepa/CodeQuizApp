@@ -5,6 +5,7 @@ import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
+import com.google.firebase.functions.FirebaseFunctions
 import com.jakubn.codequizapp.model.Game
 import com.jakubn.codequizapp.model.Lobby
 import com.jakubn.codequizapp.model.Question
@@ -20,7 +21,8 @@ import javax.inject.Singleton
 
 @Singleton
 class GameRepository @Inject constructor(
-    private val firebaseDatabase: FirebaseDatabase
+    private val firebaseDatabase: FirebaseDatabase,
+    private val firebaseFunctions: FirebaseFunctions
 ) : GameRepository {
 
     override suspend fun createGame(
@@ -145,6 +147,45 @@ class GameRepository @Inject constructor(
 
         awaitClose {
             reference.removeEventListener(listener)
+        }
+    }
+
+    override suspend fun inviteFriendToGame(gameId: String, friendUid: String) {
+        val data = hashMapOf(
+            "friendUid" to friendUid,
+            "gameId" to gameId
+        )
+
+        try {
+            firebaseFunctions
+                .getHttpsCallable("inviteFriendToGame")
+                .call(data)
+                .await()
+        } catch (e: Exception) {
+            throw Exception("Failed to invite friend: ${e.message}", e)
+        }
+    }
+
+    override suspend fun acceptGameInvite(gameId: String) {
+        val data = hashMapOf(
+            "gameId" to gameId
+        )
+
+        try {
+            firebaseFunctions
+                .getHttpsCallable("acceptGameInvitation")
+                .call(data)
+                .await()
+        } catch (e: Exception) {
+            throw Exception("Failed to accept game invitation: ${e.message}", e)
+        }
+    }
+
+    override suspend fun deleteGameInvitation(gameId: String) {
+        try {
+            firebaseDatabase.getReference("gameInvitations").child(gameId).removeValue().await()
+        } catch (e: Exception) {
+            throw Exception("Failed to delete game invitation: ${e.message}", e)
         }
     }
 

@@ -9,6 +9,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreException
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.QuerySnapshot
+import com.google.firebase.functions.FirebaseFunctions
 import com.google.firebase.functions.functions
 import com.google.firebase.storage.FirebaseStorage
 import com.jakubn.codequizapp.model.User
@@ -37,7 +38,8 @@ import javax.inject.Singleton
 class UserDataRepository @Inject constructor(
     private val firebaseAuth: FirebaseAuth,
     private val firebaseFirestore: FirebaseFirestore,
-    private val firebaseStorage: FirebaseStorage
+    private val firebaseStorage: FirebaseStorage,
+    private val firebaseFunctions: FirebaseFunctions
 ) : UserDataRepository {
 
     override suspend fun getUserData(): Flow<User> {
@@ -292,11 +294,10 @@ class UserDataRepository @Inject constructor(
     }
 
     override suspend fun createChat(userUid: String, friendUid: String): String {
-        val functions = Firebase.functions
         val data = hashMapOf(
             "friendUid" to friendUid
         )
-        val result = functions
+        val result = firebaseFunctions
             .getHttpsCallable("createChat")
             .call(data)
             .await()

@@ -60,8 +60,15 @@ fun MainNavGraph(
                         navigateToChat = { friend ->
                             navController.navigate(
                                 Screen.Chat.createRoute(
-                                    friendUid = friend.uid ?: "Unknown",
-                                    friendName = friend.name ?: "Unknown"
+                                    friendUid = friend.uid ?: "Unknown id",
+                                    friendName = friend.name ?: "Unknown name"
+                                )
+                            )
+                        },
+                        navigateToNotifications = { 
+                            navController.navigate(
+                                Screen.Notifications.createRoute(
+                                    userId = user.uid ?: "Unknown id"
                                 )
                             )
                         }

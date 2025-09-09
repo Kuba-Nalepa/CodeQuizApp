@@ -26,6 +26,12 @@ interface GameRepository {
 
     suspend fun getGamesList(): Flow<List<Game>>
 
+    suspend fun inviteFriendToGame(gameId: String, friendUid: String)
+
+    suspend fun acceptGameInvite(gameId: String)
+
+    suspend fun deleteGameInvitation(gameId: String)
+
     suspend fun saveUserGameStats(gameId: String, lobby: Lobby, user: User, answersList: List<Int>, correctAnswersQuantity: Int, points: Int)
 
     suspend fun setUserFinishedGame(gameId: String, lobby: Lobby, user: User, hasFinished: Boolean)
