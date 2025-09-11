@@ -36,6 +36,8 @@ class HomeViewModel @Inject constructor(
     private val _notificationsNumberState = MutableStateFlow<CustomState<Int>>(CustomState.Idle)
     val notificationsNumberState: StateFlow<CustomState<Int>> = _notificationsNumberState.asStateFlow()
 
+    private var currentUserId: String? = null
+
 
     init {
         observeUserDataAndNotificationsNumber()
@@ -57,6 +59,7 @@ class HomeViewModel @Inject constructor(
                 .collect { user ->
                     _state.value = CustomState.Success(user)
                     if (user?.uid != null) {
+                        currentUserId = user.uid
                         observeNotificationsNumber(user.uid)
                         observeFriends(user.uid)
                         observeFriendshipRequests(user.uid)
@@ -112,18 +115,16 @@ class HomeViewModel @Inject constructor(
 
     fun acceptFriendshipRequest(friendshipId: String) {
         viewModelScope.launch {
-            val userId = (_state.value as? CustomState.Success)?.result?.uid ?: return@launch
             userDataRepository.acceptFriendshipRequest(friendshipId)
-            userDataRepository.decrementFriendInvitationCount(userId)
+            currentUserId?.let { userDataRepository.decrementFriendInvitationCount(it) }
 
         }
     }
 
     fun declineFriendshipRequest(friendshipId: String) {
         viewModelScope.launch {
-            val userId = (_state.value as? CustomState.Success)?.result?.uid ?: return@launch
             userDataRepository.declineFriendshipRequest(friendshipId)
-            userDataRepository.decrementFriendInvitationCount(userId)
+            currentUserId?.let { userDataRepository.decrementFriendInvitationCount(it) }
         }
     }
 }

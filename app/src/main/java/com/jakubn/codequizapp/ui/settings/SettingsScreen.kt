@@ -58,7 +58,7 @@ fun SettingsScreen(
         Text(
             text = "<CODE/QUIZ>",
             style = Typography.bodyMedium,
-            color = Color(0xff7BAFC4)
+            color = MaterialTheme.colorScheme.secondary
         )
 
         Row(

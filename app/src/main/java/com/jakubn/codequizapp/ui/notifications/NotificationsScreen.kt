@@ -1,10 +1,13 @@
 package com.jakubn.codequizapp.ui.notifications
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -16,10 +19,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Done
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -33,7 +38,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
@@ -54,8 +63,6 @@ fun NotificationsScreen(
 
     val notificationsState by notificationsViewModel.notificationsState.collectAsState()
 
-
-
     val colors = arrayOf(
         0.06f to Color(0xffA3FF0D),
         0.22f to Color(0xff74B583),
@@ -67,19 +74,41 @@ fun NotificationsScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(brush = Brush.verticalGradient(colorStops = colors))
-            .padding(16.dp),
+            .background(brush = Brush.verticalGradient(colorStops = colors)),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(10.dp)
+        ) {
+            Text(
+                modifier = Modifier.align(Alignment.Center),
+                text = "<CODE/QUIZ>",
+                style = Typography.bodyMedium,
+                color = MaterialTheme.colorScheme.secondary
+            )
+        }
+
         when (val state = notificationsState) {
             is CustomState.Success -> {
                 val notifications = state.result
                 if (notifications.isNotEmpty()) {
+                    Text(
+                        modifier = Modifier.padding(horizontal = 20.dp),
+                        text = "You have ${notifications.size} notifications remaining",
+                        style = Typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.secondary
+                    )
+
                     LazyColumn(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 20.dp)
+                            .background(Color(0x52D9D9D9))
+                            .clip(RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-
                         items(notifications) { notification ->
                             when (notification) {
                                 is Notification.FriendInvite -> FriendNotificationItem(
@@ -107,24 +136,45 @@ fun NotificationsScreen(
                         }
                     }
                 } else {
-                    Text(
-                        text = "You don't have any notifications.",
-                        textAlign = TextAlign.Center,
-                        style = Typography.bodyLarge,
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                    Column(
+                        modifier = Modifier.fillMaxSize(),
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+
+                        Icon(
+                            painter = painterResource(R.drawable.ic_notifications_off),
+                            contentDescription = "No notifications found",
+                            tint = MaterialTheme.colorScheme.onSecondary
+                        )
+                        Text(
+                            text = "You don't have any notifications.",
+                            textAlign = TextAlign.Center,
+                            style = Typography.bodyLarge,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 8.dp)
+                        )
+                    }
+
                 }
             }
 
             is CustomState.Failure -> {
                 val message = state.message
-                Text(
-                    text = "Failed to fetch notifications due to: $message",
-                    textAlign = TextAlign.Center,
-                    style = Typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.fillMaxWidth()
-                )
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "Failed to fetch notifications due to: $message",
+                        textAlign = TextAlign.Center,
+                        style = Typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
             }
 
             is CustomState.Loading -> {
@@ -148,44 +198,67 @@ fun FriendNotificationItem(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
-            .background(Color(0x52D9D9D9))
-            .padding(horizontal = 20.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
+            .padding(horizontal = 8.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.Top,
         horizontalArrangement = Arrangement.Start
     ) {
-        AsyncImage(
-            model = ImageRequest.Builder(LocalContext.current)
-                .data(notification.request.senderImageUri)
-                .crossfade(true)
-                .build(),
-            placeholder = painterResource(R.drawable.sample_avatar),
-            error = painterResource(R.drawable.sample_avatar),
-            contentDescription = "User Avatar",
-            contentScale = ContentScale.Crop,
+        Column(
             modifier = Modifier
-                .size(40.dp)
-                .clip(CircleShape)
-        )
-        Spacer(modifier = Modifier.size(16.dp))
-        Text(
-            text = "${notification.request.senderName}",
-            style = Typography.bodyMedium,
-            modifier = Modifier.weight(1f)
-        )
-        Row {
-            IconButton(onClick = { notification.request.id?.let { onAccept(it) } }) {
-                Icon(
-                    imageVector = Icons.Default.Done,
-                    contentDescription = "Accept",
-                    tint = Color.White
-                )
-            }
-            IconButton(onClick = { notification.request.id?.let { onDecline(it) } }) {
-                Icon(
-                    imageVector = Icons.Default.Close,
-                    contentDescription = "Decline",
-                    tint = Color.White
-                )
+                .fillMaxHeight()
+                .padding(start = 8.dp, top = 8.dp),
+            horizontalAlignment = Alignment.Start,
+            verticalArrangement = Arrangement.Top
+        ) {
+            AsyncImage(
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(notification.request.senderImageUri)
+                    .crossfade(true)
+                    .build(),
+                placeholder = painterResource(R.drawable.sample_avatar),
+                error = painterResource(R.drawable.sample_avatar),
+                contentDescription = "User Avatar",
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+            )
+        }
+
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.Start
+        ) {
+            Text(
+                buildAnnotatedString {
+                    append("Player ")
+
+                    withStyle(
+                        style = SpanStyle(
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.secondary
+                        )
+                    ) {
+                        append(notification.request.senderName)
+                    }
+
+                    append(" has invited You to friends")
+                },
+                style = Typography.bodyMedium
+            )
+            Row(modifier = Modifier.padding(8.dp)) {
+                Button(onClick = { notification.request.id?.let { onAccept(it) } }) {
+                    Text("Accept", color = MaterialTheme.colorScheme.onPrimary)
+                }
+                Spacer(modifier = Modifier.size(10.dp))
+                OutlinedButton(
+                    onClick = { notification.request.id?.let { onDecline(it) } },
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.secondary)
+                ) {
+                    Text("Decline")
+                }
             }
         }
     }
@@ -225,7 +298,7 @@ fun GameNotificationItem(
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(
-                onClick = { notification.request.gameId.let { onAccept(it) }  }
+                onClick = { notification.request.gameId.let { onAccept(it) } }
             ) {
                 Icon(
                     imageVector = Icons.Default.Done,

@@ -111,8 +111,7 @@ fun HomeScreen(
             .background(brush = Brush.verticalGradient(colorStops = colors))
             .then(
                 if (showBottomSheet) Modifier
-                    .background(Color.Black.copy(alpha = 0.2f))
-                    .blur(12.dp) else Modifier
+                    .blur(6.dp) else Modifier
             )
     ) {
         Box(
