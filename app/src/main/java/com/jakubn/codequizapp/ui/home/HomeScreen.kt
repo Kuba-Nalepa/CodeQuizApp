@@ -20,9 +20,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Done
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.CircularProgressIndicator
@@ -60,7 +57,6 @@ import coil.request.ImageRequest
 import com.jakubn.codequizapp.R
 import com.jakubn.codequizapp.model.CustomState
 import com.jakubn.codequizapp.model.Friend
-import com.jakubn.codequizapp.model.FriendshipRequest
 import com.jakubn.codequizapp.model.User
 import com.jakubn.codequizapp.theme.Typography
 import java.util.Locale
@@ -76,7 +72,6 @@ fun HomeScreen(
 ) {
     val userState by homeViewModel.state.collectAsState()
     val friendsState by homeViewModel.friendsState.collectAsState()
-    val requestsState by homeViewModel.friendshipRequestsState.collectAsState()
     var showBottomSheet by remember { mutableStateOf(false) }
     val notificationsNumberState by homeViewModel.notificationsNumberState.collectAsState()
 
@@ -209,14 +204,8 @@ fun HomeScreen(
                         ) {
                             FriendsListBottomSheet(
                                 friendsState = friendsState,
-                                requestsState = requestsState,
+
                                 onCloseBottomSheet = { showBottomSheet = false },
-                                onAcceptRequest = { friendshipId ->
-                                    homeViewModel.acceptFriendshipRequest(friendshipId)
-                                },
-                                onDeclineRequest = { friendshipId ->
-                                    homeViewModel.declineFriendshipRequest(friendshipId)
-                                },
                                 navigateToChat = navigateToChat
                             )
                         }
@@ -419,10 +408,7 @@ fun UserSectionContainer(
 @Composable
 fun FriendsListBottomSheet(
     friendsState: CustomState<List<Friend>>,
-    requestsState: CustomState<List<FriendshipRequest>>,
     onCloseBottomSheet: () -> Unit,
-    onAcceptRequest: (String) -> Unit,
-    onDeclineRequest: (String) -> Unit,
     navigateToChat: (Friend) -> Unit
 ) {
     Column(
@@ -431,55 +417,6 @@ fun FriendsListBottomSheet(
             .padding(vertical = 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        when (requestsState) {
-            is CustomState.Success -> {
-                val invitations = requestsState.result
-                if (invitations.isNotEmpty()) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 16.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "Pending Invitations",
-                            style = Typography.titleSmall
-                        )
-                    }
-                    LazyColumn(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        items(invitations) { request ->
-                            FriendRequestItem(
-                                request = request,
-                                onAccept = { request.id?.let { onAcceptRequest(it) } },
-                                onDecline = { request.id?.let { onDeclineRequest(it) } }
-                            )
-                        }
-                    }
-                } else {
-                    // Nothing to show
-                }
-            }
-
-            is CustomState.Failure -> {
-                Text(
-                    text = "Failed to load invitations: ${requestsState.message}",
-                    style = Typography.labelSmall,
-                    textAlign = TextAlign.Center
-                )
-            }
-
-            is CustomState.Loading -> {
-                CircularProgressIndicator(modifier = Modifier.padding(16.dp))
-            }
-
-            is CustomState.Idle -> {
-                // Do nothing
-            }
-        }
 
         Row(
             modifier = Modifier
@@ -564,59 +501,6 @@ fun FriendsListBottomSheet(
 }
 
 @Composable
-fun FriendRequestItem(
-    request: FriendshipRequest,
-    onAccept: () -> Unit,
-    onDecline: () -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .background(Color(0x52D9D9D9))
-            .padding(horizontal = 20.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Start
-    ) {
-        AsyncImage(
-            model = ImageRequest.Builder(LocalContext.current)
-                .data(request.senderImageUri)
-                .crossfade(true)
-                .build(),
-            placeholder = painterResource(R.drawable.sample_avatar),
-            error = painterResource(R.drawable.sample_avatar),
-            contentDescription = "User Avatar",
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .size(40.dp)
-                .clip(CircleShape)
-        )
-        Spacer(modifier = Modifier.size(16.dp))
-        Text(
-            text = "${request.senderName}",
-            style = Typography.bodyMedium,
-            modifier = Modifier.weight(1f)
-        )
-        Row {
-            IconButton(onClick = onAccept) {
-                Icon(
-                    imageVector = Icons.Default.Done,
-                    contentDescription = "Accept",
-                    tint = Color.White
-                )
-            }
-            IconButton(onClick = onDecline) {
-                Icon(
-                    imageVector = Icons.Default.Close,
-                    contentDescription = "Decline",
-                    tint = Color.White
-                )
-            }
-        }
-    }
-}
-
-@Composable
 private fun FriendMenuItem(friend: Friend, textFriend: () -> Unit, playGame: () -> Unit) {
     Row(
         modifier = Modifier
@@ -627,20 +511,54 @@ private fun FriendMenuItem(friend: Friend, textFriend: () -> Unit, playGame: () 
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Start
     ) {
-        AsyncImage(
-            model = ImageRequest.Builder(LocalContext.current)
-                .data(friend.imageUri)
-                .crossfade(true)
-                .build(),
-            placeholder = painterResource(R.drawable.sample_avatar),
-            error = painterResource(R.drawable.sample_avatar),
-            contentDescription = "User Avatar",
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .size(40.dp)
-                .clip(CircleShape)
-        )
+        if (friend.imageUri == null) {
+            Image(
+                painter = painterResource(R.drawable.sample_avatar),
+                contentDescription = "User Avatar",
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+            )
+        } else {
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+            ) {
+                var isLoading by remember { mutableStateOf(true) }
+
+                AsyncImage(
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data(friend.imageUri)
+                        .crossfade(true)
+                        .build(),
+                    contentDescription = "User Avatar",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.matchParentSize(),
+                    onLoading = { isLoading = true },
+                    onSuccess = { isLoading = false },
+                    onError = { isLoading = false }
+                )
+
+                if (isLoading) {
+                    Box(
+                        modifier = Modifier
+                            .matchParentSize()
+                            .background(Color.LightGray.copy(alpha = 0.3f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            strokeWidth = 2.dp
+                        )
+                    }
+                }
+            }
+        }
+
         Spacer(modifier = Modifier.size(16.dp))
+
         friend.name?.let { name ->
             Text(
                 text = name,
@@ -655,6 +573,7 @@ private fun FriendMenuItem(friend: Friend, textFriend: () -> Unit, playGame: () 
             maxLines = 1,
             modifier = Modifier.weight(1f)
         )
+
         Spacer(modifier = Modifier.weight(1f))
 
         Row {

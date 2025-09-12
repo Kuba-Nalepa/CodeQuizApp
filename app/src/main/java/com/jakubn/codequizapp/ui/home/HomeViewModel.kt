@@ -5,7 +5,6 @@ import androidx.lifecycle.viewModelScope
 import com.jakubn.codequizapp.data.repositoryImpl.UserDataRepository
 import com.jakubn.codequizapp.model.CustomState
 import com.jakubn.codequizapp.model.Friend
-import com.jakubn.codequizapp.model.FriendshipRequest
 import com.jakubn.codequizapp.model.User
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -28,11 +27,6 @@ class HomeViewModel @Inject constructor(
     private val _friendsState = MutableStateFlow<CustomState<List<Friend>>>(CustomState.Idle)
     val friendsState: StateFlow<CustomState<List<Friend>>> = _friendsState.asStateFlow()
 
-    private val _friendshipRequestsState =
-        MutableStateFlow<CustomState<List<FriendshipRequest>>>(CustomState.Idle)
-    val friendshipRequestsState: StateFlow<CustomState<List<FriendshipRequest>>> =
-        _friendshipRequestsState.asStateFlow()
-
     private val _notificationsNumberState = MutableStateFlow<CustomState<Int>>(CustomState.Idle)
     val notificationsNumberState: StateFlow<CustomState<Int>> = _notificationsNumberState.asStateFlow()
 
@@ -49,12 +43,10 @@ class HomeViewModel @Inject constructor(
                 .onStart {
                     _state.value = CustomState.Loading
                     _friendsState.value = CustomState.Loading
-                    _friendshipRequestsState.value = CustomState.Loading
                 }
                 .catch { throwable ->
                     _state.value = CustomState.Failure(throwable.message)
                     _friendsState.value = CustomState.Failure(throwable.message)
-                    _friendshipRequestsState.value = CustomState.Failure(throwable.message)
                 }
                 .collect { user ->
                     _state.value = CustomState.Success(user)
@@ -62,10 +54,8 @@ class HomeViewModel @Inject constructor(
                         currentUserId = user.uid
                         observeNotificationsNumber(user.uid)
                         observeFriends(user.uid)
-                        observeFriendshipRequests(user.uid)
                     } else {
                         _friendsState.value = CustomState.Success(emptyList())
-                        _friendshipRequestsState.value = CustomState.Success(emptyList())
                     }
                 }
         }
@@ -97,34 +87,6 @@ class HomeViewModel @Inject constructor(
                 .collect { friendsList ->
                     _friendsState.value = CustomState.Success(friendsList)
                 }
-        }
-    }
-
-    private fun observeFriendshipRequests(userId: String) {
-        viewModelScope.launch {
-            userDataRepository.observeFriendshipRequests(userId)
-                .onStart { _friendshipRequestsState.value = CustomState.Loading }
-                .catch { throwable ->
-                    _friendshipRequestsState.value = CustomState.Failure(throwable.message)
-                }
-                .collect { requestsList ->
-                    _friendshipRequestsState.value = CustomState.Success(requestsList)
-                }
-        }
-    }
-
-    fun acceptFriendshipRequest(friendshipId: String) {
-        viewModelScope.launch {
-            userDataRepository.acceptFriendshipRequest(friendshipId)
-            currentUserId?.let { userDataRepository.decrementFriendInvitationCount(it) }
-
-        }
-    }
-
-    fun declineFriendshipRequest(friendshipId: String) {
-        viewModelScope.launch {
-            userDataRepository.declineFriendshipRequest(friendshipId)
-            currentUserId?.let { userDataRepository.decrementFriendInvitationCount(it) }
         }
     }
 }

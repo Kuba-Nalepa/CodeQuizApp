@@ -16,13 +16,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Done
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -30,6 +26,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -102,12 +101,7 @@ fun NotificationsScreen(
                     )
 
                     LazyColumn(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 20.dp)
-                            .background(Color(0x52D9D9D9))
-                            .clip(RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                        modifier = Modifier.padding(top = 20.dp)
                     ) {
                         items(notifications) { notification ->
                             when (notification) {
@@ -178,7 +172,10 @@ fun NotificationsScreen(
             }
 
             is CustomState.Loading -> {
-                CircularProgressIndicator()
+                Box(modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
             }
 
             CustomState.Idle -> {
@@ -197,8 +194,9 @@ fun FriendNotificationItem(
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .padding(horizontal = 8.dp, vertical = 8.dp)
             .clip(RoundedCornerShape(16.dp))
-            .padding(horizontal = 8.dp, vertical = 8.dp),
+            .background(Color(0x52D9D9D9)),
         verticalAlignment = Alignment.Top,
         horizontalArrangement = Arrangement.Start
     ) {
@@ -209,19 +207,40 @@ fun FriendNotificationItem(
             horizontalAlignment = Alignment.Start,
             verticalArrangement = Arrangement.Top
         ) {
-            AsyncImage(
-                model = ImageRequest.Builder(LocalContext.current)
-                    .data(notification.request.senderImageUri)
-                    .crossfade(true)
-                    .build(),
-                placeholder = painterResource(R.drawable.sample_avatar),
-                error = painterResource(R.drawable.sample_avatar),
-                contentDescription = "User Avatar",
-                contentScale = ContentScale.Crop,
+            Box(
                 modifier = Modifier
                     .size(40.dp)
                     .clip(CircleShape)
-            )
+            ) {
+                var isLoading by remember { mutableStateOf(true) }
+
+                AsyncImage(
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data(notification.request.senderImageUri)
+                        .crossfade(true)
+                        .build(),
+                    contentDescription = "User Avatar",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.matchParentSize(),
+                    onLoading = { isLoading = true },
+                    onSuccess = { isLoading = false },
+                    onError = { isLoading = false }
+                )
+
+                if (isLoading) {
+                    Box(
+                        modifier = Modifier
+                            .matchParentSize()
+                            .background(Color.LightGray.copy(alpha = 0.3f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            strokeWidth = 2.dp
+                        )
+                    }
+                }
+            }
         }
 
         Column(
@@ -244,7 +263,7 @@ fun FriendNotificationItem(
                         append(notification.request.senderName)
                     }
 
-                    append(" has invited You to friends")
+                    append(" has invited You to friends.")
                 },
                 style = Typography.bodyMedium
             )
@@ -273,47 +292,91 @@ fun GameNotificationItem(
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .padding(horizontal = 8.dp, vertical = 8.dp)
             .clip(RoundedCornerShape(16.dp))
-            .background(Color(0x52D9D9D9))
-            .padding(horizontal = 20.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
+            .background(Color(0x52D9D9D9)),
+        verticalAlignment = Alignment.Top,
         horizontalArrangement = Arrangement.Start
     ) {
-        Icon(
-            painter = painterResource(id = R.drawable.ic_play),
-            contentDescription = "Game Icon",
+        Column(
             modifier = Modifier
-                .size(40.dp)
-                .padding(end = 16.dp),
-            tint = MaterialTheme.colorScheme.primary
-        )
-
-        Text(
-            text = "${notification.request.senderName} has invited you to a game!",
-            style = Typography.bodyMedium,
-            modifier = Modifier.weight(1f)
-        )
-
-        Row(
-            verticalAlignment = Alignment.CenterVertically
+                .fillMaxHeight()
+                .padding(start = 8.dp, top = 8.dp),
+            horizontalAlignment = Alignment.Start,
+            verticalArrangement = Arrangement.Top
         ) {
-            IconButton(
-                onClick = { notification.request.gameId.let { onAccept(it) } }
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
             ) {
-                Icon(
-                    imageVector = Icons.Default.Done,
-                    contentDescription = "Accept game invitation",
-                    tint = Color.Green
+                var isLoading by remember { mutableStateOf(true) }
+
+                AsyncImage(
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data(notification.request.senderImageUri)
+                        .crossfade(true)
+                        .build(),
+                    contentDescription = "User Avatar",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.matchParentSize(),
+                    onLoading = { isLoading = true },
+                    onSuccess = { isLoading = false },
+                    onError = { isLoading = false }
                 )
+
+                if (isLoading) {
+                    Box(
+                        modifier = Modifier
+                            .matchParentSize()
+                            .background(Color.LightGray.copy(alpha = 0.3f)), // dim overlay
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            strokeWidth = 2.dp
+                        )
+                    }
+                }
             }
-            IconButton(
-                onClick = { notification.request.gameId.let { onDecline(it) } }
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Close,
-                    contentDescription = "Decline game invitation",
-                    tint = Color.Red
-                )
+        }
+
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.Start
+        ) {
+            Text(
+                buildAnnotatedString {
+                    withStyle(
+                        style = SpanStyle(
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.secondary
+                        )
+                    ) {
+                        append(notification.request.senderName)
+                    }
+
+                    append(" has challenged You. ")
+                },
+                style = Typography.bodyMedium
+            )
+
+            Row(modifier = Modifier.padding(8.dp)) {
+                Button(onClick = { onAccept(notification.request.gameId) }) {
+                    Text("Compete", color = MaterialTheme.colorScheme.onPrimary)
+                }
+
+                Spacer(modifier = Modifier.size(10.dp))
+
+                OutlinedButton(
+                    onClick = { onDecline(notification.request.gameId) },
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.secondary)
+                ) {
+                    Text("Not now")
+                }
             }
         }
     }

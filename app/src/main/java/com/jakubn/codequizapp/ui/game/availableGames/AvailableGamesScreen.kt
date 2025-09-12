@@ -256,4 +256,3 @@ fun DetailRow(iconRes: Int, label: String, value: String, valueColor: Color = Co
         Text(text = value, style = Typography.labelMedium, color = valueColor)
     }
 }
-
