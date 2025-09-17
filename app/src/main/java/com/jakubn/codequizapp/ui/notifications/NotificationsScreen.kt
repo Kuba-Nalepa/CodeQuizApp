@@ -118,11 +118,11 @@ fun NotificationsScreen(
 
                                 is Notification.GameInvite -> GameNotificationItem(
                                     notification = notification,
-                                    onAccept = { gameId ->
-                                        notificationsViewModel.handleGameInvitationAccept(gameId)
+                                    onAccept = { inviteId ->
+                                        notificationsViewModel.handleGameInvitationAccept(inviteId)
                                     },
-                                    onDecline = { gameId ->
-                                        notificationsViewModel.handleGameInvitationDecline(gameId)
+                                    onDecline = { inviteId ->
+                                        notificationsViewModel.handleGameInvitationDecline(inviteId)
 
                                     }
                                 )
@@ -365,14 +365,14 @@ fun GameNotificationItem(
             )
 
             Row(modifier = Modifier.padding(8.dp)) {
-                Button(onClick = { onAccept(notification.request.gameId) }) {
+                Button(onClick = { onAccept(notification.request.inviteId) }) {
                     Text("Compete", color = MaterialTheme.colorScheme.onPrimary)
                 }
 
                 Spacer(modifier = Modifier.size(10.dp))
 
                 OutlinedButton(
-                    onClick = { onDecline(notification.request.gameId) },
+                    onClick = { onDecline(notification.request.inviteId) },
                     border = BorderStroke(1.dp, MaterialTheme.colorScheme.secondary)
                 ) {
                     Text("Not now")

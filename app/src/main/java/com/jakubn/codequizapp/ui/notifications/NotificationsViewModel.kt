@@ -2,7 +2,6 @@ package com.jakubn.codequizapp.ui.notifications
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.jakubn.codequizapp.data.repositoryImpl.GameRepository
 import com.jakubn.codequizapp.data.repositoryImpl.UserDataRepository
 import com.jakubn.codequizapp.model.CustomState
 import com.jakubn.codequizapp.model.Notification
@@ -18,8 +17,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class NotificationsViewModel @Inject constructor(
-    private val userDataRepository: UserDataRepository,
-    private val gameRepository: GameRepository
+    private val userDataRepository: UserDataRepository
 ) : ViewModel() {
 
     private val _notificationsState =
@@ -65,18 +63,18 @@ class NotificationsViewModel @Inject constructor(
         }
     }
 
-    fun handleGameInvitationAccept(gameId: String) {
+    fun handleGameInvitationAccept(inviteId: String) {
         viewModelScope.launch {
-            gameRepository.acceptGameInvite(gameId)
+            userDataRepository.acceptGameInvite(inviteId)
             currentUserId?.let { userId ->
                 userDataRepository.decrementGameInvitationCount(userId)
             }
         }
     }
 
-    fun handleGameInvitationDecline(gameId: String) {
+    fun handleGameInvitationDecline(inviteId: String) {
         viewModelScope.launch {
-            gameRepository.deleteGameInvitation(gameId)
+            userDataRepository.declineGameInvite(inviteId)
             currentUserId?.let { userId ->
                 userDataRepository.decrementGameInvitationCount(userId)
             }

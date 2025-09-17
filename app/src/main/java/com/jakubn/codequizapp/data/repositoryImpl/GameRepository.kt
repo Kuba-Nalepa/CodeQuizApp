@@ -5,6 +5,7 @@ import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
+import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.functions.FirebaseFunctions
 import com.jakubn.codequizapp.model.Game
 import com.jakubn.codequizapp.model.Lobby
@@ -22,7 +23,8 @@ import javax.inject.Singleton
 @Singleton
 class GameRepository @Inject constructor(
     private val firebaseDatabase: FirebaseDatabase,
-    private val firebaseFunctions: FirebaseFunctions
+    private val firebaseFunctions: FirebaseFunctions,
+    private val firebaseFirestore: FirebaseFirestore
 ) : GameRepository {
 
     override suspend fun createGame(
@@ -150,42 +152,24 @@ class GameRepository @Inject constructor(
         }
     }
 
-    override suspend fun inviteFriendToGame(gameId: String, friendUid: String) {
+    override suspend fun inviteFriendToGame(gameId: String, friendUid: String): String {
         val data = hashMapOf(
             "friendUid" to friendUid,
             "gameId" to gameId
         )
 
         try {
-            firebaseFunctions
+            val result = firebaseFunctions
                 .getHttpsCallable("inviteFriendToGame")
                 .call(data)
                 .await()
+            val responseData = result.data as? Map<String, String>
+
+            return responseData?.get("inviteId")
+                ?: throw Exception("Failed to get invitation ID.")
+
         } catch (e: Exception) {
             throw Exception("Failed to invite friend: ${e.message}", e)
-        }
-    }
-
-    override suspend fun acceptGameInvite(gameId: String) {
-        val data = hashMapOf(
-            "gameId" to gameId
-        )
-
-        try {
-            firebaseFunctions
-                .getHttpsCallable("acceptGameInvitation")
-                .call(data)
-                .await()
-        } catch (e: Exception) {
-            throw Exception("Failed to accept game invitation: ${e.message}", e)
-        }
-    }
-
-    override suspend fun deleteGameInvitation(gameId: String) {
-        try {
-            firebaseDatabase.getReference("gameInvitations").child(gameId).removeValue().await()
-        } catch (e: Exception) {
-            throw Exception("Failed to delete game invitation: ${e.message}", e)
         }
     }
 

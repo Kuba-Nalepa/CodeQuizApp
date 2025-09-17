@@ -13,6 +13,8 @@ interface FriendshipRequest {
   senderId: string;
   receiverId: string;
   status: string;
+  senderName?: string;
+  id?: string;
 }
 
 interface User {
@@ -20,8 +22,9 @@ interface User {
   name: string;
   imageUri: string;
   fcmToken?: string;
-  unreadFriendInvitations?: number;
-  unreadGameInvitations?: number;
+  friendInvitations?: number;
+  gameInvitations?: number;
+  description?: string;
 }
 
 interface Friend {
@@ -49,7 +52,6 @@ interface Game {
     founder: { uid: string };
     member: { uid: string } | null;
   };
-
 }
 
 export const onFriendshipAccepted = onDocumentUpdated(
@@ -61,6 +63,7 @@ export const onFriendshipAccepted = onDocumentUpdated(
 
     const beforeData = event.data.before.data() as FriendshipRequest;
     const afterData = event.data.after.data() as FriendshipRequest;
+    const friendshipId = event.params.friendshipId;
 
     if (beforeData.status === "pending" && afterData.status === "accepted") {
       const senderId = afterData.senderId;
@@ -107,26 +110,6 @@ export const onFriendshipAccepted = onDocumentUpdated(
         .set(friendDataForReceiver);
 
       console.log(`Friendship created between ${senderId} and ${receiverId}`);
-    }
-
-    return;
-  }
-);
-
-export const onDeleteFriendshipAfterAccept = onDocumentUpdated(
-  "friendships/{friendshipId}",
-  async (event) => {
-    if (!event.data) {
-      return;
-    }
-
-    const beforeData = event.data.before.data() as FriendshipRequest;
-    const afterData = event.data.after.data() as FriendshipRequest;
-
-    const friendshipId = event.params.friendshipId;
-
-    if (beforeData.status === "pending" && afterData.status === "accepted") {
-      const firestore = admin.firestore();
 
       try {
         await firestore.collection("friendships").doc(friendshipId).delete();
@@ -144,6 +127,7 @@ export const onDeleteFriendshipAfterAccept = onDocumentUpdated(
     return;
   }
 );
+
 
 export const createChat = onCall(async (request) => {
   const {data, auth} = request;
@@ -226,17 +210,16 @@ export const handleNewFriendshipRequest = onDocumentCreated(
       return null;
     }
 
-    const request = event.data.data();
+    const request = event.data.data() as FriendshipRequest;
     const receiverId = request.receiverId;
     const senderName = request.senderName;
 
     const userRef = admin.firestore().collection("users").doc(receiverId);
-
     const userDoc = await userRef.get();
     const fcmToken = userDoc.data()?.fcmToken;
 
     await userRef.update({
-      unreadFriendInvitations: admin.firestore.FieldValue.increment(1),
+      friendInvitations: admin.firestore.FieldValue.increment(1),
     });
 
     console.log(
@@ -280,6 +263,7 @@ export const handleNewGameInvite = onDocumentCreated(
       return null;
     }
 
+    const inviteId = event.params.inviteId;
     const inviteData = event.data.data() as GameInvite;
     const receiverId = inviteData.receiverId;
     const senderName = inviteData.senderName;
@@ -290,7 +274,7 @@ export const handleNewGameInvite = onDocumentCreated(
     const fcmToken = userDoc.data()?.fcmToken;
 
     await userRef.update({
-      unreadGameInvitations: admin.firestore.FieldValue.increment(1),
+      gameInvitations: admin.firestore.FieldValue.increment(1),
     });
 
     console.log(`Game invite count increased for user: ${receiverId}`);
@@ -307,6 +291,8 @@ export const handleNewGameInvite = onDocumentCreated(
       },
       data: {
         type: "game_invite",
+        inviteId: inviteId,
+        gameId: inviteData.gameId,
       },
       token: fcmToken,
     };
@@ -382,7 +368,7 @@ export const inviteFriendToGame = onCall(async (request) => {
   };
 });
 
-export const onGameInviteAccepted = onDocumentUpdated(
+export const onGameInvitationStatusChanged = onDocumentUpdated(
   "gameInvitations/{inviteId}",
   async (event) => {
     if (!event.data) {
@@ -393,10 +379,16 @@ export const onGameInviteAccepted = onDocumentUpdated(
     const afterData = event.data.after.data() as GameInvite;
     const inviteId = event.params.inviteId;
 
-    if (beforeData.status === "pending" && afterData.status === "accepted") {
-      const receiverId = afterData.receiverId;
-      const gameId = afterData.gameId;
+    if (beforeData.status === afterData.status) {
+      console.log("Status did not change, no action needed.");
+      return;
+    }
 
+    const receiverId = afterData.receiverId;
+    const userRef = firestore.collection("users").doc(receiverId);
+
+    if (afterData.status === "accepted") {
+      const gameId = afterData.gameId;
       const gameRef = db.ref(`games/${gameId}`);
       const gameSnapshot = await gameRef.once("value");
 
@@ -406,66 +398,47 @@ export const onGameInviteAccepted = onDocumentUpdated(
       }
 
       const lobbyUpdate = {
-        member: {
+        "lobby/member": {
           uid: receiverId,
         },
-        isMemberReady: false,
+        "lobby/isMemberReady": false,
       };
 
       await gameRef.update(lobbyUpdate);
       console.log(`User ${receiverId} joined lobby for game ${gameId}`);
+      try {
+        await userRef.update({
+          gameInvitations: admin.firestore.FieldValue.increment(-1),
+        });
+        console.log(`Game invitation count decremented for user: ${receiverId}`);
+      } catch (error) {
+        console.error(`Error decrementing game invitation count for user ${receiverId}:`, error);
+      }
 
       try {
         await firestore.collection("gameInvitations").doc(inviteId).delete();
-        console.log(`Game invitation document ${inviteId} deleted.`);
+        console.log(`Game invitation document ${inviteId} deleted after acceptance.`);
+      } catch (error) {
+        console.error(`Error deleting invitation ${inviteId}:`, error);
+      }
+    } else if (afterData.status === "declined") {
+      console.log(`Game invitation ${inviteId} was declined.`);
+
+      try {
+        await userRef.update({
+          gameInvitations: admin.firestore.FieldValue.increment(-1),
+        });
+        console.log(`Game invitation count decremented for user: ${receiverId}`);
+      } catch (error) {
+        console.error(`Error decrementing game invitation count for user ${receiverId}:`, error);
+      }
+
+      try {
+        await firestore.collection("gameInvitations").doc(inviteId).delete();
+        console.log(`Game invitation document ${inviteId} deleted after decline.`);
       } catch (error) {
         console.error(`Error deleting invitation ${inviteId}:`, error);
       }
     }
-    return;
   }
 );
-
-export const acceptGameInvite = onCall(async (request) => {
-  const {data, auth} = request;
-
-  if (!auth) {
-    throw new HttpsError("unauthenticated", "User not authenticated.");
-  }
-
-  const {inviteId} = data;
-  const myUid = auth.uid;
-
-  if (!inviteId) {
-    throw new HttpsError("invalid-argument", "Missing inviteId.");
-  }
-
-  const inviteRef = firestore.collection("gameInvitations").doc(inviteId);
-  const inviteDoc = await inviteRef.get();
-
-  if (!inviteDoc.exists) {
-    throw new HttpsError("not-found", "Invitation not found.");
-  }
-
-  const inviteData = inviteDoc.data() as GameInvite;
-
-  if (inviteData.receiverId !== myUid) {
-    throw new HttpsError(
-      "permission-denied",
-      "You cannot accept this invitation."
-    );
-  }
-
-  if (inviteData.status !== "pending") {
-    throw new HttpsError(
-      "failed-precondition",
-      "Invitation is no longer pending."
-    );
-  }
-
-  await inviteRef.update({
-    status: "accepted",
-  });
-
-  return {success: true};
-});

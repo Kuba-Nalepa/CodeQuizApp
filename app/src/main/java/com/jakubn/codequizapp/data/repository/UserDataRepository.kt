@@ -44,6 +44,10 @@ interface UserDataRepository {
 
     fun observeGameRequest(userId: String): Flow<List<GameRequest>>
 
+    suspend fun acceptGameInvite(inviteId: String)
+
+    suspend fun declineGameInvite(inviteId: String)
+
     suspend fun createChat(userUid: String,friendUid: String): String
 
     suspend fun sendMessage(chatId: String, userUid: String, messageText: String)

@@ -387,7 +387,7 @@ class UserDataRepository @Inject constructor(
                 close(exception)
                 return@addSnapshotListener
             }
-            val count = snapshot?.getLong("unreadFriendInvitations") ?: 0L
+            val count = snapshot?.getLong("friendInvitations") ?: 0L
             trySend(count).isSuccess
         }
         awaitClose { subscription.remove() }
@@ -400,7 +400,7 @@ class UserDataRepository @Inject constructor(
                 close(exception)
                 return@addSnapshotListener
             }
-            val count = snapshot?.getLong("unreadGameInvitations") ?: 0L
+            val count = snapshot?.getLong("gameInvitations") ?: 0L
             trySend(count).isSuccess
         }
         awaitClose { subscription.remove() }
@@ -478,17 +478,40 @@ class UserDataRepository @Inject constructor(
         awaitClose { subscription.remove() }
     }
 
+    override suspend fun acceptGameInvite(inviteId: String) {
+        withContext(Dispatchers.IO) {
+            val inviteRef = firebaseFirestore.collection("gameInvitations").document(inviteId)
+            try {
+                inviteRef.update("status", "accepted").await()
+            } catch (e: Exception) {
+                throw e
+            }}
+
+    }
+
+    override suspend fun declineGameInvite(inviteId: String) {
+        withContext(Dispatchers.IO) {
+            val inviteRef = firebaseFirestore.collection("gameInvitations").document(inviteId)
+            try {
+                inviteRef.update("status", "declined").await()
+            } catch (e: Exception) {
+                throw e
+            }
+        }
+
+    }
+
     override suspend fun decrementFriendInvitationCount(userId: String) {
         withContext(Dispatchers.IO) {
             val userRef = firebaseFirestore.collection("users").document(userId)
-            userRef.update("unreadFriendInvitations", FieldValue.increment(-1))
+            userRef.update("friendInvitations", FieldValue.increment(-1))
         }
     }
 
     override suspend fun decrementGameInvitationCount(userId: String) {
         withContext(Dispatchers.IO) {
             val userRef = firebaseFirestore.collection("users").document(userId)
-            userRef.update("unreadGameInvitations", FieldValue.increment(-1))
+            userRef.update("gameInvitations", FieldValue.increment(-1))
         }
     }
 }

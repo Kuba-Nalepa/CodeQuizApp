@@ -1,9 +1,12 @@
 package com.jakubn.codequizapp.model
 
+import com.google.firebase.firestore.DocumentId
 import com.google.firebase.firestore.ServerTimestamp
 import java.util.Date
 
 data class GameRequest(
+    @DocumentId
+    val inviteId: String = "",
     val gameId: String = "",
     val senderId: String = "",
     val receiverId: String = "",

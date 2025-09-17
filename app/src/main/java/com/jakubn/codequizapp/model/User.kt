@@ -14,5 +14,7 @@ data class User(
     val score: Int = 0,
     val winRatio: Float = 0f,
     val description: String? = null,
-    val fcmToken: String? = null
+    val fcmToken: String? = null,
+    val gameInvitations: Int? = null,
+    val friendsInvitations: Int? = null
 ): Parcelable
