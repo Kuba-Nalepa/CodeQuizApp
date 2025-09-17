@@ -5,7 +5,6 @@ import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
-import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.functions.FirebaseFunctions
 import com.jakubn.codequizapp.model.Game
 import com.jakubn.codequizapp.model.Lobby
@@ -23,8 +22,7 @@ import javax.inject.Singleton
 @Singleton
 class GameRepository @Inject constructor(
     private val firebaseDatabase: FirebaseDatabase,
-    private val firebaseFunctions: FirebaseFunctions,
-    private val firebaseFirestore: FirebaseFirestore
+    private val firebaseFunctions: FirebaseFunctions
 ) : GameRepository {
 
     override suspend fun createGame(

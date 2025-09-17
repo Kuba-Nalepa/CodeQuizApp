@@ -16,13 +16,14 @@ import javax.inject.Singleton
 
 @Singleton
 class UserManager @Inject constructor(
-
     private val userDataRepository: UserDataRepository,
     private val authRepository: AuthRepository,
     private val applicationScope: CoroutineScope
 ) {
     private val _userState = MutableStateFlow<CustomState<User>>(CustomState.Idle)
     val userState: StateFlow<CustomState<User>> = _userState.asStateFlow()
+
+    private var currentUser: User? = null
 
     init {
         applicationScope.launch {
@@ -39,6 +40,7 @@ class UserManager @Inject constructor(
                 _userState.value = CustomState.Failure(throwable.message ?: "Failed to load user")
             }
             .collect { user ->
+                currentUser = user
                 _userState.value = CustomState.Success(user)
             }
     }
@@ -51,7 +53,7 @@ class UserManager @Inject constructor(
         applicationScope.launch {
             _userState.value = CustomState.Loading
             try {
-                authRepository.signOutUser()
+                currentUser?.uid?.let { authRepository.signOutUser(it) }
                 _userState.value = CustomState.Failure("User logged out successfully")
             } catch (e: Exception) {
                 _userState.value = CustomState.Failure("Logout failed: ${e.message}")

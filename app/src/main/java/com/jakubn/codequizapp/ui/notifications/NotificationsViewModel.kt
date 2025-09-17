@@ -66,18 +66,12 @@ class NotificationsViewModel @Inject constructor(
     fun handleGameInvitationAccept(inviteId: String) {
         viewModelScope.launch {
             userDataRepository.acceptGameInvite(inviteId)
-            currentUserId?.let { userId ->
-                userDataRepository.decrementGameInvitationCount(userId)
-            }
         }
     }
 
     fun handleGameInvitationDecline(inviteId: String) {
         viewModelScope.launch {
             userDataRepository.declineGameInvite(inviteId)
-            currentUserId?.let { userId ->
-                userDataRepository.decrementGameInvitationCount(userId)
-            }
         }
     }
 }

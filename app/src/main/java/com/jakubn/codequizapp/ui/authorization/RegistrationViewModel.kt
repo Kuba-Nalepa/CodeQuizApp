@@ -100,10 +100,6 @@ class RegistrationViewModel @Inject constructor(
         }
     }
 
-    fun signOut() {
-        authRepository.signOutUser()
-    }
-
     fun resetState() {
         _authState.value = CustomState.Idle
         _name.value = ""

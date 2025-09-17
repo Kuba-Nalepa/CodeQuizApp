@@ -12,8 +12,10 @@ interface AuthRepository {
 
     fun getCurrentUser(): FirebaseUser?
 
-    fun signOutUser()
+    suspend fun signOutUser(userId: String)
 
     suspend fun saveFCMTokenToFirestore(userId: String)
+
+    suspend fun clearFCMTokenFromFirestore(userId: String)
 
 }

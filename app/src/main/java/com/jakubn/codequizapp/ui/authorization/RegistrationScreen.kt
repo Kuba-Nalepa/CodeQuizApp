@@ -161,7 +161,6 @@ fun RegistrationScreen(navHostController: NavHostController, viewModel: Registra
         when(val currentState = authState) {
             is CustomState.Success -> {
                 viewModel.resetState()
-                viewModel.signOut()
                 navHostController.navigate(route = Screen.Login.route)
             }
 

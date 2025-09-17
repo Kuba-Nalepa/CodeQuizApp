@@ -208,7 +208,7 @@ fun SettingsScreen(
                     message = "Do you really want to sign out?",
                     confirmText = "Sign Out",
                     onConfirm = {
-                        viewModel.signOut()
+                        viewModel.signOut(user)
                         onLogoutConfirmed()
                         Toast.makeText(context, "Signed out", Toast.LENGTH_SHORT).show()
                         showSignOutDialog = false

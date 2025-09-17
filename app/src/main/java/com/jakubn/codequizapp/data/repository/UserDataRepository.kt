@@ -55,6 +55,4 @@ interface UserDataRepository {
     suspend fun checkChatExists(myUserId: String, friendUid: String): Boolean
 
     suspend fun decrementFriendInvitationCount(userId: String)
-
-    suspend fun decrementGameInvitationCount(userId: String)
 }

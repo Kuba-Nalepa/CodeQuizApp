@@ -36,13 +36,6 @@ class LoginViewModel @Inject constructor(
         }
     }
 
-    fun saveFCMToken(userId: String) {
-        viewModelScope.launch {
-            authRepository.saveFCMTokenToFirestore(userId)
-
-        }
-    }
-
     fun resetState() {
         _authState.value = CustomState.Idle
     }

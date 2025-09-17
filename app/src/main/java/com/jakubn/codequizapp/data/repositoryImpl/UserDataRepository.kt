@@ -507,11 +507,4 @@ class UserDataRepository @Inject constructor(
             userRef.update("friendInvitations", FieldValue.increment(-1))
         }
     }
-
-    override suspend fun decrementGameInvitationCount(userId: String) {
-        withContext(Dispatchers.IO) {
-            val userRef = firebaseFirestore.collection("users").document(userId)
-            userRef.update("gameInvitations", FieldValue.increment(-1))
-        }
-    }
 }

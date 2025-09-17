@@ -43,6 +43,7 @@ class AuthRepository @Inject constructor(
             )
 
             firebaseFirestore.collection("users").document(firebaseUser.uid).set(user).await()
+            saveFCMTokenToFirestore(firebaseUser.uid)
             emit(user)
         }.flowOn(Dispatchers.IO)
     }
@@ -62,6 +63,7 @@ class AuthRepository @Inject constructor(
             val user = documentSnapshot.toObject(User::class.java)
                 ?: throw Exception("User data not found")
 
+            saveFCMTokenToFirestore(firebaseUser.uid)
             emit(user)
         }.flowOn(Dispatchers.IO)
     }
@@ -70,7 +72,8 @@ class AuthRepository @Inject constructor(
         return firebaseAuth.currentUser
     }
 
-    override fun signOutUser() {
+    override suspend fun signOutUser(userId: String) {
+        clearFCMTokenFromFirestore(userId)
         firebaseAuth.signOut()
     }
 
@@ -84,5 +87,9 @@ class AuthRepository @Inject constructor(
             }
         }
 
+    }
+
+    override suspend fun clearFCMTokenFromFirestore(userId: String) {
+        firebaseFirestore.collection("users").document(userId).update("fcmToken", null)
     }
 }
